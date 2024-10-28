@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>probetest</title>
+</head>
+<body>
+    <p>This Flask app is served from {{ from_hostname }}</p>
+    <p>The readiness endpoint (/readyz) is {{ readyz }}</p>
+    <p>The liveness endpoint is (/livez) {{ livez }}</p>
+    <form method="POST">
+        <button type="submit" name="readyz">Toggle Readiness</button>
+        <button type="submit" name="livez">Toggle Liveness</button>
+    </form>
+</body>
+</html>

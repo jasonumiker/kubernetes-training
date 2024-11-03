@@ -2,7 +2,7 @@
 docker buildx create --name mybuilder --bootstrap --use
 docker buildx build --push \
   --platform linux/arm64,linux/amd64 \
-  --tag jasonumiker/probe-test-app:281024 \
+  --tag jasonumiker/probe-test-app:031124 \
   .
 docker buildx build --push \
   --platform linux/arm64,linux/amd64 \

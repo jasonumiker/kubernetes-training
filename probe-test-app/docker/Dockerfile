@@ -13,4 +13,4 @@ COPY --chown=python:python . .
 
 EXPOSE 8080
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "probetest:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--access-logfile", "-","probetest:app"]

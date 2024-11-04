@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: probe-test-app
+  name: probe-test-app-2
   labels:
     app.kubernetes.io/name: probe-test-app
 spec:

@@ -117,5 +117,122 @@ To see that in action we can add a 2nd Pod with that label by running `kubectl a
 
 If you re-run `kubectl get endpoints` you'll now see the 2nd Pod has been added as an endpoint for the serivce.
 
-And if you go to http://localhost:8080 in your browser and refresh you'll see that the name changes in what Pod that you're served from (that you are balanced between them). Note that the hostname the Pod sees is its Pod name - and I am just returning that hostname here.
+And if you go to http://localhost:8080 in your browser and refresh you'll see that the name changes in what Pod that you're served from (that you are balanced between them). Note that the hostname the Pod sees is its Pod name - and I am just having it return that hostname out this web app.
 
+### Probes
+You may have noticed in the Pod settings that we've defined both of the types of Probes - readinesss and liveness.
+
+```
+    livenessProbe:
+      httpGet:
+        path: /livez
+        port: 8080
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8080
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 3
+```
+
+You don't have to put all of those settings but I wanted to put them all explictly on what they default to so that you can see what options are available and what their defaults are. You can learn more about them in the K8s documentation [here](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)
+
+In short, the livenessProbe controls whether a Pod should be restarted due to it behind unhealthy (as an attempt to heal it) vs. the readinessProbe which is used to decide whether a Service should send it traffic or not. In AWS these two things are often combined - but seperating them into different endpoints and behaviors can be very useful.
+
+The app that you go to on http://localhost:8080 not only tells you if each of these is healthy but it also lets you toggle them between behind healthy and unhealthy.
+
+If you click the button to toggle the livenessProbe then you'll see the container restart - and this app defaults to it behind Healthy so that will 'heal' it. As you can see in the settings above it does the probe every 10 seconds and in order to be restarted it needs to fail it 3 times - so be unhealthy for 30 seconds all up.
+
+To see this in action click the **Toggle Liveness** button. Then run `kubectl get pods -w` and watch for it to restart (press ctrl-c to stop)
+
+To see the readinessProbe in action click the **Toggle Readiness** button. If you refresh http://localhost:8080 after 30 second you'll see it no longer balances you between the two pods but, instead, is only sending you to the Pod that is still passing its readinessProbe.
+
+Unlike the livenessProbe this won't automatically heal - you can heal it by connecting directly to the Pod and clicking the Toggle button again. As we saw you can do that by running:
+* `kubectl get pods` - note which of the two has a 0/1 for READY
+* `kubectl port-forward pod/probe-test-app(-2) 8081:8080` - Point the port-forward at the not ready Pod Name so that you can go to port 8081 on your laptop to reach it directly (bypassing the Service that won't send you there any longer)
+* Click the **Toggle Readiness** button again to 'heal' the service.
+* Press ctrl-c to exit the port-forward
+* Refresh http://localhost:8080 and see the traffic start to load balance between the two again
+
+Alternatively you could have deleted the Pod and recreated it to heal it (`kubectl delete pod probe-test-app-2 && kubectl apply -f probe-test-app-pod-2.yaml`) - but, since this Pod isn't managed by a ReplicaSet, you would have had to recreate it yourself. Let's look at how a ReplicaSet can help do that for us next.
+
+### ReplicaSets
+First, lets delete our two Pods. Since they are the only two that are running in the default Namespace so far we can run `kubectl delete pods --all` to delete them both.
+
+Now we're going to let a ReplicaSet create them for us. Let's have a look at the ReplicaSet YAML spec at [probe-test-app/probe-test-app-replicaset.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-replicaset.yaml)
+
+```
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: probe-test-app #Name of our ReplicaSet
+  labels:
+    app.kubernetes.io/name: probe-test-app #Label of our ReplicaSet
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: probe-test-app #Label on Pods so it thinks it manages them
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: probe-test-app #Label it puts on Pods it creates (should match selector)
+    spec:
+      containers: #From here on very similar to PodSpec - as it is a template for the Pods it creates
+        - name: probe-test-app
+          image: jasonumiker/probe-test-app:v1
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 52Mi
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+
+```
+
+To see it in action you can run `kubectl apply -f probe-test-app-replicaset.yaml`
+
+You'll now see three Pods running with five random characters appended to each.
+
+You can scale this in to two Pods by running `kubectl scale replicaset probe-test-app --replicas=2`.
+
+And you can add tools to automatically scale it in and out for you, such as the [Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) or [KEDA](https://keda.sh/), as well. We'll cover those in later sections.
+
+### Deployments
+So ReplicaSets help us out abstracting the management and scaling of Pods a bit. But when we want to deploy a new version we ideally want to manage two ReplicaSets - one with the old version and one with the new one. And, for a big Deployment, to scale the old down and the new up gradually so it doesn't require us to run double the services during the cutover etc.
+
+That is where Deployments come in.
+
+You can remove the ReplicaSet by running `kubectl delete replicaset probe-test-app`. We'll replace it with a Deployment.
+
+If you look at the Deployment YAML spec at [probe-test-app/probe-test-app-deployment.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-deployment.yaml) it is nearly identical to the ReplicaSet one. The difference comes when you update a Deployment vs. a ReplicaSet.
+
+Run `kubectl apply -f probe-test-app-deployment.yaml` to see this in action.
+
+If you run `kubectl get pods` you get the first clue there is a difference - it is't just the random 5 characters appended on the name but another random 9 appended before that one. That is because the Deployment manages ReplicaSets with a random name which manages Pods with a random name. If you run `kubectl get replicasets` you'll see that the 9 digits is indeed the one it appended on the ReplicaSet it created.
+
+Now let's say we wanted to upgrade our app to v2 and see what happens. To do so we'd run: 
+* `kubectl set image deployment/probe-test-app probe-test-app=jasonumiker/probe-test-app:v2`
+* Then quickly run `kubectl get replicasets -w` - you'll see the new ReplicaSet gradually have its DESIRED increased and the old one have its decreased all the way to zero.
+* Once you've seen that ctrl-c out of that
+* If you run `kubectl events` you can see the scaling actions the Deployment was taking there
+
+You can customise many aspects of this upgrade behavior (how agressive, fast or automatic it is etc.) as documented [here](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy)
+
+Finally, let's say this was bad and we want to roll it back. You simply run `kubectl rollout undo deployment/probe-test-app` - which will scale the new version ReplicaSet down and the old version back up (since it is still there at 0). It actually leaves the last 10 versions there by default - though you can customise this with `.spec.revisionHistoryLimit`

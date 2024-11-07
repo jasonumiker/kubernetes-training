@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#I retreieved this from https://gist.github.com/SpoddyCoder/ff0ea39260b0d4acdb8b482532d4c1af on 7/11/24
 
 echo
 echo "Updating docker-desktop pods to expose metrics endpoints"

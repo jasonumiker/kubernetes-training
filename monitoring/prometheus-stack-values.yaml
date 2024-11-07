@@ -12,4 +12,9 @@ prometheus-node-exporter:
         action: replace
         regex: (.+)
         replacement: ${1}
-
+prometheus:
+  service:
+    type: LoadBalancer
+grafana:
+  service:
+    type: LoadBalancer

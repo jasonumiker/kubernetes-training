@@ -6,6 +6,8 @@ This set of general Kubernetes training materials was designed to run on the Kub
 1. Download and Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 1. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
     1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
+1. Install Helm
+    1. On Mac you can do this via Homebrew with a `brew install helm`
 1. Install [k9s](https://k9scli.io/)
     1. On Mac you can do this via Homebrew with a `brew install derailed/k9s/k9s`
 1. Install git (if it's not already)
@@ -87,10 +89,10 @@ metadata:
   name: probe-test-app
 spec:
   ports:
-  - name: 8080-tcp #We want to take traffic in on 8080
-    port: 8080
+  - name: 8000-tcp #We want to take traffic in on 8000
+    port: 8000
     protocol: TCP
-    targetPort: 8080 #And our target Pod(s) are listening on 8080 too
+    targetPort: 8080 #And our target Pod(s) are listening on 8080
   selector:
     app.kubernetes.io/name: probe-test-app #And our target Pods have this label
   type: LoadBalancer #More about the various types below
@@ -107,8 +109,8 @@ Deploy the service by running `kubectl apply -f probe-test-app-service.yaml`
 You can see the details by running `kubectl get services -o wide`. You'll see that:
 * The probe-test-app service is of a LoadBalancer type 
 * With an EXTERNAL-IP (usually the DNS address of the external load balancer you should be able to reach it on) of localhost 
-* And that it is actually mapping port 8080 on the LoadBalancer through a random NodePort in the 30000-ish range on its way in.
-    * You can just ignore that and use the http://localhost:8080 and ignore that though - thanks Docker Desktop!
+* And that it is actually mapping port 8000 on the LoadBalancer through a random NodePort in the 30000-ish range on its way in.
+    * You can just ignore that and use the http://localhost:8000 and ignore that though - thanks Docker Desktop!
 * That it is pointing at any Pods (it's Selector) with the label `app.kubernetes.io/name=probe-test-app`
 
 If you run `kubectl get endpoints` you'll see the Pod IP there as the only endpoint of the service (you can see the Pod IP to verify it is what you see with `kubectl get pods -o wide`).
@@ -117,7 +119,7 @@ To see that in action we can add a 2nd Pod with that label by running `kubectl a
 
 If you re-run `kubectl get endpoints` you'll now see the 2nd Pod has been added as an endpoint for the serivce.
 
-And if you go to http://localhost:8080 in your browser and refresh you'll see that the name changes in what Pod that you're served from (that you are balanced between them). Note that the hostname the Pod sees is its Pod name - and I am just having it return that hostname out this web app.
+And if you go to http://localhost:8000 in your browser and refresh you'll see that the name changes in what Pod that you're served from (that you are balanced between them). Note that the hostname the Pod sees is its Pod name - and I am just having it return that hostname out this web app.
 
 ### Probes
 You may have noticed in the Pod settings that we've defined both of the types of Probes - readinesss and liveness.
@@ -147,20 +149,20 @@ You don't have to put all of those settings but I wanted to put them all explict
 
 In short, the livenessProbe controls whether a Pod should be restarted due to it behind unhealthy (as an attempt to heal it) vs. the readinessProbe which is used to decide whether a Service should send it traffic or not. In AWS these two things are often combined - but seperating them into different endpoints and behaviors can be very useful.
 
-The app that you go to on http://localhost:8080 not only tells you if each of these is healthy but it also lets you toggle them between behind healthy and unhealthy.
+The app that you go to on http://localhost:8000 not only tells you if each of these is healthy but it also lets you toggle them between behind healthy and unhealthy.
 
 If you click the button to toggle the livenessProbe then you'll see the container restart - and this app defaults to it behind Healthy so that will 'heal' it. As you can see in the settings above it does the probe every 10 seconds and in order to be restarted it needs to fail it 3 times - so be unhealthy for 30 seconds all up.
 
 To see this in action click the **Toggle Liveness** button. Then run `kubectl get pods -w` and watch for it to restart (press ctrl-c to stop)
 
-To see the readinessProbe in action click the **Toggle Readiness** button. If you refresh http://localhost:8080 after 30 second you'll see it no longer balances you between the two pods but, instead, is only sending you to the Pod that is still passing its readinessProbe.
+To see the readinessProbe in action click the **Toggle Readiness** button. If you refresh http://localhost:8000 after 30 second you'll see it no longer balances you between the two pods but, instead, is only sending you to the Pod that is still passing its readinessProbe.
 
 Unlike the livenessProbe this won't automatically heal - you can heal it by connecting directly to the Pod and clicking the Toggle button again. As we saw you can do that by running:
 * `kubectl get pods` - note which of the two has a 0/1 for READY
-* `kubectl port-forward pod/probe-test-app(-2) 8081:8080` - Point the port-forward at the not ready Pod Name so that you can go to port 8081 on your laptop to reach it directly (bypassing the Service that won't send you there any longer)
+* `kubectl port-forward pod/probe-test-app(-2) 8001:8080` - Point the port-forward at the not ready Pod Name so that you can go to port 8081 on your laptop to reach it directly (bypassing the Service that won't send you there any longer)
 * Click the **Toggle Readiness** button again to 'heal' the service.
 * Press ctrl-c to exit the port-forward
-* Refresh http://localhost:8080 and see the traffic start to load balance between the two again
+* Refresh http://localhost:8000 and see the traffic start to load balance between the two again
 
 Alternatively you could have deleted the Pod and recreated it to heal it (`kubectl delete pod probe-test-app-2 && kubectl apply -f probe-test-app-pod-2.yaml`) - but, since this Pod isn't managed by a ReplicaSet, you would have had to recreate it yourself. Let's look at how a ReplicaSet can help do that for us next.
 
@@ -236,3 +238,74 @@ Now let's say we wanted to upgrade our app to v2 and see what happens. To do so 
 You can customise many aspects of this upgrade behavior (how agressive, fast or automatic it is etc.) as documented [here](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy)
 
 Finally, let's say this was bad and we want to roll it back. You simply run `kubectl rollout undo deployment/probe-test-app` - which will scale the new version ReplicaSet down and the old version back up (since it is still there at 0). It actually leaves the last 10 versions there by default - though you can customise this with `.spec.revisionHistoryLimit`
+
+## Requests, Limits and Scaling Pods
+
+### First let's install Prometheus for Metrics/Monitoring
+In order to automatically scale a workload we'll need some metrics to do it in response to.
+
+The most common tool to do that in the Kubernetes / CNCF ecosystem is Prometheus. And that is often visualised with Grafana.
+
+You can install that on your local Kubernetes cluster by:
+1. `cd monitoring`
+1. Run `./install-prometheus.sh`
+
+Once that is up and running it will have configured both Prometheus and Grafana with Services of type LoadBalancer - so you can reach them on localhost. Prometheus is at http://localhost:9090 with no login. And Grafana is on http://localhost with the login admin and the password prom-operator.
+
+You can see the all the data sources that Prometheus is scraping for metrics (its Targets) at http://localhost:9090/targets. They should all be healthy. The two main ones that are interesting are for our purposes here are:
+* Prometheus Node Exporter which gives it host-level metrics on the Node
+* And cAdvisor which gives it container-level metrics (which it is actually scraping through the Node's Kubelet)
+
+NOTE: Unfortunatly, for some reason the Kubernetes in Docker Desktop is missing some usual/expected labels on its cAdvisor container-level metrics - container and image being two main ones. [I believe this is because it is using an uncommon container runtime for K8s (cri-docker)](https://github.com/kubernetes/kubernetes/issues/122182) to allow it to bridge back to Docker's container runtime in Docker Desktop. That means that many of the dashboards that ship built-in with this Grafana, that expect those labels, will appear empty unless we change their queries to omit them. It *does* still have the following labels - and so will still work for our needs here - instance, namespace, node, pod and service.
+
+We've also installed the adapter to let Prometheus serve the Kubernetes Metrics API - that serves `kubectl top` as well as the Horizontal Pod Autoscaler. To see that in action run the following:
+* `kubectl top nodes`
+* `kubectl top pods` to see the Pods in the default Namespace
+* `kubectl top pods -n monitoring` to see the Pods in the monitoring Namespace
+* etc.
+
+One other nice thing is that k9s, which is a nice console UI for managing Kubernetes that we installed as a prereq but haven't look at yet, ties into this metrics API data if it is available and shows both Node and Pod CPU and Memory information in its UI. 
+
+Run `k9s` to see that in action. Some useful k9s keyboard shortcuts are:
+* 0 - to see Pods in all namespaces instead of just the default one
+* Press enter/return on a Pod twice to see its logs
+* Then escape key twice to go back to the main page
+* In addition to the shortcuts on the top of the page type ? to see more (and the escape key to go back out of that)
+![](images/k9s.png)
+
+### The Horiztonal Pod Autoscaler (HPA)
+You tell Kubernetes that you want to autoscale a ReplicaSet or Deployment with a Horizontal Pod Autoscaler manifest. Have a look at the example at [probetest-app/probe-test-app-hpa.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-hpa.yaml)]
+
+```
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: probe-test-app
+spec:
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 50
+        type: Utilization
+    type: Resource
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: probe-test-app
+```
+
+In this case we are saying we want to scale out when the average CPU utilisation is greater than 50% and in when it is less than that. There are many options you can choose to scale on instead - the various options you can put in this file is well documented [here](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/).
+
+Let's apply that HPA by running `kubectl apply -f probe-test-hpa.yaml`
+
+Now we'll generate a bunch of load against our probe-test-app by running `kubectl apply -f generate-load-replicaset.yaml`
+
+Open a new terminal and run `k9s` and you'll see the CPU go up on the probe-test-app as well as the new Pods start to appear as the HPA scales it out.
+
+After you've let it run for a few minutes you kill the generate-load-apps with `kubectl delete replicaset generate-load-app` to kill the load and see the HPA then scale probe-test-app back in to one Pod. You can keep k9s running to watch it and/or run `kubectl describe hpa probe-test-app` to see its current view of the world as well as its recent history of scaling actions.
+
+Note that there is a "Downscale Stabalization Window" which defaults to 5 minutes - so it is less agressive on scaling back *in* than it was *out* to prevent flapping and given adding Pods is usually less risky than taking them away.
+

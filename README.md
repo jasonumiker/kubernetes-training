@@ -239,6 +239,19 @@ You can customise many aspects of this upgrade behavior (how agressive, fast or 
 
 Finally, let's say this was bad and we want to roll it back. You simply run `kubectl rollout undo deployment/probe-test-app` - which will scale the new version ReplicaSet down and the old version back up (since it is still there at 0). It actually leaves the last 10 versions there by default - though you can customise this with `.spec.revisionHistoryLimit`
 
+### Quarantine a Pod by removing the label from it that the operators are selecting it on?
+One interesting common thread with Services and ReplicaSets have in common is that they are looking for Pods with certain label(s).
+
+If you take a pod and remove the label that they are looking for (which is often the same for both) then it will stop getting Service traffic and/or it won't be killed by the ReplicaSet (which feels that it is no longer managing it). The ReplicaSet will add another one to 'replace' it since it doesn't see it any longer as well.
+
+To see this in action:
+* Run `kubectl get pods` and copy the name of one of the probe-test-app Pods
+  * If there aren't any running do a `kubectl apply -f probe-test-app-deployment.yaml` and a `kubectl apply -f probe-test-app-service.yaml` to ensure both are running
+* Run `kubectl label pod [copied pod name] app.kubernetes.io/name-` as if you put a minus sign after the label it in a `kubectl label` command it removes it
+* Run `kubectl get pods` and note that the ReplicaSet launched another one because it doesn't include the one that we relabled in its list anymore. 
+  * Since this is the same label we used for the Service it also would have stopped getting traffic from that at the same time too...
+* Run `kubectl describe replicaset probe-test-app` and see the details of its action from its perspective there too 
+
 ## Requests, Limits and Scaling Pods
 
 ### First let's install Prometheus for Metrics/Monitoring

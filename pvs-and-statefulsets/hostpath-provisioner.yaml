@@ -33,8 +33,6 @@ spec:
               value: /var/lib/k8s-pvs
             - name: BUSYBOX_IMAGE
               value: busybox:1.28.4
-          #   - name: PV_RECLAIM_POLICY
-          #     value: Retain
           volumeMounts:
             - name: pv-volume
               mountPath: /var/lib/k8s-pvs
@@ -48,7 +46,7 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: hostpath-provisioner
   annotations:
-    storageclass.kubernetes.io/is-default-class: true
+    storageclass.kubernetes.io/is-default-class: "false"
 provisioner: microk8s.io/hostpath
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer

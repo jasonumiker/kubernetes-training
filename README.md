@@ -255,7 +255,32 @@ To see this in action:
 ### PersistentVolumes, PersistentVolumeClaims and StorageClasses
 Deployments are great for stateless workloads - but some workload on Kubernetes require state. The way that Kubernetes does this is that it allows Pods to ask for PersistentVolumes - which usually map through to things like EBS Volumes in AWS or Persistent Disks in GCP etc.
 
-TODO
+Kubernetes hands the creation, updating and deletion of these volumes out on the cloud or in your SAN to a Container Storage Interface (CSI) driver. Appropriate CSI drivers will usually be installed by the cloud provider or internal platform team for the cluster that you're running as part of creating and bootstrapping your cluster.
+
+For the purposes of this environment we have a sort of 'dummy' CSI driver called hostpath-provisioner. The "volumes" it creats are just folders on the Node that it is running on (making them persist across Pod restarts but not against the termination of the Node and its local disk). 
+
+First install that by:
+* `cd pvs-and-statefulsets`
+* `kubectl apply -f hostpath-provisioner.yaml`
+* `kubectl get storageclass` - you'll see our new 'mock' CSI driver listed there now as hostpath-provisioner
+
+Pods ask for PersistentVolumes via PersistentVolumeClaims. The CSI driver takes those claims and goes and provisions a PersistentVolume for that Pod. Those PersistentVolumes can, in turn, be mounted into Pod(s).
+
+First, have a look at pvc.yaml and pod.yaml in pvs-and-statefulsets/
+
+Then see this in action by:
+`kubectl apply -f pvc.yaml`
+`kubectl get pvc` - note it is there as Pending because no Pod has used it yet
+`kubectl apply -f pod.yaml`
+`kubectl get pvc` - see now that it is Bound and there a VOLUME listed
+`kubectl get pv` - here you'll see the PersistentVolume that was created by fulfilling the claim
+`kubectl delete pod nginx`
+`kubectl get pv` - even if we delete the Pod the volume is still here
+`kubectl apply -f pod.yaml` - and if we re-create the Pod it just mounts it back
+`kubectl get pv` - note no new PersistentVolume just the same one
+`kubectl delete pod nginx`
+`kubectl delete pvc test-pvc` - in order to delete the volume we need to delete the PersistentVolumeClaim
+`kubectl get pv` - that will delete the associated volume
 
 ### StatefulSets
 TODO

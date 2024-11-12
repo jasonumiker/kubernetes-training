@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hostpath-provisioner
+  labels:
+    k8s-app: hostpath-provisioner
+  namespace: kube-system
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      k8s-app: hostpath-provisioner
+  template:
+    metadata:
+      labels:
+        k8s-app: hostpath-provisioner
+    spec:
+      serviceAccountName: hostpath-provisioner
+      containers:
+        - name: hostpath-provisioner
+          image: cdkbot/hostpath-provisioner:1.5.0
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: PV_DIR
+              value: /var/lib/k8s-pvs
+            - name: BUSYBOX_IMAGE
+              value: busybox:1.28.4
+          #   - name: PV_RECLAIM_POLICY
+          #     value: Retain
+          volumeMounts:
+            - name: pv-volume
+              mountPath: /var/lib/k8s-pvs
+      volumes:
+        - name: pv-volume
+          hostPath:
+            path: /var/lib/k8s-pvs
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: hostpath-provisioner
+  annotations:
+    storageclass.kubernetes.io/is-default-class: true
+provisioner: microk8s.io/hostpath
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hostpath-provisioner
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hostpath-provisioner
+rules:
+  - apiGroups: [""]
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - list
+      - get
+      - watch
+      - update
+  - apiGroups: [""]
+    resources:
+      - persistentvolumes
+    verbs:
+      - list
+      - get
+      - update
+      - watch
+      - create
+      - delete
+  - apiGroups: [""]
+    resources:
+      - endpoints
+    verbs:
+      - list
+      - get
+      - update
+      - watch
+      - create
+      - delete
+  - apiGroups: [""]
+    resources:
+      - events
+    verbs:
+      - create
+      - list
+      - patch
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - storageclasses
+    verbs:
+      - list
+      - watch
+  - apiGroups: [""]
+    resources:
+      - pods
+    verbs:
+      - get
+      - create
+      - delete
+  - apiGroups: [""]
+    resources:
+      - nodes
+    verbs:
+      - get
+  - apiGroups: ["coordination.k8s.io"]
+    resources:
+      - "leases"
+    verbs:
+      - "get"
+      - "create"
+      - "update"
+      - "patch"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hostpath-provisioner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hostpath-provisioner
+subjects:
+  - kind: ServiceAccount
+    name: hostpath-provisioner
+    namespace: kube-system

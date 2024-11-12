@@ -252,6 +252,14 @@ To see this in action:
   * Since this is the same label we used for the Service it also would have stopped getting traffic from that at the same time too...
 * Run `kubectl describe replicaset probe-test-app` and see the details of its action from its perspective there too 
 
+### PersistentVolumes, PersistentVolumeClaims and StorageClasses
+Deployments are great for stateless workloads - but some workload on Kubernetes require state. The way that Kubernetes does this is that it allows Pods to ask for PersistentVolumes - which usually map through to things like EBS Volumes in AWS or Persistent Disks in GCP etc.
+
+TODO
+
+### StatefulSets
+TODO
+
 ## Requests, Limits and Scaling Pods
 
 ### First let's install Prometheus for Metrics/Monitoring
@@ -287,7 +295,7 @@ Run `k9s` to see that in action. Some useful k9s keyboard shortcuts are:
 ![](images/k9s.png)
 
 ### The Horiztonal Pod Autoscaler (HPA)
-You tell Kubernetes that you want to autoscale a ReplicaSet or Deployment with a Horizontal Pod Autoscaler manifest. Have a look at the example at [probetest-app/probe-test-app-hpa.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-hpa.yaml)]
+You tell Kubernetes that you want to autoscale a ReplicaSet or Deployment with a Horizontal Pod Autoscaler manifest - which includes what metrics and when/how to do that. Have a look at the example at [probetest-app/probe-test-app-hpa.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-hpa.yaml)]
 
 ```
 apiVersion: autoscaling/v2
@@ -322,3 +330,15 @@ After you've let it run for a few minutes you kill the generate-load-apps with `
 
 Note that there is a "Downscale Stabalization Window" which defaults to 5 minutes - so it is less agressive on scaling back *in* than it was *out* to prevent flapping and given adding Pods is usually less risky than taking them away.
 
+### Kubernetes Event-driven Autoscaling (KEDA)
+
+HPA is usually sufficient if you are scaling a stateless web service in/out. But if you instead want to scale based on the amount of work in a queue or the like that is where the Kubernetes Event-driven Autoscaler (KEDA) comes in.
+
+Under the hood KEDA is actually managing HPA for you to offer even more advanced scaling - similar to the way that a Deployment manages ReplicaSets to do more advanced things around deployments.
+![](https://opensource.microsoft.com/blog/wp-content/uploads/2020/05/KEDA-architecture.png)
+
+KEDA looks at a large number of plugins [(71 as of the time I wrote this)](https://keda.sh/docs/2.16/scalers/) for various queueing and streaming services.
+
+The example we'll use here is one based on a RabbitMQ message queue and wanting to scale out Pods to "do the work" when there is a sudden influx of work into the queue.
+
+TODO

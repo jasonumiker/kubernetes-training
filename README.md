@@ -283,6 +283,15 @@ Then see this in action by:
 `kubectl get pv` - that will delete the associated volume
 
 ### StatefulSets
+Deployments are good for stateless applications that need to scale in and out with load - but they are not appropriate for stateful ones. That is where StatefulSets come in.
+
+These do a few things:
+* The keep consistent Pod names (kill the Pod and it'll get the same name back) - which in K8s also means the same DNS-resolvable service-discovery as well
+* They keep the same PersistentVolumes associated with them when they come back
+
+There is a good example of a StatefulSet in the RabbitMQ that we need for the KEDA example below. Let's deploy that now just to have a look at how the StatefulSet and PVs work:
+* `cd keda-example/rabbitmq`
+
 TODO
 
 ## Requests, Limits and Scaling Pods

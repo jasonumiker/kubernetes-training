@@ -8,10 +8,16 @@ spec:
       containers:
         - name: rabbitmq-client
           image: ghcr.io/kedacore/rabbitmq-client:v1.0
+          env:
+          - name: rabbitmq_host
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-consumer-secret
+                key: host
           command:
             [
               "send",
-              "amqp://admin:admin@rabbitmq-client.default.svc.cluster.local:5672",
+              $(rabbitmq_host),
               "300",
             ]
       restartPolicy: Never

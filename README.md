@@ -25,7 +25,7 @@ This set of general Kubernetes training materials was designed to run on the Kub
 
 TODO: Add Windows instructions
 
-## Pods, Probes, Services, ReplicaSets and Deployments
+## Pods, Probes, Services, ReplicaSets, Deployments and StatefulSets
 In this section you'll learn about:
 * [Pods](https://kubernetes.io/docs/concepts/workloads/pods/) - including how Kubernetes ensures they are healthy and ready for traffic via [Probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
 * [Services](https://kubernetes.io/docs/concepts/services-networking/service/) - whihc is how to expose them outside your cluster and load-balance them
@@ -286,21 +286,31 @@ Then see this in action by:
 * `kubectl get pv` - Deleting our PersistentVolumeClaim deleted our PV
 
 ### StatefulSets
-Deployments are good for stateless applications that need to scale in and out with load - but they are not appropriate for stateful ones. That is where StatefulSets come in.
+Deployments are good for stateless applications that need to scale in and out with load - but they are not really appropriate for stateful ones. That is where StatefulSets come in.
 
 These do a few things:
-* The keep consistent Pod names (kill the Pod and it'll get the same name back) - which in K8s also means the same DNS-resolvable service-discovery as well
-* They keep the same PersistentVolumes associated with them when they come back
+* The keep consistent Pod names (kill the Pod and it'll get the same name back) - which in K8s also means the same DNS-resolvable service-discovery as well. And it uses a nice naming convention for them.
+  * These pod names go [podname]-0, [podname]-1 etc. as you scale it out
+    * The application needs to cluster and replicate between these Pods for a scale out to be effective - K8s can't do that bit for the app
+  * It scales out by launching anoteher pod with ascending numbers and down by removing the pod with the largest number
+* The Pods keep the same PersistentVolumes associated with them when they come back
+  * If you scale up from 1 to 2 then pod-1 will appear and get its own Volume. Then if you scale back down to 1 pod-1 wil go away but the Volume will stay there ready to be remounted. And then if you scale back to 2 it'll have the same volume with all the same data in it.
+  * It also works if you kill a Pod it'll get it's particular volume back when it is relaunched - including on another Node when it is running in AWS/GCP or even in a place with a real Storage Area Netowrk (SAN)-backed PersistentVolume.
 
-There is a good example of a StatefulSet in the RabbitMQ that we need for the KEDA example below. Let's deploy that now just to have a look at how the StatefulSet and PVs work:
+There is a good example of a StatefulSet in the RabbitMQ that we'll also need for the KEDA example below. Let's deploy that now just to have a look at how the StatefulSet and PVs work before we get to KEDA:
 * `cd keda-example/rabbitmq`
+* `kubectl apply -k .` - This deploys everything in the kustomization.yaml file in the order it is listed there (due to the -k) - we'll cover more about Kustomize in a later section
+* `kubectl describe statefulset rabbitmq` to see more about our new StatefulSet
+* `kubectl get pods` - you'll see a rabbitmq-0 - unlike ReplicaSets which appends some random characters to the end of the Pod name
+* `kubectl get pvc` and `kubectl get pv` - you'll see that it got its own PersistentVolume via its own PersistentVolumeClaim
+* `kubectl delete pod rabbit-mq-0` and `kubectl get pods` - you'll see that the Pod comes back with the same name and the same PersistentVolume with its state in it
 
-TODO
+We'll look more closely at this RabbitMQ in the KEDA section later on...
 
 ## Requests, Limits and Scaling Pods
 
 ### First let's install Prometheus for Metrics/Monitoring
-In order to automatically scale a workload we'll need some metrics to do it in response to.
+In order to automatically scale a workload we'll need some metrics to do that in response to.
 
 The most common tool to do that in the Kubernetes / CNCF ecosystem is Prometheus. And that is often visualised with Grafana.
 
@@ -367,9 +377,19 @@ After you've let it run for a few minutes you kill the generate-load-apps with `
 
 Note that there is a "Downscale Stabalization Window" which defaults to 5 minutes - so it is less agressive on scaling back *in* than it was *out* to prevent flapping and given adding Pods is usually less risky than taking them away.
 
+### Understanding CPU and Memory Limits - and how misconfiguring them can really hurt your performance and availability
+
+Putting appropriate CPU and Memory Requests on your workloads is important for two reasons:
+* The Kubernetes Scheduler will only put it on a Node where it 'fits' based on its Requests
+* The Kubelet configures the local Linux kernel control groups (cgroups) to ensure that Pod gets at least the CPU and Memory that it requested.
+
+There is also the option of putting a CPU and Memory Limit on your Pods. These can prove to be much more disruptive to your performance and availability if you get them wrong.
+
+TODO
+
 ### Kubernetes Event-driven Autoscaling (KEDA)
 
-HPA is usually sufficient if you are scaling a stateless web service in/out. But if you instead want to scale based on the amount of work in a queue or the like that is where the Kubernetes Event-driven Autoscaler (KEDA) comes in.
+HPA is usually sufficient if you are scaling a stateless web service in/out based on CPU utilization or load balancer latency/errors etc. But if you instead want to scale based on the amount of work in a queue or other more event-based concerns that is where the Kubernetes Event-driven Autoscaler (KEDA) comes in.
 
 Under the hood KEDA is actually managing HPA for you to offer even more advanced scaling - similar to the way that a Deployment manages ReplicaSets to do more advanced things around deployments.
 ![](https://opensource.microsoft.com/blog/wp-content/uploads/2020/05/KEDA-architecture.png)
@@ -377,5 +397,41 @@ Under the hood KEDA is actually managing HPA for you to offer even more advanced
 KEDA looks at a large number of plugins [(71 as of the time I wrote this)](https://keda.sh/docs/2.16/scalers/) for various queueing and streaming services.
 
 The example we'll use here is one based on a RabbitMQ message queue and wanting to scale out Pods to "do the work" when there is a sudden influx of work into the queue.
+
+You should have already installed RabbitMQ above in the StatefulSet section. If not please run `kubectl apply -k keda-example/rabbitmq`
+
+**NOTE:** We deployed the RabbitMQ container a bit 'manually' here via a StatefulSet to show you how those work. You wouldn't usually do this for stateful popular databases/caches/queues etc. - instead you would use their Operator (and they will almost always have one). In the case of RabbitMQ their operator is documented [here](https://www.rabbitmq.com/kubernetes/operator/operator-overview).
+
+The next step is installing KEDA via its Helm Chart. To do that:
+* `cd keda-example`
+* `./install-keda.sh` - we'll cover Helm in more detail in a later section
+
+Now that we have KEDA installed our goal is to:
+* Implement a service that does work when it is in the RabbitMQ queue (that we want to scale based on the queue length)
+* Set up KEDA to scale that service based on the queue length
+* And then put a bunch of work to be done in the queue (in order to see it do the scaling as we requested)
+
+We can do that with the following commands:
+* `kubectl apply -f consumer.yaml` - deploying our RabbitMQ consumer service. This is set to consume one message per instance, sleep for 1 second, and then acknowledge completion of the message. This is used to simulate work.
+* `kubectl apply -f keda-scaled-object.yaml` - this configures KEDA on when to scale our new consumer
+  * The settings are to scale to a minimum of 0 replicas and up to a maximum of 30 replicas - optimising for a queue length of 5 messages per replica
+* `kubectl apply -f publisher.yaml` - run a Kubernetes Job (we'll discuss Jobs in the next section) that will publish 300 messages to the queue that the consumer is listening to.
+  * KEDA will scale out the consumer pods until the queue is drained after about 2 minutes at the maximum of 30 concurrent Pods
+
+You can follow the progress of the consumers emptying the queue by going to http://localhost:15672/#/queues/%2F/hello and loging in with admin/admin
+
+## Jobs and CronJobs
+
+TODO
+
+## Kubernetes Namespaces and API Authorization (via Roles/ClusterRoles)
+
+TODO
+
+## Kustomize and Helm
+
+TODO
+
+## Controllers/Operators
 
 TODO

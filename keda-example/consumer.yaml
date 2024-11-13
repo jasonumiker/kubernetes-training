@@ -1,0 +1,34 @@
+# NOTE: usually you wouldn't check this secret into git and get it into the cluster another way
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-consumer-secret
+data:
+  host: YW1xcDovL2FkbWluOmFkbWluQHJhYmJpdG1xLWNsaWVudC5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsOjU2NzI=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-consumer
+  labels:
+    app: rabbitmq-consumer
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq-consumer
+  template:
+    metadata:
+      labels:
+        app: rabbitmq-consumer
+    spec:
+      containers:
+        - name: rabbitmq-consumer
+          image: ghcr.io/kedacore/rabbitmq-client:v1.0
+          env:
+          - name: rabbitmq_host
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-consumer-secret
+                key: host
+          command: ["receive"]
+          args: ["$(rabbitmq_host)"]

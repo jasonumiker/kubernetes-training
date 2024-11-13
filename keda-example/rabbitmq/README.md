@@ -1,0 +1,1 @@
+This was cloned from https://github.com/rabbitmq/diy-kubernetes-examples/tree/master/gke with some slight changes/variations

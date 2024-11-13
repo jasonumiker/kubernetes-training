@@ -1,0 +1,1 @@
+This example was mostly cloned from https://github.com/kedacore/sample-go-rabbitmq

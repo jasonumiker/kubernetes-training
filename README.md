@@ -417,12 +417,32 @@ We can do that with the following commands:
   * The settings are to scale to a minimum of 0 replicas and up to a maximum of 30 replicas - optimising for a queue length of 5 messages per replica
 * `kubectl apply -f publisher.yaml` - run a Kubernetes Job (we'll discuss Jobs in the next section) that will publish 300 messages to the queue that the consumer is listening to.
   * KEDA will scale out the consumer pods until the queue is drained after about 2 minutes at the maximum of 30 concurrent Pods
+* `kubectl get pods` or `k9s` and you can watch the consumer pods scale out and then back in again
+* `kubectl events` and you can follow the Kubernetes events around the KEDA and the ReplicaSet and Pods that underpin it as they scaled out and back in
 
-You can follow the progress of the consumers emptying the queue by going to http://localhost:15672/#/queues/%2F/hello and loging in with admin/admin
+You can also follow the progress of the consumers emptying the queue by going to http://localhost:15672/#/queues/%2F/hello and loging in with admin/admin
+
+If you want to run it again run `kubectl replace -f ./publisher.yaml --force` (the --force is required because there is an existing Job with the same name to replace).
 
 ## Jobs and CronJobs
 
-TODO
+We just used a Job in the KEDA example. A Job in Kubernetes starts a container to runs a task (like a cron job or a batch process) and then stops when it is done. It can be either 'Complete' or 'Failed' based on the return code of the command that gets run in the container.
+
+Have a look at [keda-example/publisher.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/keda-example/publisher.yaml) as well as `kubectl describe job rabbitmq-publish` to see the details of that Job we just ran. This was a very simple Job that was just running a single container to run a single command only once.
+
+There are many other options documented [here](https://kubernetes.io/docs/concepts/workloads/controllers/job/). These include:
+* How many Pods the Job should run in parallel
+  * And whether to use a fixed completion count or expect the Jobs to work out amoung themselves based on an external queue (like the RabbitMQ we just used) instead
+* How many times to retry on failure (the `backoffLimit`)
+* Etc.
+
+While kicking off a Job right when you want it to run can be useful, you usually will want to schedule them to run at a specific time in the future or on a schedule - that is where Kubernetes' built-in [CronJob controller](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/) comes in.
+
+As you can assume from the name, this lets you run a Job in the future as well as regularly on a schedule like cron.
+
+There is an example cronjob at [cronjob.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/cronjob.yaml) that will run once a minute and output the current time as well as a hello message and stop.
+
+Run `kubectl apply -f cronjob.yaml` and then `k9s` and wait to see a Job Pod launch once a minute. You can hit Enter/Return twice to see the logs of that container. If this was a 'real' Job there would be log lines of the work it did and/or they would have put that work into a stateful service like a bucket or database etc.
 
 ## Kubernetes Namespaces and API Authorization (via Roles/ClusterRoles)
 

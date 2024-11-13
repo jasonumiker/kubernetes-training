@@ -269,18 +269,21 @@ Pods ask for PersistentVolumes via PersistentVolumeClaims. The CSI driver takes 
 First, have a look at pvc.yaml and pod.yaml in pvs-and-statefulsets/
 
 Then see this in action by:
-`kubectl apply -f pvc.yaml`
-`kubectl get pvc` - note it is there as Pending because no Pod has used it yet
-`kubectl apply -f pod.yaml`
-`kubectl get pvc` - see now that it is Bound and there a VOLUME listed
-`kubectl get pv` - here you'll see the PersistentVolume that was created by fulfilling the claim
-`kubectl delete pod nginx`
-`kubectl get pv` - even if we delete the Pod the volume is still here
-`kubectl apply -f pod.yaml` - and if we re-create the Pod it just mounts it back
-`kubectl get pv` - note no new PersistentVolume just the same one
-`kubectl delete pod nginx`
-`kubectl delete pvc test-pvc` - in order to delete the volume we need to delete the PersistentVolumeClaim
-`kubectl get pv` - that will delete the associated volume
+* `kubectl apply -f pvc.yaml`
+* `kubectl get pvc` - note it is there as Pending because no Pod has used it yet
+* `kubectl apply -f pod.yaml`
+* `kubectl get pvc` - see now that it is Bound and there a VOLUME listed
+* `kubectl get pv` - here you'll see the PersistentVolume that was created by fulfilling the claim
+* http://localhost:8001 - we mounted an empty volume at the nginx path
+* `kubectl exec -it nginx  -- bash -c "echo 'Data on PV' > /usr/share/nginx/html/index.html"` to write some stuff to index.html for nginx to display
+* http://localhost:8001
+* `kubectl delete pod nginx`
+* `kubectl get pv` - even if we delete the Pod the volume is still here
+* `kubectl apply -f pod.yaml` - and if we re-create the Pod it just mounts it back
+* `kubectl get pv` - note it is the same PersistentVolume (not a new one)
+* http://localhost:8001 - note we can still see the data in it too
+* `kubectl delete service nginx`, `kubectl delete pod nginx` and `kubectl delete pvc test-pvc` - clean up our example
+* `kubectl get pv` - Deleting our PersistentVolumeClaim deleted our PV
 
 ### StatefulSets
 Deployments are good for stateless applications that need to scale in and out with load - but they are not appropriate for stateful ones. That is where StatefulSets come in.

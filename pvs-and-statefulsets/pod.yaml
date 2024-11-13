@@ -2,12 +2,14 @@ apiVersion: v1
 kind: Pod  
 metadata:  
   name: nginx
+  labels:
+    app.kubernetes.io/name: nginx
 spec:  
   containers:  
     - name: nginx
       image: nginx:1.27.2
       volumeMounts:  
-        - mountPath: "/var/www/html"
+        - mountPath: "/usr/share/nginx/html"
           name: test-pv
   volumes:  
     - name: test-pv

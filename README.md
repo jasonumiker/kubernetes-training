@@ -444,6 +444,10 @@ There is an example cronjob at [cronjob.yaml](https://github.com/jasonumiker/kub
 
 Run `kubectl apply -f cronjob.yaml` and then `k9s` and wait to see a Job Pod launch once a minute. You can hit Enter/Return twice to see the logs of that container. If this was a 'real' Job there would be log lines of the work it did and/or they would have put that work into a stateful service like a bucket or database etc.
 
+There is a more elaborate controller for Jobs than CronJobs from Argo called [Argo Workflows](https://argoproj.github.io/workflows/). This lets you specify a series of steps or a directed-asyclic graph (DAG) of work to be done where the output of one Job gets passed to another etc.
+
+The use of Argo Workflows is an advanced enough topic it likely should be its own seperate training.
+
 ## Kubernetes Namespaces and API Authorization (via Roles/ClusterRoles)
 
 TODO

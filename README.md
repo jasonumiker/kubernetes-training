@@ -401,17 +401,16 @@ It isn't just CPU Limits that can throttle your Pod(s) - the Linux cgroups as co
 Let's see this in action:
 * `cd limit-examples`
 * `kubectl apply -f cpu-stressor.yaml` - this will kick off an app that is trying to use 2 full CPUs (i.e. 2 fully utilised threads) but with a CPU limit of 1 CPU
-  * This means we should get 50ms of CPU and then get throttled for 50ms each acounting period
+  * This means we should get 50ms of CPU and then get throttled for 50ms each acounting period of 100ms
 * Open Prometheus by going to http://localhost:9090
 * Paste in the following query `container_cpu_cfs_throttled_seconds_total` and press Execute.
   * Go to the Graph tab - if you hover over the line you'll see it is your cpu-stressor Pod
   * This query is showing the total amount of time the Pod has been throttled and so will only go up over time. You can choose to use rate() to work out per-second average rate (e.g. `rate(container_cpu_cfs_throttled_seconds_total[5m])` will tell you the per-second rate over the last 5 minutes)
-    * As we said above, any throttling during this period will count (even a 1ms out of 100ms) - so this is a bit of a blunt metric vs. container_cpu_cfs_throttled_seconds_total which would be preferable if we had it.
 * `kubectl edit deployment cpu-stressor` and edit the CPU Limit to 2
   * This is likely with vi so you type `i` to Insert and then hit Esc and :wq to finish
   * You can't change this for a running Pod so you'll see the Deployment create a new one with the new Limit and kill the old one
   * This should make that metric go down - but it likely won't be zero since this cpu-stressor isn't *exact* and there might be some throttling around ensuring the Reservations of other Pods are met depending on how many cores on your laptop you gave Docker Desktop etc.
-* `kubectl delete pod cpu-stressor` - clean this up
+* `kubectl delete pod cpu-stressor` - clean this up when done
 
 You can read more about this on [this great AWS Blog Post](https://aws.amazon.com/blogs/containers/using-prometheus-to-avoid-disasters-with-kubernetes-cpu-limits/).
 

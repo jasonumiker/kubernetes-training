@@ -515,7 +515,41 @@ There is a more elaborate controller for Jobs than CronJobs from Argo called [Ar
 The use of Argo Workflows is an advanced enough topic it likely should be its own separate training.
 
 ## Kubernetes Namespaces and API Authorization (via Roles/ClusterRoles)
-TODO
+Regardless of how you have people authenticate/login to Kubernetes (AWS IAM Users/Roles for EKS, Google Account to GKE, OIDC to your own identity provider, etc.) Kubernetes does its own authorization. It does this via its [Role Based Access Control (RBAC)](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) APIs.
+
+At a high level, the way Kubernetes RBAC works is that you either assign your Users a [ClusterRole](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole), which gives them cluster-wide privileges, or you assign them a [Role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) which restricts them to only have access to a particular Namespace within the cluster. A [Namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) is a logical boundary and grouping within Kubernetes to isolate the resources of particular teams from one another - so if you put different teams in different Namespaces via Roles the idea is that they can safely share the cluster as they shouldn't be able to interfere with one another. This is known as multi-tenancy. There is a bit more to it than that - we'll talk about other considerations such as Pod security in a later section.
+
+For both a Role as well as a ClusterRole you also assign what rules/permissions to it for what it can do. These are additive - in that there are no denys only allows.
+
+Let's explore how this all works:
+1. `kubectl get pods -A` - We are currently signed in as the cluster-admin ClusterRole - we can do anything cluster-wide (e.g. see Pods in all Namespaces)
+1. `kubectl api-resources` this shows all the different resources that we can control the use of in our RBAC. 
+    1. It also shows which of them are Namespaced (can be managed by Roles) vs. which can't (and are therefore cluster-wide and need a ClusterRole to manage them)
+    1. And it also shows the short names for each resource type (which you can use to save typing in kubectl)
+1. `kubectl get clusterrole admin -o yaml | less` (press space to page down and q to exit) - This built-in admin role can explicitly do everything - and so you can clone it and remove those things you don't want a user to be able to do. As you can see, the minute you don't do *'s there is quite a lot of YAML here to go through!
+1. `kubectl get clusterrole admin -o yaml | wc -l` - 315 lines of it!
+1. You can see the details about this and the other built-in Roles such as edit and view [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
+1. `cd k8s-authz`
+1. `./setup-tokens-on-cluster.sh` to add our Jane and John users to the Docker Desktop's Kubernetes
+1. `./add-users-kubeconfig.sh` to add them also to our ~/.kube/config file
+1. `cat team1.yaml` - Here we're creating a new namespace, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Then we're binding that new Role to a user named Jane.
+    1. This is perhaps overly permissive as it:
+        1. Includes the verbs like [Escalate](https://kubernetes.io/docs/concepts/security/rbac-good-practices/#escalate-verb) and [Impersonate](https://kubernetes.io/docs/concepts/security/rbac-good-practices/#escalate-verb) that most users won't need.
+        1. Allows the Role to create other Roles and bind Users to it within that Namespace
+        1. Allows the Role to create/edit all the NetworkPolicy firewalls for that Namespace and its workloads
+        1. Etc.
+    1. But, just by using a Role and Namespace rather than a ClusterRole (which would be cluster-wide), we're still doing pretty well here.
+1. We have that team1 you saw as well as another similar Namespace and Role called Team2 that is bound to another user (John) - let's apply them!
+1. `kubectl apply -f team1.yaml && kubectl apply -f team2.yaml`
+1. `kubectl config get-contexts` - Our two other users are already set up here in our kubectl - `jane` who we just gave access to namespace `team1` and `john` who we just gave access to namespace `team2`
+1. `kubectl config use-context docker-desktop-jane` - we've just logged in as Jane instead
+1. `kubectl get pods -A` if we try to ask to see all the Pods in all the namespaces again we now get an error that we can't use the cluster scope
+1. `kubectl get pods` removing the -A for all namespaces and it says we don't have any Pods in our team1 namespace - which we *do* have access to see
+1. `kubectl config use-context docker-desktop-john` - Now lets flip to John who is restricted to the team2 namespace
+1. `kubectl get pods` - like Jane with team1, John can see things in his team2 Namespace
+1. `kubectl get pods --namespace=team1` - and, as expected we are not allowed to interact with Jane's team1 Namespace
+
+So, that was a very quick overview of how to configure multi-tenancy of Kubernetes at the control plane level via Namespaces and Roles. And, how much YAML it takes to move away from *'s for the resources and verbs in your Role definitions.
 
 ## Kustomize and Helm
 TODO

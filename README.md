@@ -584,6 +584,15 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 ## Kustomize and Helm
 TODO
 
+## Ingress
+TODO
+
+## Gateway (the upcoming replacement for Ingress)
+TODO
+
+## Istio
+TODO
+
 ## Controllers/Operators
 TODO
 

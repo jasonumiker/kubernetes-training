@@ -253,6 +253,36 @@ To see this in action:
   * Since this is the same label we used for the Service it also would have stopped getting traffic from that at the same time too...
 * Run `kubectl describe replicaset probe-test-app` and see the details of its action from its perspective there too 
 
+### Sidecar and Init containers within a Pod
+A Pod is made up of one or more containers. The containers section is a sequence/array and you can just specify more of them. When you specify more than one container in the Pod, the additional ones are called [Sidecar Containers](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/).
+
+These containers are:
+* Scheduled together on the same Node
+  * So, they always scale in/out togetether in ReplicaSets etc.
+* Put in the same Linux Namespace / Security Boundary so that:
+  * They be configured to see each other's processes - see [here](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)
+  * They share the same network interface and IP address (i.e. they can run different services on differnt ports on it)
+  * They share the same storage Namespace and can share emptyDir Volumes between each other
+
+And there is also a special type of additional container called [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that run before the other container(s) in the Pod and can contain utilities or setup scripts not present in an app image (e.g. to load the schema into an empty database that the app expects to be there etc.). These:
+ * Always run to completion (rather than stay running all the time like the main or sidecar containers)
+ * Each init container in the YAML sequence/array must complete successfully before the next one starts (so you can count on that ordering)
+
+First, we have a sidecar container example. In this example there is an 'app' container which is generating a log file. That is being written to a shared emptyDir Volume that is also mounted in our 'sidecar' container. That, in turn, is running nginx to share the contents of this log file out on port 80. This is meant to represent a logging sidecar that maybe would send the logs on to Splunk etc. instead. To see this in action:
+* `cd sidecar-and-init-containers`
+* `kubectl apply -f sidecar.yaml`
+* `kubectl exec pod-with-sidecar -c sidecar-container -it bash` - connect to the sidecar container within the Pod
+* `apt-get update && apt-get install curl` - install curl within that sidecar
+* `curl 'http://localhost:80/app.txt'` - access the log file via the sidecar's nginx service
+* `exit` to exit out of our interactive kubectl exec session
+
+Next, we have an init container example. In this example we will only start our main application once two Kubernetes Services exist. We have two different initContainers which check for each of these two services.
+* `kubectl apply -f init.yaml`
+* `kubectl get pod myapp-pod` - you'll see it is waiting on the first init container to be successful
+* `kubectl apply -f services-init-requires.yaml` - create those services it is looking for
+* `kubectl get pod myapp-pod -w` - quickly do a kubectl get with a -w to watch/follow the output
+* Once you see the initContainers succeed and the Pod go to Running you can ctrl-c to exit the -w
+
 ### PersistentVolumes, PersistentVolumeClaims and StorageClasses
 Deployments are great for stateless workloads - but some workload on Kubernetes require state. The way that Kubernetes does this is that it allows Pods to ask for PersistentVolumes - which usually map through to things like EBS Volumes in AWS or Persistent Disks in GCP etc.
 
@@ -555,6 +585,9 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 TODO
 
 ## Controllers/Operators
+TODO
+
+### Admission Controllers / OPA Gatekeeper
 TODO
 
 ## Kubernetes Pod Security / Multi-tenancy Considerations

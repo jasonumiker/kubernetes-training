@@ -530,8 +530,8 @@ Let's explore how this all works:
 1. `kubectl get clusterrole admin -o yaml | wc -l` - 315 lines of it!
 1. You can see the details about this and the other built-in Roles such as edit and view [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
 1. `cd k8s-authz`
-1. `./setup-tokens-on-cluster.sh` to add our Jane and John users to the Docker Desktop's Kubernetes
-1. `./add-users-kubeconfig.sh` to add them also to our ~/.kube/config file
+1. `./setup-tokens-on-cluster.sh` to add our Jane and John users to the Docker Desktop's Kubernetes (via token authentication)
+1. `./add-users-kubeconfig.sh` to add them also to our ~/.kube/config file so we can use their logins with kubectl
 1. `cat team1.yaml` - Here we're creating a new namespace, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Then we're binding that new Role to a user named Jane.
     1. This is perhaps overly permissive as it:
         1. Includes the verbs like [Escalate](https://kubernetes.io/docs/concepts/security/rbac-good-practices/#escalate-verb) and [Impersonate](https://kubernetes.io/docs/concepts/security/rbac-good-practices/#escalate-verb) that most users won't need.

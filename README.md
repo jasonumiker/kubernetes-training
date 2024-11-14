@@ -313,7 +313,7 @@ In this section you'll learn about:
 * Using [Prometheus](https://prometheus.io/) for Metrics/Monitoring (as we require metrics to inform automatic scaling - but they also are necessary to operate your cluster and apps too...)
   * Prometheus is also a CNCF project like Kubernetes (in the same "Cloud Native ecosystem") - so while it isn't the only way to monitor it they often go together
 * The built-in [Horizontal Pod Autoscaler (HPA)](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) that will scale your Pods in/out based on metrics.
-* Pod CPU and Memory Requests and Limits - as scaling your Pods is quite linked with the CPU and Memory they require
+* Pod CPU and Memory Requests and Limits - as scaling your Pods is quite linked with their sizing (the CPU and Memory they require)
 * [Kubernetes Event-driven Autoscaling (KEDA)](https://keda.sh/) - for when you want to scale your Pods based on something like queue-length rather than load
 
 ### First let's install Prometheus for Metrics/Monitoring
@@ -350,6 +350,8 @@ Run `k9s` to see that in action. Some useful k9s keyboard shortcuts are:
 
 ### The Horizontal Pod Autoscaler (HPA)
 You tell Kubernetes that you want to auto-scale a ReplicaSet or Deployment with a Horizontal Pod Autoscaler manifest - which includes what metrics and when/how to do that. Have a look at the example at [probetest-app/probe-test-app-hpa.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-hpa.yaml)]
+
+![](images/hpa.png)
 
 ```
 apiVersion: autoscaling/v2
@@ -406,7 +408,7 @@ The issue is if you have a busy multi-threaded app running across many Cores at 
 ![](images/kubernetes-cpu-1.webp)
 ![](images/kubernetes-cpu-2.webp)
 
-It isn't just CPU Limits that can throttle your Pod(s) - the Linux cgroups as configured will also throttle you if they need to in order to satisfy the CPU Reservations of other Pods (i.e. if needed to give them the amount of CPU they have 'reserved' if you have exhausted the amount you have).
+It isn't just CPU Limits that can throttle your Pod(s) - the Linux cgroups as configured will also throttle you if they need to in order to satisfy the CPU Reservations of other Pods (i.e. if needed to give them the amount of CPU they have 'reserved' if you have exhausted your reservation).
 
 Let's see this in action:
 * `cd limit-examples`
@@ -520,3 +522,13 @@ TODO
 
 ## Controllers/Operators
 TODO
+
+## Kubernetes Pod Security / Multi-tenancy Considerations
+TODO
+
+## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them
+* Since Docker Desktop is a single-Node Kubernetes, anything that involves multiple Nodes (draining them, updating them, scaling them in/out, etc.)
+* Since Docker Desktop doesn't have a network plugin (CNI) that supports NetworkPolicies (the K8s native firewall), anything that involves the implementation of those
+* Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS IAM, AWS SecurityGroups, external-dns of Route53, Crossplane, etc.)
+
+We'll develop another training with a cloud environment that can support these items.

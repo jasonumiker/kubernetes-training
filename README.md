@@ -385,7 +385,44 @@ Putting appropriate CPU and Memory Requests on your workloads is important for t
 
 There is also the option of putting a CPU and Memory Limit on your Pods. These can prove to be much more disruptive to your performance and availability if you get them wrong.
 
-TODO
+In the case of CPU this is "compressible" and so K8s CPU Limits will just make your Pod wait (called throttling) rather than scheduling you on the CPU - even if it is available - once you hit it. Memory, on the other hand, isn't compressible - and so if your pod tries to exceed a Memory limit that is set on it then it'll be killed (called OOMKilled for Out-of-Memory Killed). 
+
+While it is clear that your Pod getting killed is disruptive, as you'll see in this example CPU throttling can really impair your workload as well.
+
+The way that K8s CPU Limits are implemented within Linux cgroups is that you are specifying how much of CPU time that you want to limit the Pod to within each of its 100ms accounting/evaluation period. You often see Kubernets CPU limits written in units of 1000m (with m being a thousandth of a CPU core) - so 2000m would be two full cores while 50m would be 5% of a CPU core. You can also use whole core numbers such a 2 for two cores or 0.1 for 10% of a core as  well.
+
+The issue is if you have a busy multi-threaded app running across many Cores at once you can use all of your limit quite quickly. Say that, for example, you have a CPU limit of 1000m but you have a busy app running 10 threads in your Pod. You can use all of your allocated CPU time in 10ms (10ms * 10 cores is the same as 100ms * 1 core in its view) - and then you'll be throttled for 90ms or 90% of the time! And this would happen over and over for each 100ms accounting.
+
+![](images/kubernetes-cpu-1.webp)
+![](images/kubernetes-cpu-2.webp)
+
+It isn't just CPU Limits that can throttle your Pod(s) - the Linux cgroups as configured will also throttle you if they need to in order to satisfy the CPU Reservations of other Pods (i.e. if needed to give them the amount of CPU they have 'reserved' if you have exhausted the amount you have).
+
+Let's see this in action:
+* `cd limit-examples`
+* `kubectl apply -f cpu-stressor.yaml` - this will kick off an app that is trying to use 2 full CPUs (i.e. 2 fully utilised threads) but with a CPU limit of 1 CPU
+  * This means we should get 50ms of CPU and then get throttled for 50ms each acounting period
+* Open Prometheus by going to http://localhost:9090
+* Paste in the following query `container_cpu_cfs_throttled_seconds_total` and press Execute.
+  * Go to the Graph tab - if you hover over the line you'll see it is your cpu-stressor Pod
+  * This query is showing the total amount of time the Pod has been throttled and so will only go up over time. You can choose to use rate() to work out per-second average rate (e.g. `rate(container_cpu_cfs_throttled_seconds_total[5m])` will tell you the per-second rate over the last 5 minutes)
+    * As we said above, any throttling during this period will count (even a 1ms out of 100ms) - so this is a bit of a blunt metric vs. container_cpu_cfs_throttled_seconds_total which would be preferable if we had it.
+* `kubectl edit deployment cpu-stressor` and edit the CPU Limit to 2
+  * This is likely with vi so you type `i` to Insert and then hit Esc and :wq to finish
+  * You can't change this for a running Pod so you'll see the Deployment create a new one with the new Limit and kill the old one
+  * This should make that metric go down - but it likely won't be zero since this cpu-stressor isn't *exact* and there might be some throttling around ensuring the Reservations of other Pods are met depending on how many cores on your laptop you gave Docker Desktop etc.
+* `kubectl delete pod cpu-stressor` - clean this up
+
+You can read more about this on [this great AWS Blog Post](https://aws.amazon.com/blogs/containers/using-prometheus-to-avoid-disasters-with-kubernetes-cpu-limits/).
+
+The best way to 'fix' this for an app is to control how many threads it uses and align that with the Reservation and Limit you are setting. Many languages and runtimes are now "container friendly" and will work out the cgroup they are in and align their thread counts to that automatically. But many don't and you'll need to specify a parameter around thread count at runtime.
+
+A controverial opinion here is that, as long as you ensure that everything has an adequate CPU Reservation set, that CPU Limits often do more harm than good. If you don't set Limits then it will allow Pods to burst into additional CPU that isn't being used if it is available and wouldn't hurt other apps getting what they Reserved.
+
+That was CPU Limits - now let's see a Memory Limit OOMKill:
+* `kubectl apply -f memory-stressor.yaml` - this deploys a workload that has a limit of 100Mi and tries to consume 150Mi of memory
+* `kubectl get pods -w` - you'll see it alternate between STATUS OOMKilled and CrashLoopBackOff (ctrl-c to exit)
+* `kubectl delete pod memory-stressor` - clean this up
 
 ### Kubernetes Event-driven Autoscaling (KEDA)
 
@@ -440,7 +477,7 @@ While kicking off a Job right when you want it to run can be useful, you usually
 
 As you can assume from the name, this lets you run a Job in the future as well as regularly on a schedule like cron.
 
-There is an example cronjob at [cronjob.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/cronjob.yaml) that will run once a minute and output the current time as well as a hello message and stop.
+There is an example cronjob at [cronjob/cronjob.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/cronjob/cronjob.yaml) that will run once a minute and output the current time as well as a hello message and stop.
 
 Run `kubectl apply -f cronjob.yaml` and then `k9s` and wait to see a Job Pod launch once a minute. You can hit Enter/Return twice to see the logs of that container. If this was a 'real' Job there would be log lines of the work it did and/or they would have put that work into a stateful service like a bucket or database etc.
 

@@ -607,4 +607,4 @@ TODO
 * Since Docker Desktop doesn't have a network plugin (CNI) that supports NetworkPolicies (the K8s native firewall), anything that involves the implementation of those
 * Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS IAM, AWS SecurityGroups, external-dns of Route53, Crossplane, etc.)
 
-We'll develop another training with a cloud environment that can support these items.
+We'll develop another training with a cloud environment that can support these items to cover them. Stay tuned!

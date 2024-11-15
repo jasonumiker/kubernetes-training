@@ -132,6 +132,8 @@ If you re-run `kubectl get endpoints` you'll now see the 2nd Pod has been added 
 
 And if you go to http://localhost:8000 in your browser and refresh you'll see that the name changes in what Pod that you're served from (that you are balanced between them). Note that the hostname the Pod sees is its Pod name - and I am just having it return that hostname out this web app.
 
+One last thing to note about Services is that Kubernetes creates a DNS record for them in a naming convention that allows for easy and predictable discovery of them by other Pods running within the same cluster. The naming convention is `service-name.namespace-name.svc.cluster.local`. You'll see this convention used later on in the init containers example below. Note that this only applies within a Pod - you can't use this convention outside the cluster or between clusters.
+
 ### Probes
 You may have noticed in the Pod settings that we've defined both of the types of Probes - readiness and liveness.
 
@@ -350,8 +352,13 @@ There is a good example of a StatefulSet in the RabbitMQ that we'll also need fo
 We'll look more closely at this RabbitMQ in the KEDA section later on...
 
 ### DaemonSets
+DaemonSets are a way to tell Kubernetes that you want to run a Pod on every Node. This is useful for Kubernetes components and host agents that facilitate networking, storage, security and observability in the cluster.
 
-TODO
+We do have one installed in our cluster as part of the monitoring tooling - the prometheus-node-exporter. It collects host/Node-level metrics which is then scraped by Prometheus to get them into that where we can also visualise them with Grafana.
+
+You can run `kubectl get daemonset prometheus-prometheus-node-exporter -n monitoring -o yaml` to see the manifest for it. As you'll see it is quite similar to the other controllers like ReplicaSet or Deployment in that you're giving it an embedded PodSpec with some additional parameters about how you want to run it across all the Nodes.
+
+Note also that, as you see in this example, with a `get` with a `-o yaml` you can basically export the YAML manifests out of any running object and do a `> output.yaml` at the end to save it. You can then re-import that back into the cluster with a `kubectl apply -f` if you need to.
 
 ## Requests, Limits and Scaling Pods
 In this section you'll learn about:

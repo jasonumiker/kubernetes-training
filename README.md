@@ -264,7 +264,7 @@ These containers are:
   * They be configured to see each other's processes - see [here](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)
   * They share the same network interface and IP address
     * This means they can run their services on different ports on their shared network interface/IP and reach each other on localhost on their respective ports
-  * They share the same storage Namespace and can share emptyDir Volumes between each other
+  * They share the same storage Namespace and can share [emptyDir Volumes](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir) between each other (these exist just to have an ephemeral Volume to share some data between containers in the same Pod)
 
 And there is also a special type of additional container called [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that run before the other container(s) in the Pod and can contain utilities or setup scripts not present in an app image (e.g. to load the schema into an empty database that the app expects to be there etc.). These:
  * Always run to completion (rather than stay running all the time like the main or sidecar containers)

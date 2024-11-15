@@ -473,7 +473,7 @@ You can read more about this on [this great AWS Blog Post](https://aws.amazon.co
 
 The best way to 'fix' this for an app is to control how many threads it uses and align that with the Reservation and Limit you are setting. Many languages and runtimes are now "container friendly" and will work out the cgroup they are in and align their thread counts to that automatically. But many don't and you'll need to specify a parameter around thread count at runtime.
 
-A controversial opinion here is that, as long as you ensure that everything has an adequate CPU Reservation set, that CPU Limits often do more harm than good. If you don't set Limits then it will allow Pods to burst into additional CPU that isn't being used if it is available and wouldn't hurt other apps getting what they Reserved.
+A controversial opinion here is that, as long as you ensure that everything has an adequate CPU Reservation set, that CPU Limits often do more harm than good and you should avoid them. If you don't set Limits then it will allow Pods to burst into additional CPU that isn't being used if it is available and still wouldn't hurt other apps getting what they Reserved.
 
 That was CPU Limits - now let's see a Memory Limit OOMKill:
 * `kubectl apply -f memory-stressor.yaml` - this deploys a workload that has a limit of 100Mi and tries to consume 150Mi of memory

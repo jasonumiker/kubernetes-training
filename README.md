@@ -22,6 +22,15 @@ This set of general Kubernetes training materials was designed to run on the Kub
         *         docker-desktop   docker-desktop   docker-desktop   
 
         ```
+    1. And/or run `kubectl get nodes` and you should see
+      ```
+      NAME             STATUS   ROLES           AGE   VERSION
+      docker-desktop   Ready    control-plane   10s   v1.30.2
+      ```
+    1. If you don't see this then I'd suggest these troubleshooting steps:
+      1. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
+      1. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
+      1. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
 
 TODO: Add Windows instructions
 

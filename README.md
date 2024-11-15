@@ -32,6 +32,7 @@ In this section you'll learn about:
 * [ReplicaSets](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) - which is how to scale them out as many 'replica' Pods as you need as well as scale them back in when you no longer need as many
 * [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) - which is how we deploy new version/tags of our apps via a new ReplicaSet alongside the existing one and gradually scale it out and the old version down until you're 100% on the new version
 * [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) - which is how we deploy stateful workloads that need consistent naming/DNS and to be reconnected to their [PersistentVolumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/).
+* [DaemonSets](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) - which is how we can say we want to deploy something once on every Node in the cluster
 
 ### A Pod
 Have a look at the PodSpec at [probetest-app/probe-test-app-pod.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-pod.yaml). You'll see the following:
@@ -261,7 +262,8 @@ These containers are:
   * So, they always scale in/out togetether in ReplicaSets etc.
 * Put in the same Linux Namespace / Security Boundary so that:
   * They be configured to see each other's processes - see [here](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)
-  * They share the same network interface and IP address (i.e. they can run different services on differnt ports on it)
+  * They share the same network interface and IP address
+    * This means they can run their services on different ports on their shared network interface/IP and reach each other on localhost on their respective ports
   * They share the same storage Namespace and can share emptyDir Volumes between each other
 
 And there is also a special type of additional container called [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that run before the other container(s) in the Pod and can contain utilities or setup scripts not present in an app image (e.g. to load the schema into an empty database that the app expects to be there etc.). These:
@@ -337,6 +339,10 @@ There is a good example of a StatefulSet in the RabbitMQ that we'll also need fo
 * `kubectl delete pod rabbit-mq-0` and `kubectl get pods` - you'll see that the Pod comes back with the same name and the same PersistentVolume with its state in it
 
 We'll look more closely at this RabbitMQ in the KEDA section later on...
+
+### DaemonSets
+
+TODO
 
 ## Requests, Limits and Scaling Pods
 In this section you'll learn about:

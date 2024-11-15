@@ -41,7 +41,7 @@ spec:
   - name: app-container
     # Simple application: write the current date
     # to the log file every five seconds
-    image: alpine # alpine is a simple Linux OS image
+    image: alpine:3.20.3 # alpine is a simple Linux OS image
     command: ["/bin/sh"]
     args: ["-c", "while true; do date >> /var/log/app.txt; sleep 5;done"]
 

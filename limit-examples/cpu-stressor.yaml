@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: cpu-stressor
-          image: narmidm/k8s-pod-cpu-stressor:latest
+          image: narmidm/k8s-pod-cpu-stressor:v1.2.0
           args:
             - "-cpu=2"
             - "-forever"

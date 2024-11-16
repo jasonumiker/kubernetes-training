@@ -265,12 +265,16 @@ To see this in action:
   * Since this is the same label we used for the Service it also would have stopped getting traffic from that at the same time too...
 * Run `kubectl describe replicaset probe-test-app` and see the details of its action from its perspective there too 
 
+Clean up probe-test-app now that we're done with it by running:
+* `kubectl delete deployments probe-test-app`
+* `kubectl delete service probe-test-app`
+
 ### Sidecar and Init containers within a Pod
 A Pod is made up of one or more containers. The containers section is a sequence/array and you can just specify more of them. When you specify more than one container in the Pod, the additional ones are called [Sidecar Containers](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/).
 
 These containers are:
 * Scheduled together on the same Node
-  * So, they always scale in/out togetether in ReplicaSets etc.
+  * So, they always scale in/out together in ReplicaSets etc.
 * Put in the same Linux Namespace / Security Boundary so that:
   * They be configured to see each other's processes - see [here](https://kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/)
   * They share the same network interface and IP address
@@ -282,7 +286,7 @@ And there is also a special type of additional container called [Init Containers
  * Each init container in the YAML sequence/array must complete successfully before the next one starts (so you can count on that ordering)
 
 First, we have a sidecar container example. In this example there is an 'app' container which is generating a log file. That is being written to a shared emptyDir Volume that is also mounted in our 'sidecar' container. That, in turn, is running nginx to share the contents of this log file out on port 80. This is meant to represent a logging sidecar that maybe would send the logs on to Splunk etc. instead. To see this in action:
-* `cd sidecar-and-init-containers`
+* `cd ../sidecar-and-init-containers`
 * `kubectl apply -f sidecar.yaml`
 * `kubectl exec pod-with-sidecar -c sidecar-container -it bash` - connect to the sidecar container within the Pod
 * `apt-get update && apt-get install curl` - install curl within that sidecar
@@ -377,7 +381,7 @@ You can install that on your local Kubernetes cluster by:
 1. `cd monitoring`
 1. Run `./install-prometheus.sh`
 
-Once that is up and running it will have configured both Prometheus and Grafana with Services of type LoadBalancer - so you can reach them on localhost. Prometheus is at http://localhost:9090 with no login. And Grafana is on http://localhost with the login admin and the password prom-operator.
+Once that is up and running it will have configured both Prometheus and Grafana with Services of type LoadBalancer - so you can reach them on localhost. Prometheus is at http://localhost:9090 with no login. And Grafana is on http://localhost:3000 with the login admin and the password prom-operator.
 
 You can see the all the data sources that Prometheus is scraping for metrics (its Targets) at http://localhost:9090/targets. They should all be healthy. The two main ones that are interesting are for our purposes here are:
 * Prometheus Node Exporter which gives it host-level metrics on the Node

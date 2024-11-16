@@ -18,6 +18,7 @@ prometheus:
 grafana:
   service:
     type: LoadBalancer
+    port: 3000
 kubelet:
   serviceMonitor:
     cAdvisorMetricRelabelings: null

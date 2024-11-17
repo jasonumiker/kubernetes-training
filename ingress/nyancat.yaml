@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nyancat
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      run: nyancat
+  template:
+    metadata:
+      labels:
+        run: nyancat
+    spec:
+      containers:
+      - image: jasonumiker/nyancat:latest
+        imagePullPolicy: IfNotPresent
+        name: nyancat
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          requests:
+            memory: "52Mi"
+            cpu: "50m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nyancat
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    run: nyancat
+  type: NodePort

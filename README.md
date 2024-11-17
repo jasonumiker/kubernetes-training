@@ -639,6 +639,8 @@ spec:
 
 This will just say if you to go to the Ingress's endpoint http://localhost it'll forward you through to the probe-test-app service.
 
+To set that in action run `kubectl apply -f probe-test-app-ingress.yaml` and then go to http://localhost.
+
 To see something more elaborate let's add a second service at a different URI path:
 ```
 apiVersion: networking.k8s.io/v1
@@ -670,6 +672,10 @@ spec:
 ```
 
 This is one area where nginx handles its path rewrites a bit differently to something like an AWS ALB for example - and so the Ingress document for the two controllers will vary a bit.
+
+To see this:
+* Run `kubectl apply -f nyancat.yaml` to create another Pod/Service to route to
+* Run `kubectl apply -f nycancat-ingress.yaml` to update our Ingress object to serve both URI paths with rewriting.
 
 You could also have it route to different backends/services based on different hostnames as well (pointing different A records at the same Ingress endpoint(s)). For an example of that check [this](https://kubernetes.github.io/ingress-nginx/user-guide/basic-usage/) out.
 

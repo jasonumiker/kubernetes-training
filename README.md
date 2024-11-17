@@ -263,11 +263,7 @@ To see this in action:
 * Run `kubectl label pod [copied pod name] app.kubernetes.io/name-` as if you put a minus sign after the label it in a `kubectl label` command it removes it
 * Run `kubectl get pods` and note that the ReplicaSet launched another one because it doesn't include the one that we re-labeled in its list anymore. 
   * Since this is the same label we used for the Service it also would have stopped getting traffic from that at the same time too...
-* Run `kubectl describe replicaset probe-test-app` and see the details of its action from its perspective there too 
-
-Clean up probe-test-app now that we're done with it by running:
-* `kubectl delete deployments probe-test-app`
-* `kubectl delete service probe-test-app`
+* Run `kubectl describe replicaset probe-test-app` and see the details of its action from its perspective there too
 
 ### Sidecar and Init containers within a Pod
 A Pod is made up of one or more containers. The containers section is a sequence/array and you can just specify more of them. When you specify more than one container in the Pod, the additional ones are called [Sidecar Containers](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/).
@@ -607,16 +603,89 @@ Let's explore how this all works:
 
 So, that was a very quick overview of how to configure multi-tenancy of Kubernetes at the control plane level via Namespaces and Roles. And, how much YAML it takes to move away from *'s for the resources and verbs in your Role definitions.
 
-## Kustomize and Helm
-TODO
-
 ## Ingress
-TODO
+The initial Kubernetes approach to Layer 7 LoadBalancing is [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Unlike Services, which are built-in to Kubernetes, Ingress is more a standard for plugins/controllers to provide the capability in a (somewhat) consistent way.
 
-## Gateway (the upcoming replacement for Ingress)
-TODO
+The two approaches to these controllers are to either to run them on top of the cluster, by managing tools such as nginx or Envoy running in Pods on the cluster, or by orchestrating a Layer-7 Load Balancer outside of the cluster such as the AWS ALB. In this example, we'll use the common and free nginx Ingress controller - which is a combination of an nginx to forward the traffic and a controller to watch for Ingress documents and convert those to the require nginx config(s) both running on our cluster.
+
+1. `cd ../ingress`
+1. Run `./install-nginx.sh` to install the Nginx Ingress Controller via its Helm Chart
+
+This deployed the controller fronted by a Service type LoadBalancer on ports 80 and 443. Given the way that Docker Desktop works that means it is listening on http://localhost and https://localhost (on a self-signed certificate). If you go to these you'll see you get back a 404 page from nginx - that is because we haven't provided it Ingress YAML documents to tell it where the traffic to it should go yet.
+
+Ingress points at an underlying Kubernetes Service to discover its targets. We have one still running in probe-test-app that we'll use.
+
+This is what a basic Ingress document looks like:
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: probe-test-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: probe-test-app
+            port:
+              number: 8080
+```
+
+This will just say if you to go to the Ingress's endpoint http://localhost it'll forward you through to the probe-test-app service.
+
+To see something more elaborate let's add a second service at a different URI path:
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: probe-test-app
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/configuration-snippet: rewrite ^(/nyancat)$ $1/ redirect;
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: probe-test-app
+                port:
+                  number: 8080
+          - path: /nyancat()(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nyancat
+                port:
+                  number: 80
+```
+
+This is one area where nginx handles its path rewrites a bit differently to something like an AWS ALB for example - and so the Ingress document for the two controllers will vary a bit.
+
+You could also have it route to different backends/services based on different hostnames as well (pointing different A records at the same Ingress endpoint(s)). For an example of that check [this](https://kubernetes.github.io/ingress-nginx/user-guide/basic-usage/) out.
+
+### What is 'wrong' with Ingress for it to need to be eventually replaced (by Gateway)?
+Ingress will *eventually* go away and be replaced by Gateway. However, many of the providers such as [AWS](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1338) and [Microsoft](https://github.com/Azure/AKS/issues/3198) have not yet released new versions of their load balancer controllers that support that the new Gateway API. The only of the major cloud providers to release one at the time of writing this is [Google](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api). And, they still also offer an Ingress option alongside it too. So, Ingress remains the current solution in the industry - especially in places with AWS EKS or Azure AKS in the mix.
+
+The main reason is that the Ingress API standard/schema didn't include enough of the common options that people need to control around a Layer 7 load balancer. The solution they all went with is to use annotations for this (to break out of 'the standard' and flip the missing options they need for just their ingress controller). But then every Ingress controller opted for different annotations - so you can't take an Ingress document written for one controller/cloud and use it on another without changing it quite a bit.
+
+For example, look at all the [annotations for AWS ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/). And how much they differ from the [nginx ones](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) that we're working with here in this example.
+
+The new Gateway API is informed by the different annotations that all the controllers started using and making sure that those were covered by the standard this time.
 
 ## Istio
+TODO
+
+## Kustomize and Helm
 TODO
 
 ## Controllers/Operators
@@ -626,6 +695,12 @@ TODO
 TODO
 
 ## Kubernetes Pod Security / Multi-tenancy Considerations
+TODO
+
+## GitOps with Argo CD
+TODO
+
+## Progressive Delivery with Argo Rollouts
 TODO
 
 ## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them

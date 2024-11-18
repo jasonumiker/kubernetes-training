@@ -700,7 +700,7 @@ TODO
 
 To install Istio onto our cluster `cd istio` and run `./install-istio.sh`. 
 
-**NOTE:** that Istio requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
+**NOTE:** Istio (or at least its Kiali UI) requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
 
 ~![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
 

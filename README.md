@@ -690,11 +690,8 @@ Also, you'll see in the second example we had to flip the paths to 'Implementati
 
 The new Gateway API is informed by all these differences to ensure they are (much more) covered by the standard this time.
 
-## Gateway
-TODO
-
 ## Istio
-TODO
+
 
 ## Kustomize and Helm
 TODO

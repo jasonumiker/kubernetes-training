@@ -9,6 +9,7 @@ external_services:
     auth:
       username: admin
       password: prom-operator
+      type: basic
     internal_url: http://prometheus-grafana.monitoring.svc.cluster.local:3000
     external_url: http://prometheus-grafana.monitoring.svc.cluster.local:3000
 istio_labels:

@@ -1,0 +1,15 @@
+deployment:
+  service_type: LoadBalancer
+external_services:
+  istio:
+    ingress_gateway_namespace: "istio-ingress"
+  prometheus:
+    url: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+  grafana:
+    auth:
+      username: admin
+      password: prom-operator
+    internal_url: http://prometheus-grafana.monitoring.svc.cluster.local:3000
+    external_url: http://prometheus-grafana.monitoring.svc.cluster.local:3000
+istio_labels:
+  ingress_gateway_label: "istio=ingress"

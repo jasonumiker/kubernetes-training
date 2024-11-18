@@ -693,10 +693,21 @@ The new Gateway API is informed by all these differences to ensure they are (muc
 ## Gateway
 In addition to its own traffic management API, Istio supports the Kubernetes [Gateway API](https://istio.io/latest/blog/2024/gateway-mesh-ga/) and intends to make it the default API for traffic management in the future.
 
-So, in the examples below for Istio, we'll focus on that API (giving you exposure to it even if you end up not using Istio - as the whole point is that it is a standard that will have similar YAML regardless of the controller that you use for it).
+So, in the examples below for Istio, we'll focus on that API (giving you exposure to it even if you end up not using Istio - as the whole point of it is that it's a standard that will have similar YAML schema regardless of the controller that you use for it).
 
 ## Istio
+TODO 
 
+~![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
+
+To install the sample app run:
+* `kubectl label namespace default istio-injection=enabled`
+* `kubectl apply -f bookinfo/platform/kube/bookinfo.yaml`
+* `kubectl apply -f bookinfo/gateway-api/bookinfo-gateway.yaml`
+
+Then go to the Kiali UI at http://localhost:20001/. You'll need a token that you can get by running `kubectl -n istio-system create token kiali`.
+
+TODO
 
 ## Kustomize and Helm
 TODO

@@ -9,3 +9,4 @@ helm install istio-ingress istio/gateway -n istio-ingress --wait --version=1.24.
 helm repo add kiali https://kiali.org/helm-charts
 helm install kiali-server -n istio-system kiali/kiali-server -f kiali-values.yaml --version=v2.1.0
 kubectl apply -f prom-metrics.yaml
+kubectl apply -f gateway-api-crds.yaml

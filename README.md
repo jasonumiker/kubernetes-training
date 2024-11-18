@@ -690,6 +690,11 @@ Also, you'll see in the second example we had to flip the paths to 'Implementati
 
 The new Gateway API is informed by all these differences to ensure they are (much more) covered by the standard this time.
 
+## Gateway
+In addition to its own traffic management API, Istio supports the Kubernetes [Gateway API](https://istio.io/latest/blog/2024/gateway-mesh-ga/) and intends to make it the default API for traffic management in the future.
+
+So, in the examples below for Istio, we'll focus on that API (giving you exposure to it even if you end up not using Istio - as the whole point is that it is a standard that will have similar YAML regardless of the controller that you use for it).
+
 ## Istio
 
 

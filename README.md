@@ -703,7 +703,9 @@ TODO
 To install the sample app run:
 * `kubectl label namespace default istio-injection=enabled` - This tells the Istio mutating admission controller to add the Istio sidecars to each Pod in the default Namespace (for new Pods that launch after the label was added)
 * `kubectl apply -f bookinfo/platform/kube/bookinfo.yaml` - This deploys our sample application as above
-* `kubectl apply -f bookinfo/gateway-api/bookinfo-gateway.yaml` - This deploys a LoadBalancer controlled by the Kubernetes Gateway API (Istio's controller that adheres to the standard) - in this case listening on http://localhost on default port 80
+* `kubectl apply -f bookinfo/gateway-api/bookinfo-gateway.yaml` - This deploys:
+  * A [Gateway](https://kubernetes.io/docs/concepts/services-networking/gateway/#api-kind-gateway) which creates a LoadBalancer controlled by the Kubernetes Gateway API (Istio's controller that adheres to the standard) - in this case listening on http://localhost on default port 80
+  * A [HTTPRoute](https://kubernetes.io/docs/concepts/services-networking/gateway/#api-kind-httproute) that specifies some specific routes/paths that should be routed through that Gateway to the productpage service on port 9080
 
 Then go to the Kiali UI at http://localhost:20001/. You'll need a token that you can get by running `kubectl -n istio-system create token kiali`.
 

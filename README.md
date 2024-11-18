@@ -693,10 +693,14 @@ The new Gateway API is informed by all these differences to ensure they are (muc
 ## Gateway
 In addition to its own traffic management API, Istio supports the Kubernetes [Gateway API](https://istio.io/latest/blog/2024/gateway-mesh-ga/) and intends to make it the default API for traffic management in the future.
 
-So, in the examples below for Istio, we'll focus on that API (giving you exposure to it even if you end up not using Istio - as the whole point of it is that it's a standard that will have similar YAML schema regardless of the controller that you use for it).
+So, in the examples below for Istio, we'll focus on the Gateway API option/path (giving you exposure to it even if you end up not using Istio - as the whole point of it is that it's a standard that will have similar YAML schema regardless of the controller that you use for it).
 
 ## Istio
 TODO 
+
+To install Istio onto our cluster `cd istio` and run `./install-istio.sh`. 
+
+**NOTE:** that Istio requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
 
 ~![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
 

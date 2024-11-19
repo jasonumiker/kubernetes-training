@@ -710,7 +710,23 @@ To install Istio onto our cluster `cd istio` and run `./install-istio.sh`.
 **NOTE:** Istio (or at least its Kiali UI) requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
 
 Now that Istio is installed we'll be working with the most common sample Istio app - bookinfo.
-~![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
+![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
+
+The application displays information about a book, similar to a single catalog entry of an online book store. Displayed on the page is a description of the book, book details (ISBN, number of pages, and so on), and a few book reviews.
+
+The Bookinfo application is broken into four separate microservices:
+
+* productpage - The productpage microservice calls the details and reviews microservices to populate the page.
+* details - The details microservice contains book information.
+* reviews - The reviews microservice contains book reviews. It also calls the ratings microservice.
+* ratings - The ratings microservice contains book ranking information that accompanies a book review.
+
+There are 3 versions of the reviews microservice:
+* Version v1 doesn’t call the ratings service.
+* Version v2 calls the ratings service, and displays each rating as 1 to 5 black stars.
+* Version v3 calls the ratings service, and displays each rating as 1 to 5 red stars.
+
+All of the services are written in different languages/runtimes/frameworks to illustrate that this solution, unlike incorporating shared libraries/packages into each microservice for traffic management and/or encryption and/or authx, can work with all of them in the same way by abstracting it all out to the network via the Envoy sidecars.
 
 To install the sample app run:
 * `kubectl label namespace default istio-injection=enabled` - This tells the Istio mutating admission controller to add the Istio sidecars to each Pod in the default Namespace (for new Pods that launch after the label was added)
@@ -720,6 +736,11 @@ To install the sample app run:
   * A [HTTPRoute](https://kubernetes.io/docs/concepts/services-networking/gateway/#api-kind-httproute) that specifies some specific routes/paths that should be routed through that Gateway to the productpage service on port 9080
 
 Then go to the Kiali UI at http://localhost:20001/. You'll need a token that you can get by running `kubectl -n istio-system create token kiali`.
+
+You won't see anything here in the Traffic Map until you generate traffic through the system by going to http://localhost/productpage. Refresh it 5-10 times and you'll see that it is balancing the load across those three versions of the service (one without stars, one with black stars and the other with red stars) which changes/impacts the customer experience. If you don't see anything ensure you've picked the default namespace in the dropdown up top - and note it also defaults to only showing you the laste minute so pick a longer time range if you last hit the service over a minute ago.
+![](images/kiali.png)
+
+One of the things that Istio can really help us with is traffic management. 
 
 TODO
 

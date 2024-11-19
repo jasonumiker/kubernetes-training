@@ -14,3 +14,7 @@ external_services:
     external_url: http://prometheus-grafana.monitoring.svc.cluster.local:3000
 istio_labels:
   ingress_gateway_label: "istio=ingress"
+server:
+  observability:
+    metrics:
+      enabled: false

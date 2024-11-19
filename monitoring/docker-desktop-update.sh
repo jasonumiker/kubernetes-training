@@ -7,7 +7,7 @@ echo "This will involve several kube-system pod restarts"
 echo
 
 echo "Fetching debian image to run nsenter on the docker-desktop host..."
-docker pull debian
+docker pull debian:12.8
 
 NODE_IP=$(kubectl get nodes -o wide --no-headers | awk -v OFS='\t\t' '{print $6}')
 echo "Host Node IP: $NODE_IP"
@@ -33,7 +33,7 @@ rm -f $MOD_YAML
 
 echo "Updating bind-address on kube-controller-manager..."
 if kubectl describe pod kube-controller-manager-docker-desktop -n kube-system | grep -q "bind-address=127.0.0.1"; then
-    docker run -it --privileged --pid=host debian nsenter -t 1 -m -u -n -i \
+    docker run -it --privileged --pid=host debian:12.8 nsenter -t 1 -m -u -n -i \
         sh -c "sed -i 's/--bind-address=127.0.0.1/--bind-address=0.0.0.0/g' /etc/kubernetes/manifests/kube-controller-manager.yaml"
     echo "Waiting for kube-controller-manager to restart, this can take some time..."
     kubectl wait pod -l component=kube-controller-manager -n kube-system --timeout=3m --for=delete 
@@ -48,7 +48,7 @@ fi
 
 echo "Updating bind-address on kube-scheduler"
 if kubectl describe pod kube-scheduler-docker-desktop -n kube-system | grep -q "bind-address=127.0.0.1"; then
-    docker run -it --privileged --pid=host debian nsenter -t 1 -m -u -n -i \
+    docker run -it --privileged --pid=host debian:12.8 nsenter -t 1 -m -u -n -i \
         sh -c "sed -i 's/--bind-address=127.0.0.1/--bind-address=0.0.0.0/g' /etc/kubernetes/manifests/kube-scheduler.yaml"
     echo "Waiting for kube-scheduler to restart, this can take some time..."
     kubectl wait pod -l component=kube-scheduler -n kube-system --timeout=3m --for=delete
@@ -65,7 +65,7 @@ echo "Adding node ip to listen-metrics-urls on etcd"
 if kubectl describe pod etcd-docker-desktop -n kube-system | grep "listen-metrics-urls" | grep -q "http://${NODE_IP}:2381"; then
     echo "etcd listen-metrics-urls already updated, skipping."
 else
-    docker run -it --privileged --pid=host debian nsenter -t 1 -m -u -n -i \
+    docker run -it --privileged --pid=host debian:12.8 nsenter -t 1 -m -u -n -i \
         sh -c "sed -i 's/--listen-metrics-urls=http:\/\/127.0.0.1\:2381/--listen-metrics-urls=http:\/\/127.0.0.1\:2381,http:\/\/${NODE_IP}\:2381/g' /etc/kubernetes/manifests/etcd.yaml"
     echo "Waiting for etcd to restart, this can take some time..."
     kubectl wait pod -l component=etcd -n kube-system --timeout=3m --for=delete                         # as soon as etcd goes down this will respond with an error from the api server

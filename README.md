@@ -696,12 +696,20 @@ In addition to its own traffic management API, Istio supports the Kubernetes [Ga
 So, in the examples below for Istio, we'll focus on the Gateway API option/path (giving you exposure to it even if you end up not using Istio - as the whole point of it is that it's a standard that will have similar YAML schema regardless of the controller that you use for it).
 
 ## Istio
-TODO 
+[Istio](https://istio.io/) is the leading service mesh for Kubernetes.
+
+Service Meshes like Istio have the following benefits:
+1. Security - Istio provides strong identity-based authentication, authorization, and encryption. It also allows you to enforce policies with access controls, rate limits, and quotas. 
+1. Traffic management - Istio offers fine-grained control over traffic behavior with features like routing rules, retries, failovers, and fault injection. You can also use Istio to split traffic for A/B testing and canary deployments. 
+1. Observability - Istio provides robust tracing, monitoring, and logging features to help you understand how service performance impacts upstream matters. You can collect telemetry data from individual microservices to gain visibility into their health.
+
+Traditionally, service meshes have been based on sidecar containers running a service like [Envoy](https://www.envoyproxy.io/) within each Pod. Many like Istio are starting to offer an alterative, which Istio calls [Ambient Mesh](https://istio.io/latest/blog/2022/introducing-ambient-mesh/), which can function without the overhead of so many sidecars. Ambient Mesh doesn't work with Docker Desktop (as it doesn't have a traditional CNI) though - and the traditional sidecar-based Istio are also still the most commonly used today - so we'll be looking at the traditional sidecar-based Istio here.
 
 To install Istio onto our cluster `cd istio` and run `./install-istio.sh`. 
 
 **NOTE:** Istio (or at least its Kiali UI) requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
 
+Now that Istio is installed we'll be working with the most common sample Istio app - bookinfo.
 ~![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
 
 To install the sample app run:

@@ -2,6 +2,41 @@
 
 This set of general Kubernetes training materials was designed to run on the Kubernetes that is part of Docker Desktop on a Mac or Windows machine. It should actually run on *any* Kubernetes - but it hasn't been documented/tested outside of Docker Desktop.
 
+## Table of Contents
+- [Kubernetes Training](#kubernetes-training)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Pods, Probes, Services, ReplicaSets, Deployments and StatefulSets](#pods-probes-services-replicasets-deployments-and-statefulsets)
+    - [A Pod](#a-pod)
+    - [A Service](#a-service)
+    - [Probes](#probes)
+    - [ReplicaSets](#replicasets)
+    - [Deployments](#deployments)
+    - [Quarantine a Pod (by removing the label from it that the operators are selecting it on)?](#quarantine-a-pod-by-removing-the-label-from-it-that-the-operators-are-selecting-it-on)
+    - [Sidecar and Init containers within a Pod](#sidecar-and-init-containers-within-a-pod)
+    - [PersistentVolumes, PersistentVolumeClaims and StorageClasses](#persistentvolumes-persistentvolumeclaims-and-storageclasses)
+    - [StatefulSets](#statefulsets)
+    - [DaemonSets](#daemonsets)
+  - [Requests, Limits and Scaling Pods](#requests-limits-and-scaling-pods)
+    - [First let's install Prometheus for Metrics/Monitoring](#first-lets-install-prometheus-for-metricsmonitoring)
+    - [The Horizontal Pod Autoscaler (HPA)](#the-horizontal-pod-autoscaler-hpa)
+    - [CPU and Memory Requests](#cpu-and-memory-requests)
+    - [CPU and Memory Limits - and how misconfiguring them can really hurt your performance and availability](#cpu-and-memory-limits---and-how-misconfiguring-them-can-really-hurt-your-performance-and-availability)
+    - [Kubernetes Event-driven Autoscaling (KEDA)](#kubernetes-event-driven-autoscaling-keda)
+  - [Jobs and CronJobs](#jobs-and-cronjobs)
+  - [Kubernetes Namespaces and API Authorization (via Roles/ClusterRoles)](#kubernetes-namespaces-and-api-authorization-via-rolesclusterroles)
+  - [Ingress](#ingress)
+    - [What is 'wrong' with Ingress for it to need to be eventually replaced (by Gateway)?](#what-is-wrong-with-ingress-for-it-to-need-to-be-eventually-replaced-by-gateway)
+  - [Gateway](#gateway)
+  - [Istio](#istio)
+  - [Kustomize and Helm](#kustomize-and-helm)
+  - [Controllers/Operators](#controllersoperators)
+    - [Admission Controllers / OPA Gatekeeper](#admission-controllers--opa-gatekeeper)
+  - [Kubernetes Pod Security / Multi-tenancy Considerations](#kubernetes-pod-security--multi-tenancy-considerations)
+  - [GitOps with Argo CD](#gitops-with-argo-cd)
+  - [Progressive Delivery with Argo Rollouts](#progressive-delivery-with-argo-rollouts)
+  - [Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them](#other-topics-that-we-didnt-cover-because-docker-desktops-k8s-is-not-suitable-for-exploring-them)
+
 ## Prerequisites
 1. Download and Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 1. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
@@ -252,7 +287,7 @@ You can customize many aspects of this upgrade behavior (how aggressive, fast or
 
 Finally, let's say this was bad and we want to roll it back. You simply run `kubectl rollout undo deployment/probe-test-app` - which will scale the new version ReplicaSet down and the old version back up (since it is still there at 0). It actually leaves the last 10 versions there by default - though you can customize this with `.spec.revisionHistoryLimit`
 
-### Quarantine a Pod by removing the label from it that the operators are selecting it on?
+### Quarantine a Pod (by removing the label from it that the operators are selecting it on)?
 One interesting common thread with Services and ReplicaSets have in common is that they are looking for Pods with certain label(s).
 
 If you take a pod and remove the label that they are looking for (which is often the same for both) then it will stop getting Service traffic and/or it won't be killed by the ReplicaSet (which feels that it is no longer managing it). The ReplicaSet will add another one to 'replace' it since it doesn't see it any longer as well.

@@ -1,3 +1,4 @@
+# Run this from the parent folder with a ./tools/test-all-steps.sh
 echo "kubectl config get-contexts"
 kubectl config get-contexts
 echo "--------------------"
@@ -113,4 +114,111 @@ echo "kubectl apply -f services-init-requires.yaml"
 kubectl apply -f services-init-requires.yaml
 echo "--------------------"
 #kubectl get pod myapp-pod -w
+#echo "--------------------"
+echo "cd ../pvs-and-statefulsets"
+cd ../pvs-and-statefulsets
+#echo "--------------------"
+echo "kubectl apply -f hostpath-provisioner.yaml"
+kubectl apply -f hostpath-provisioner.yaml
+#echo "--------------------"
+echo "kubectl get storageclass"
+kubectl get storageclass
+#echo "--------------------"
+echo "kubectl apply -f pvc.yaml"
+kubectl apply -f pvc.yaml
+#echo "--------------------"
+echo "kubectl get pvc"
+kubectl get pvc
+#echo "--------------------"
+echo "kubectl apply -f pod.yaml"
+kubectl apply -f pod.yaml
+kubectl wait --for=condition=ready pod nginx
+#echo "--------------------"
+echo "kubectl get pvc"
+kubectl get pvc
+#echo "--------------------"
+echo "kubectl get pv"
+kubectl get pv
+#echo "--------------------"
+echo "kubectl apply -f service.yaml"
+kubectl apply -f service.yaml
+sleep 10
+#echo "--------------------"
+echo "curl http://localhost:8001"
+curl http://localhost:8001
+#echo "--------------------"
+echo "kubectl exec -it nginx  -- bash -c \"echo 'Data on PV' > /usr/share/nginx/html/index.html\""
+kubectl exec -it nginx  -- bash -c "echo 'Data on PV' > /usr/share/nginx/html/index.html"
+#echo "--------------------"
+echo "curl http://localhost:8001"
+curl http://localhost:8001
+#echo "--------------------"
+echo "kubectl delete pod nginx"
+kubectl delete pod nginx
+#echo "--------------------"
+echo "kubectl get pv"
+kubectl get pv
+#echo "--------------------"
+echo "kubectl apply -f pod.yaml"
+kubectl apply -f pod.yaml
+kubectl wait --for=condition=ready pod nginx
+#echo "--------------------"
+echo "curl http://localhost:8001"
+curl http://localhost:8001
+#echo "--------------------"
+echo "kubectl delete service nginx"
+kubectl delete service nginx
+#echo "--------------------"
+echo "kubectl delete pod nginx"
+kubectl delete pod nginx
+#echo "--------------------"
+echo "kubectl delete pvc test-pvc"
+kubectl delete pvc test-pvc
+#echo "--------------------"
+echo "kubectl get pv"
+kubectl get pv
+#echo "--------------------"
+cd ../keda-example/rabbitmq
+#echo "--------------------"
+echo "kubectl apply -k ."
+kubectl apply -k .
+#echo "--------------------"
+echo "kubectl rollout status statefulset/rabbitmq"
+kubectl rollout status statefulset/rabbitmq
+#echo "--------------------"
+echo "kubectl describe statefulset rabbitmq"
+kubectl describe statefulset rabbitmq
+#echo "--------------------"
+echo "kubectl get pods"
+kubectl get pods
+#echo "--------------------"
+echo "kubectl get pvc"
+kubectl get pvc
+#echo "--------------------"
+echo "kubectl get pv"
+kubectl get pv
+#echo "--------------------"
+echo "kubectl delete pod rabbit-mq-0"
+kubectl delete pod rabbit-mq-0
+#echo "--------------------"
+echo "kubectl get pods"
+kubectl get pods
+#echo "--------------------"
+echo "cd ../../monitoring"
+cd ../../monitoring
+#echo "--------------------"
+echo "./install-prometheus.sh"
+./install-prometheus.sh
+sleep 10
+kubectl rollout status deployment adapter-prometheus-adapter -n monitoring
+sleep 10
+#echo "--------------------"
+echo "kubectl top nodes"
+kubectl top nodes
+#echo "--------------------"
+echo "kubectl top pods"
+kubectl top pods
+#echo "--------------------"
+echo "kubectl top pods -n monitoring"
+kubectl top pods -n monitoring
 #echo "--------------------"

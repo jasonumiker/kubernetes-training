@@ -1,4 +1,5 @@
 ./docker-desktop-update.sh
+sleep 10
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 kubectl create namespace monitoring

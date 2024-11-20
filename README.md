@@ -353,14 +353,14 @@ Then see this in action by:
 * `kubectl apply -f pod.yaml`
 * `kubectl get pvc` - see now that it is Bound and there a VOLUME listed
 * `kubectl get pv` - here you'll see the PersistentVolume that was created by fulfilling the claim
+* `kubectl apply -f service.yaml` - create a service to expose this nginx
 * http://localhost:8001 - we mounted an empty volume at the nginx path
 * `kubectl exec -it nginx  -- bash -c "echo 'Data on PV' > /usr/share/nginx/html/index.html"` to write some stuff to index.html for nginx to display
 * http://localhost:8001
 * `kubectl delete pod nginx`
 * `kubectl get pv` - even if we delete the Pod the volume is still here
 * `kubectl apply -f pod.yaml` - and if we re-create the Pod it just mounts it back
-* `kubectl get pv` - note it is the same PersistentVolume (not a new one)
-* http://localhost:8001 - note we can still see the data in it too
+* http://localhost:8001 - note it is the same PersistentVolume (not a new one)
 * `kubectl delete service nginx`, `kubectl delete pod nginx` and `kubectl delete pvc test-pvc` - clean up our example
 * `kubectl get pv` - Deleting our PersistentVolumeClaim deleted our PV
 
@@ -377,7 +377,7 @@ These do a few things:
   * It also works if you kill a Pod it'll get it's particular volume back when it is relaunched - including on another Node when it is running in AWS/GCP or even in a place with a real Storage Area Network (SAN)-backed PersistentVolume.
 
 There is a good example of a StatefulSet in the RabbitMQ that we'll also need for the KEDA example below. Let's deploy that now just to have a look at how the StatefulSet and PVs work before we get to KEDA:
-* `cd keda-example/rabbitmq`
+* `cd ../keda-example/rabbitmq`
 * `kubectl apply -k .` - This deploys everything in the kustomization.yaml file in the order it is listed there (due to the -k) - we'll cover more about Kustomize in a later section
 * `kubectl describe statefulset rabbitmq` to see more about our new StatefulSet
 * `kubectl get pods` - you'll see a rabbitmq-0 - unlike ReplicaSets which appends some random characters to the end of the Pod name
@@ -409,7 +409,7 @@ In order to automatically scale a workload we'll need some metrics to do that in
 The most common tool to do that in the Kubernetes / CNCF ecosystem is Prometheus. And that is often visualized with Grafana.
 
 You can install that on your local Kubernetes cluster by:
-1. `cd monitoring`
+1. `cd ../../monitoring`
 1. Run `./install-prometheus.sh`
 
 Once that is up and running it will have configured both Prometheus and Grafana with Services of type LoadBalancer - so you can reach them on localhost. Prometheus is at http://localhost:9090 with no login. And Grafana is on http://localhost:3000 with the login admin and the password prom-operator.

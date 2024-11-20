@@ -260,7 +260,7 @@ To see it in action you can run `kubectl apply -f probe-test-app-replicaset.yaml
 
 You'll now see three Pods running with five random characters appended to each.
 
-You can scale this in to two Pods by running `kubectl scale replicaset probe-test-app --replicas=2`.
+You can scale this in to two Pods by running `kubectl scale replicaset probe-test-app --replicas=2` - then check with a `kubectl get pods`
 
 And you can add tools to automatically scale it in and out for you, such as the [Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) or [KEDA](https://keda.sh/), as well. We'll cover those in later sections.
 

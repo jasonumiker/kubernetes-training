@@ -330,6 +330,7 @@ Next, we have an init container example. In this example we will only start our 
 * `kubectl apply -f services-init-requires.yaml` - create those services it is looking for
 * `kubectl get pod myapp-pod -w` - quickly do a kubectl get with a -w to watch/follow the output
 * Once you see the initContainers succeed and the Pod go to Running you can ctrl-c to exit the -w
+* `kubectl delete pod myapp-pod`, `kubectl delete pod pod-with-sidecar`, `kubectl delete service myservice` and `kubectl delete service mydb` to clean this all up
 
 ### PersistentVolumes, PersistentVolumeClaims and StorageClasses
 Deployments are great for stateless workloads - but some workload on Kubernetes require state. The way that Kubernetes does this is that it allows Pods to ask for PersistentVolumes - which usually map through to things like EBS Volumes in AWS or Persistent Disks in GCP etc.
@@ -463,9 +464,11 @@ spec:
 
 In this case we are saying we want to scale out when the average CPU utilization is greater than 50% and in when it is less than that. There are many options you can choose to scale on instead - the various options you can put in this file is well documented [here](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/).
 
-Let's apply that HPA by running `kubectl apply -f probe-test-hpa.yaml`
+Let's apply that HPA by running:
+* `cd ../probe-test-app`
+* `kubectl apply -f probe-test-app-hpa.yaml`
 
-Now we'll generate a bunch of load against our probe-test-app by running `kubectl apply -f generate-load-replicaset.yaml`
+Now we'll generate a bunch of load against our probe-test-app by running `kubectl apply -f generate-load-app-replicaset.yaml`
 
 Open a new terminal and run `k9s` and you'll see the CPU go up on the probe-test-app as well as the new Pods start to appear as the HPA scales it out.
 
@@ -498,7 +501,7 @@ The issue is if you have a busy multi-threaded app running across many Cores at 
 It isn't just CPU Limits that can throttle your Pod(s) - the Linux cgroups as configured will also throttle you if they need to in order to satisfy the CPU Reservations of other Pods (i.e. if needed to give them the amount of CPU they have 'reserved' if you have exhausted your reservation).
 
 Let's see this in action:
-* `cd limit-examples`
+* `cd ../limit-examples`
 * `kubectl apply -f cpu-stressor.yaml` - this will kick off an app that is trying to use 2 full CPUs (i.e. 2 fully utilized threads) but with a CPU limit of 1 CPU
   * This means we should get 50ms of CPU and then get throttled for 50ms each accounting period of 100ms
 * Open Prometheus by going to http://localhost:9090
@@ -509,7 +512,7 @@ Let's see this in action:
   * This is likely with vi so you type `i` to Insert and then hit Esc and :wq to finish
   * You can't change this for a running Pod so you'll see the Deployment create a new one with the new Limit and kill the old one
   * This should make that metric go down - but it likely won't be zero since this cpu-stressor isn't *exact* and there might be some throttling around ensuring the Reservations of other Pods are met depending on how many cores on your laptop you gave Docker Desktop etc.
-* `kubectl delete pod cpu-stressor` - clean this up when done
+* `kubectl delete deployment cpu-stressor` - clean this up when done
 
 You can read more about this on [this great AWS Blog Post](https://aws.amazon.com/blogs/containers/using-prometheus-to-avoid-disasters-with-kubernetes-cpu-limits/).
 
@@ -537,7 +540,7 @@ You should have already installed RabbitMQ above in the StatefulSet section. If 
 **NOTE:** We deployed the RabbitMQ container a bit 'manually' here via a StatefulSet to show you how those work. You wouldn't usually do this for stateful popular databases/caches/queues etc. - instead you would use their Operator (and they will almost always have one). In the case of RabbitMQ their operator is documented [here](https://www.rabbitmq.com/kubernetes/operator/operator-overview).
 
 The next step is installing KEDA via its Helm Chart. To do that:
-* `cd keda-example`
+* `cd ../keda-example`
 * `./install-keda.sh` - we'll cover Helm in more detail in a later section
 
 Now that we have KEDA installed our goal is to:
@@ -595,7 +598,9 @@ As you can assume from the name, this lets you run a Job in the future as well a
 
 There is an example cronjob at [cronjob/cronjob.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/cronjob/cronjob.yaml) that will run once a minute and output the current time as well as a hello message and stop.
 
-Run `kubectl apply -f cronjob.yaml` and then `k9s` and wait to see a Job Pod launch once a minute. You can hit Enter/Return twice to see the logs of that container. If this was a 'real' Job there would be log lines of the work it did and/or they would have put that work into a stateful service like a bucket or database etc.
+Run `cd ../cronjob` and then run `kubectl apply -f cronjob.yaml` and then `k9s`. You'll then see a Job Pod launch once a minute. You can hit Enter/Return twice to see the logs of that container. If this was a 'real' Job there would be log lines of the work it did and/or they would have put that work into a stateful service like a bucket or database etc.
+
+You can also run `kubectl get cronjob` to see some details about the jobs, schedules, and when they were last run. And then run `kubectl delete cronjob hello` to clean this up when you're done.
 
 There is a more elaborate controller for Jobs than CronJobs from Argo called [Argo Workflows](https://argoproj.github.io/workflows/). This lets you specify a series of steps or a directed-asyclic graph (DAG) of work to be done where the output of one Job gets passed to another etc.
 
@@ -616,7 +621,7 @@ Let's explore how this all works:
 1. `kubectl get clusterrole admin -o yaml | less` (press space to page down and q to exit) - This built-in admin role can explicitly do everything - and so you can clone it and remove those things you don't want a user to be able to do. As you can see, the minute you don't do *'s there is quite a lot of YAML here to go through!
 1. `kubectl get clusterrole admin -o yaml | wc -l` - 315 lines of it!
 1. You can see the details about this and the other built-in Roles such as edit and view [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
-1. `cd k8s-authz`
+1. `cd ../k8s-authz`
 1. `./setup-tokens-on-cluster.sh` to add our Jane and John users to the Docker Desktop's Kubernetes (via token authentication)
 1. `./add-users-kubeconfig.sh` to add them also to our ~/.kube/config file so we can use their logins with kubectl
 1. `cat team1.yaml` - Here we're creating a new namespace, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Then we're binding that new Role to a user named Jane.
@@ -635,6 +640,7 @@ Let's explore how this all works:
 1. `kubectl config use-context docker-desktop-john` - Now lets flip to John who is restricted to the team2 namespace
 1. `kubectl get pods` - like Jane with team1, John can see things in his team2 Namespace
 1. `kubectl get pods --namespace=team1` - and, as expected we are not allowed to interact with Jane's team1 Namespace
+1. `kubectl config use-context docker-desktop` - return to our 'normal' Admin ClusterRole context in kubectl
 
 So, that was a very quick overview of how to configure multi-tenancy of Kubernetes at the control plane level via Namespaces and Roles. And, how much YAML it takes to move away from *'s for the resources and verbs in your Role definitions.
 
@@ -676,7 +682,7 @@ This will just say if you to go to the Ingress's endpoint http://localhost it'll
 
 To set that in action run `kubectl apply -f probe-test-app-ingress.yaml` and then go to http://localhost.
 
-To see something more elaborate let's add a second service at a different URI path:
+For something more elaborate, let's add a second service at a different URI path:
 ```
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -706,11 +712,16 @@ spec:
                   number: 80
 ```
 
-This is one area where nginx handles its path rewrites a bit differently to something like an AWS ALB for example - and so the Ingress document for the two controllers will vary a bit.
+**NOTE:** This is one area where nginx handles its path rewrites a bit differently to something like an AWS ALB - and so the Ingress document for the two controllers will vary a bit. We'll discuss why this is one of the sorts of things leading to Kubernetes from Ingress to Gateway below.
 
 To see this:
-* Run `kubectl apply -f nyancat.yaml` to create another Pod/Service to route to
-* Run `kubectl apply -f nycancat-ingress.yaml` to update our Ingress object to serve both URI paths with rewriting.
+* First run `kubectl apply -f nyancat.yaml` to add a new workload 
+* And then run `kubectl apply -f nyancat-ingress.yaml` to update our Ingress object to serve it under a separate /nyancat URI path via our single load application load balancer.
+* Finally check out our new service by going to http://localhost/nyancat
+
+Once you're done you need to clean this up or Istio won't work (as it'll want port 80 and 443 on localhost):
+* `kubectl delete ingress probe-test-app`
+* `helm uninstall ingress`
 
 You could also have it route to different backends/services based on different hostnames as well (pointing different A records at the same Ingress endpoint(s)). For an example of that check [this](https://kubernetes.github.io/ingress-nginx/user-guide/basic-usage/) out.
 
@@ -762,6 +773,8 @@ There are 3 versions of the reviews microservice:
 * Version v3 calls the ratings service, and displays each rating as 1 to 5 red stars.
 
 All of the services are written in different languages/runtimes/frameworks to illustrate that this solution, unlike incorporating shared libraries/packages into each microservice for traffic management and/or encryption and/or authx, can work with all of them in the same way by abstracting it all out to the network via the Envoy sidecars.
+
+**NOTE:** If you didn't remove the nginx ingress in the last step you need to do that before loading Istio (as it wants 80 and 443 instead) - run `helm uninstall ingress` before proceeding.
 
 To install the sample app run:
 * `kubectl label namespace default istio-injection=enabled` - This tells the Istio mutating admission controller to add the Istio sidecars to each Pod in the default Namespace (for new Pods that launch after the label was added)

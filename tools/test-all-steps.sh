@@ -18,9 +18,9 @@ echo "--------------------"
 #echo "kubectl port-forward pod/probe-test-app 8080:8080"
 #kubectl port-forward pod/probe-test-app 8080:8080
 #echo "--------------------"
-#echo "kubectl exec -it probe-test-app -- /bin/bash"
+echo "kubectl exec -it probe-test-app -- /bin/bash"
 #kubectl exec -it probe-test-app -- /bin/bash
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -f probe-test-app-service.yaml"
 kubectl apply -f probe-test-app-service.yaml
 echo "--------------------"
@@ -41,7 +41,7 @@ echo "kubectl delete pods --all"
 kubectl delete pods --all
 echo "--------------------"
 echo "kubectl apply -f probe-test-app-replicaset.yaml"
-kubectl apply -f probe-test-app-replicaset.
+kubectl apply -f probe-test-app-replicaset.yaml
 kubectl wait pods -n default -l app.kubernetes.io/name=probe-test-app --for condition=Ready
 echo "--------------------"
 echo "kubectl scale replicaset probe-test-app --replicas=2"
@@ -87,14 +87,9 @@ echo "--------------------"
 echo "kubectl describe replicaset probe-test-app"
 kubectl describe replicaset probe-test-app
 echo "--------------------"
-echo "kubectl delete deployments probe-test-app"
-kubectl delete deployments probe-test-app
-echo "kubectl delete service probe-test-app"
-kubectl delete service probe-test-app
-echo "--------------------"
 echo "cd ../sidecar-and-init-containers"
 cd ../sidecar-and-init-containers
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -f sidecar.yaml"
 kubectl apply -f sidecar.yaml
 kubectl wait --for=condition=ready pod pod-with-sidecar
@@ -112,113 +107,284 @@ kubectl get pod myapp-pod
 echo "--------------------"
 echo "kubectl apply -f services-init-requires.yaml"
 kubectl apply -f services-init-requires.yaml
+sleep 10
 echo "--------------------"
 #kubectl get pod myapp-pod -w
-#echo "--------------------"
+kubectl get pod myapp-pod
+echo "--------------------"
+kubectl delete pod myapp-pod
+kubectl delete pod pod-with-sidecar
+kubectl delete service myservice
+kubectl delete service mydb
+echo "--------------------"
 echo "cd ../pvs-and-statefulsets"
 cd ../pvs-and-statefulsets
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -f hostpath-provisioner.yaml"
 kubectl apply -f hostpath-provisioner.yaml
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get storageclass"
 kubectl get storageclass
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -f pvc.yaml"
 kubectl apply -f pvc.yaml
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pvc"
 kubectl get pvc
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -f pod.yaml"
 kubectl apply -f pod.yaml
 kubectl wait --for=condition=ready pod nginx
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pvc"
 kubectl get pvc
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pv"
 kubectl get pv
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -f service.yaml"
 kubectl apply -f service.yaml
 sleep 10
-#echo "--------------------"
+echo "--------------------"
 echo "curl http://localhost:8001"
 curl http://localhost:8001
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl exec -it nginx  -- bash -c \"echo 'Data on PV' > /usr/share/nginx/html/index.html\""
 kubectl exec -it nginx  -- bash -c "echo 'Data on PV' > /usr/share/nginx/html/index.html"
-#echo "--------------------"
+echo "--------------------"
 echo "curl http://localhost:8001"
 curl http://localhost:8001
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl delete pod nginx"
 kubectl delete pod nginx
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pv"
 kubectl get pv
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -f pod.yaml"
 kubectl apply -f pod.yaml
 kubectl wait --for=condition=ready pod nginx
-#echo "--------------------"
+echo "--------------------"
 echo "curl http://localhost:8001"
 curl http://localhost:8001
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl delete service nginx"
 kubectl delete service nginx
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl delete pod nginx"
 kubectl delete pod nginx
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl delete pvc test-pvc"
 kubectl delete pvc test-pvc
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pv"
 kubectl get pv
-#echo "--------------------"
+echo "--------------------"
 cd ../keda-example/rabbitmq
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl apply -k ."
 kubectl apply -k .
-#echo "--------------------"
-echo "kubectl rollout status statefulset/rabbitmq"
 kubectl rollout status statefulset/rabbitmq
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl describe statefulset rabbitmq"
 kubectl describe statefulset rabbitmq
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pods"
 kubectl get pods
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pvc"
 kubectl get pvc
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl get pv"
 kubectl get pv
-#echo "--------------------"
-echo "kubectl delete pod rabbit-mq-0"
-kubectl delete pod rabbit-mq-0
-#echo "--------------------"
+echo "--------------------"
+echo "kubectl delete pod rabbitmq-0"
+kubectl delete pod rabbitmq-0
+echo "--------------------"
 echo "kubectl get pods"
 kubectl get pods
-#echo "--------------------"
+echo "--------------------"
 echo "cd ../../monitoring"
 cd ../../monitoring
-#echo "--------------------"
+echo "--------------------"
 echo "./install-prometheus.sh"
 ./install-prometheus.sh
 sleep 10
 kubectl rollout status deployment adapter-prometheus-adapter -n monitoring
-sleep 10
-#echo "--------------------"
+sleep 60
+echo "--------------------"
 echo "kubectl top nodes"
 kubectl top nodes
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl top pods"
 kubectl top pods
-#echo "--------------------"
+echo "--------------------"
 echo "kubectl top pods -n monitoring"
 kubectl top pods -n monitoring
+echo "--------------------"
+echo "cd ../probe-test-app"
+cd ../probe-test-app
+echo "--------------------"
+echo "kubectl apply -f probe-test-app-hpa.yaml"
+kubectl apply -f probe-test-app-hpa.yaml
+echo "--------------------"
+echo "kubectl apply -f generate-load-app-replicaset.yaml"
+kubectl apply -f generate-load-app-replicaset.yaml
+sleep 30
+echo "--------------------"
+echo "kubectl get pods"
+kubectl get pods
+echo "--------------------"
+echo "kubectl delete replicaset generate-load-app"
+kubectl delete replicaset generate-load-app
+sleep 30
+echo "--------------------"
+echo "kubectl describe hpa probe-test-app"
+kubectl describe hpa probe-test-app
+echo "--------------------"
+echo "cd ../limit-examples"
+cd ../limit-examples
+echo "--------------------"
+echo "kubectl apply -f cpu-stressor.yaml"
+kubectl apply -f cpu-stressor.yaml
+kubectl rollout status deployment cpu-stressor -n default
+echo "--------------------"
+#kubectl edit deployment cpu-stressor
 #echo "--------------------"
+echo "kubectl delete deployment cpu-stressor"
+kubectl delete deployment cpu-stressor
+echo "--------------------"
+echo "kubectl apply -f memory-stressor.yaml"
+kubectl apply -f memory-stressor.yaml
+sleep 10
+echo "--------------------"
+#kubectl get pods -w
+#echo "--------------------"
+echo "kubectl delete pod memory-stressor"
+kubectl delete pod memory-stressor
+echo "--------------------"
+echo "cd ../keda-example"
+cd ../keda-example
+echo "--------------------"
+echo "./install-keda.sh"
+./install-keda.sh
+sleep 10
+echo "--------------------"
+echo "kubectl apply -f consumer.yaml"
+kubectl apply -f consumer.yaml
+echo "--------------------"
+echo "kubectl apply -f keda-scaled-object.yaml"
+kubectl apply -f keda-scaled-object.yaml
+echo "--------------------"
+echo "kubectl apply -f publisher.yaml"
+kubectl apply -f publisher.yaml
+echo "--------------------"
+echo "kubectl get pods"
+kubectl get pods
+echo "--------------------"
+echo "kubectl events"
+kubectl events
+echo "--------------------"
+echo "kubectl describe job rabbitmq-publish"
+kubectl describe job rabbitmq-publish
+echo "--------------------"
+echo "cd ../cronjob"
+cd ../cronjob
+echo "--------------------"
+echo "kubectl apply -f cronjob.yaml"
+kubectl apply -f cronjob.yaml
+sleep 125
+echo "--------------------"
+#k9s
+echo "kubectl get pods"
+kubectl get pods
+echo "--------------------"
+echo "kubectl get cronjob"
+kubectl get cronjob
+echo "--------------------"
+echo "kubectl delete cronjob hello"
+kubectl delete cronjob hello
+echo "--------------------"
+echo "kubectl get pods -A"
+kubectl get pods -A
+echo "--------------------"
+echo "kubectl api-resources"
+kubectl api-resources
+echo "--------------------"
+echo "kubectl get clusterrole admin -o yaml"
+kubectl get clusterrole admin -o yaml
+echo "--------------------"
+echo "kubectl get clusterrole admin -o yaml | wc -l"
+kubectl get clusterrole admin -o yaml | wc -l
+echo "--------------------"
+echo "cd ../k8s-authz"
+cd ../k8s-authz
+echo "--------------------"
+echo "./setup-tokens-on-cluster.sh"
+./setup-tokens-on-cluster.sh
+echo "--------------------"
+echo "./add-users-kubeconfig.sh"
+./add-users-kubeconfig.sh
+echo "--------------------"
+echo "cat team1.yaml"
+cat team1.yaml
+echo "--------------------"
+echo "kubectl apply -f team1.yaml && kubectl apply -f team2.yaml"
+kubectl apply -f team1.yaml && kubectl apply -f team2.yaml
+echo "--------------------"
+echo "kubectl config get-contexts"
+kubectl config get-contexts
+echo "--------------------"
+echo "kubectl config use-context docker-desktop-jane"
+kubectl config use-context docker-desktop-jane
+echo "--------------------"
+echo "kubectl get pods -A"
+kubectl get pods -A
+echo "--------------------"
+echo "kubectl get pods"
+kubectl get pods
+echo "--------------------"
+echo "kubectl config use-context docker-desktop-john"
+kubectl config use-context docker-desktop-john
+echo "--------------------"
+echo "kubectl get pods"
+kubectl get pods
+echo "--------------------"
+echo "kubectl get pods --namespace=team1"
+kubectl get pods --namespace=team1
+echo "--------------------"
+echo "kubectl config use-context docker-desktop"
+kubectl config use-context docker-desktop
+echo "--------------------"
+echo "cd ../ingress"
+cd ../ingress
+echo "--------------------"
+echo "./install-nginx.sh"
+./install-nginx.sh
+sleep 10
+echo "--------------------"
+echo "kubectl apply -f probe-test-app-ingress.yaml"
+kubectl apply -f probe-test-app-ingress.yaml
+sleep 10
+echo "--------------------"
+echo "curl http://localhost"
+curl http://localhost
+echo "--------------------"
+echo "kubectl apply -f nyancat.yaml"
+kubectl apply -f nyancat.yaml
+echo "--------------------"
+echo "kubectl rollout status deployment nyancat -n default"
+kubectl rollout status deployment nyancat -n default
+echo "--------------------"
+echo "kubectl apply -f nyancat-ingress.yaml"
+kubectl apply -f nyancat-ingress.yaml
+echo "--------------------"
+echo "curl http://localhost/nyancat/"
+curl http://localhost/nyancat/
+echo "--------------------"
+echo "kubectl delete ingress probe-test-app"
+kubectl delete ingress probe-test-app
+echo "--------------------"
+echo "helm uninstall ingress"
+helm uninstall ingress
+echo "--------------------"

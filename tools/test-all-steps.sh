@@ -516,7 +516,7 @@ echo "./install-istio.sh"
 sleep 30
 echo "--------------------"
 sleep 5
-echo "
+echo "kubectl label namespace default istio-injection=enabled"
 kubectl label namespace default istio-injection=enabled
 echo "--------------------"
 sleep 5

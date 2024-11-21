@@ -796,7 +796,8 @@ One of the things that Istio can really help us with is traffic management. To s
 * Run `kubectl apply -f bookinfo/gateway-api/route-reviews-90-10.yaml` to change it so that it sends 90% of the traffic to v1 and 10% of it to v2 (useful for progressive rollouts / canary deployments)
   * See this by refreshing http://localhost/productpage and also by seeing the subsequent Traffic Map in Kiali
 * Run `kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml` to change it to send the user Jason to v2 and everybody else to v1 - replacing some of what we may have previously needed feature flags in code for at the network/mesh layer
-  * On http://localhost/productpage log in as user jason and refresh the browser to see the black stars of v2
+  * It does this based on a header that is put on the downstream request betweeen the the productpage and the reviews service
+  * On http://localhost/productpage log in as user jason (it doesn't validate the password - type anything for that) and refresh the browser to see the black stars of v2!
   * Open another browser or the existing one in incognito and see that non-Jason goes back to no stars
 
 **NOTE:** You were just working with the Gateway API there (the replacement for Ingress we were talking about) - Istio is just implementing that standard - and it would work with other controllers that provide load balancers to that standard as well (such as when AWS releases theirs for the ALB).

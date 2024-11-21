@@ -432,7 +432,7 @@ sleep 5
 echo "cat team1.yaml"
 cat team1.yaml
 echo "--------------------"
-sleep 5
+sleep 10
 echo "kubectl apply -f team1.yaml && kubectl apply -f team2.yaml"
 kubectl apply -f team1.yaml && kubectl apply -f team2.yaml
 echo "--------------------"
@@ -475,7 +475,7 @@ echo "--------------------"
 sleep 5
 echo "./install-nginx.sh"
 ./install-nginx.sh
-sleep 20
+sleep 30
 echo "--------------------"
 sleep 5
 echo "kubectl apply -f probe-test-app-ingress.yaml"
@@ -509,3 +509,37 @@ echo "--------------------"
 sleep 5
 echo "helm uninstall ingress"
 helm uninstall ingress
+echo "--------------------"
+sleep 5
+echo "./install-istio.sh"
+./install-istio.sh
+sleep 30
+echo "--------------------"
+sleep 5
+echo "
+kubectl label namespace default istio-injection=enabled
+echo "--------------------"
+sleep 5
+echo "kubectl apply -f bookinfo/platform/kube/bookinfo.yaml"
+kubectl apply -f bookinfo/platform/kube/bookinfo.yaml
+echo "--------------------"
+sleep 5
+echo "kubectl apply -f bookinfo/gateway-api/bookinfo-gateway.yaml"
+kubectl apply -f bookinfo/gateway-api/bookinfo-gateway.yaml
+echo "--------------------"
+sleep 5
+echo "kubectl apply -f bookinfo/platform/kube/bookinfo-versions.yaml"
+kubectl apply -f bookinfo/platform/kube/bookinfo-versions.yaml
+echo "--------------------"
+sleep 5
+echo "kubectl apply -f bookinfo/gateway-api/route-all-v1.yaml"
+kubectl apply -f bookinfo/gateway-api/route-all-v1.yaml
+echo "--------------------"
+sleep 5
+echo "kubectl apply -f bookinfo/gateway-api/route-reviews-90-10.yaml"
+kubectl apply -f bookinfo/gateway-api/route-reviews-90-10.yaml
+echo "--------------------"
+sleep 5
+echo "kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml"
+kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml
+

@@ -29,6 +29,7 @@ This set of general Kubernetes training materials was designed to run on the Kub
     - [What is 'wrong' with Ingress for it to need to be eventually replaced (by Gateway)?](#what-is-wrong-with-ingress-for-it-to-need-to-be-eventually-replaced-by-gateway)
   - [Gateway](#gateway)
   - [Istio](#istio)
+    - [Carefully consider whether you need a Service Mesh like Istio](#carefully-consider-whether-you-need-a-service-mesh-like-istio)
   - [Kustomize and Helm](#kustomize-and-helm)
   - [Controllers/Operators](#controllersoperators)
     - [Admission Controllers / OPA Gatekeeper](#admission-controllers--opa-gatekeeper)
@@ -745,15 +746,17 @@ So, in the examples below for Istio, we'll focus on the Gateway API option/path 
 [Istio](https://istio.io/) is the leading service mesh for Kubernetes.
 
 Service Meshes like Istio have the following benefits:
-1. Security - Istio provides strong identity-based authentication, authorization, and encryption. It also allows you to enforce policies with access controls, rate limits, and quotas. 
-1. Traffic management - Istio offers fine-grained control over traffic behavior with features like routing rules, retries, failovers, and fault injection. You can also use Istio to split traffic for A/B testing and canary deployments. 
-1. Observability - Istio provides robust tracing, monitoring, and logging features to help you understand how service performance impacts upstream matters. You can collect telemetry data from individual microservices to gain visibility into their health.
+1. Security - Istio lets you enforce strong identity-based authentication, authorization, and encryption (via mTLS). It also allows you to enforce rate limits and quotas.
+2. Traffic management - Istio offers fine-grained control over traffic behavior with features like advanced routing rules (such as split traffic for A/B testing or canary/progressive deployments), retries, failovers, and fault injection.
+3. Observability - Istio provides robust tracing, monitoring, and logging features to help you understand how service performance impacts upstream matters. You can collect telemetry data from individual microservices to gain visibility into their health.
 
 Traditionally, service meshes have been based on sidecar containers running a service like [Envoy](https://www.envoyproxy.io/) within each Pod. Many like Istio are starting to offer an alterative, which Istio calls [Ambient Mesh](https://istio.io/latest/blog/2022/introducing-ambient-mesh/), which can function without the overhead of so many sidecars. Ambient Mesh doesn't work with Docker Desktop (as it doesn't have a traditional CNI) though - and the traditional sidecar-based Istio are also still the most commonly used today - so we'll be looking at the traditional sidecar-based Istio here.
 
 To install Istio onto our cluster `cd istio` and run `./install-istio.sh`. 
 
 **NOTE:** Istio (or at least its Kiali UI) requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
+
+**NOTE:** If you didn't remove the nginx ingress in the last step you need to do that before loading Istio (as it wants 80 and 443 instead) - run `helm uninstall ingress` before proceeding.
 
 Now that Istio is installed we'll be working with the most common sample Istio app - bookinfo.
 ![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
@@ -774,8 +777,6 @@ There are 3 versions of the reviews microservice:
 
 All of the services are written in different languages/runtimes/frameworks to illustrate that this solution, unlike incorporating shared libraries/packages into each microservice for traffic management and/or encryption and/or authx, can work with all of them in the same way by abstracting it all out to the network via the Envoy sidecars.
 
-**NOTE:** If you didn't remove the nginx ingress in the last step you need to do that before loading Istio (as it wants 80 and 443 instead) - run `helm uninstall ingress` before proceeding.
-
 To install the sample app run:
 * `kubectl label namespace default istio-injection=enabled` - This tells the Istio mutating admission controller to add the Istio sidecars to each Pod in the default Namespace (for new Pods that launch after the label was added)
 * `kubectl apply -f bookinfo/platform/kube/bookinfo.yaml` - This deploys our sample application as above
@@ -788,9 +789,30 @@ Then go to the Kiali UI at http://localhost:20001/. You'll need a token that you
 You won't see anything here in the Traffic Map until you generate traffic through the system by going to http://localhost/productpage. Refresh it 5-10 times and you'll see that it is balancing the load across those three versions of the service (one without stars, one with black stars and the other with red stars) which changes/impacts the customer experience. If you don't see anything ensure you've picked the default namespace in the dropdown up top - and note it also defaults to only showing you the laste minute so pick a longer time range if you last hit the service over a minute ago.
 ![](images/kiali.png)
 
-One of the things that Istio can really help us with is traffic management. 
+One of the things that Istio can really help us with is traffic management. To see this in action:
+* Run `kubectl apply -f bookinfo/platform/kube/bookinfo-versions.yaml` to define the available versions via backend service definitions
+* Run `kubectl apply -f bookinfo/gateway-api/route-all-v1.yaml` to have it route to only the v1 version (so you'll stop seeing both the black and red stars)
+  * See this by refreshing http://localhost/productpage and also by seeing the subsequent Traffic Map in Kiali
+* Run `kubectl apply -f bookinfo/gateway-api/route-reviews-90-10.yaml` to change it so that it sends 90% of the traffic to v1 and 10% of it to v2 (useful for progressive rollouts / canary deployments)
+  * See this by refreshing http://localhost/productpage and also by seeing the subsequent Traffic Map in Kiali
+* Run `kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml` to change it to send the user Jason to v2 and everybody else to v1 - replacing some of what we may have previously needed feature flags in code for at the network/mesh layer
+  * On http://localhost/productpage log in as user jason and refresh the browser to see the black stars of v2
+  * Open another browser or the existing one in incognito and see that non-Jason goes back to no stars
 
-TODO
+**NOTE:** You were just working with the Gateway API there (the replacement for Ingress we were talking about) - Istio is just implementing that standard - and it would work with other controllers that provide load balancers to that standard as well (such as when AWS releases theirs for the ALB).
+
+We'll keep the Istio running as we'll leverage it in our Argo Rollouts example coming later on. We can remove the bookinfo sample app though by running `./bookinfo/platform/kube/cleanup.sh` and hitting enter to accept the [default] namespace.
+
+This is just an introduction to Istio - we could have an entire session just on it as there is so many capabilities here. And maybe we will in the future if you'd like. You can explore more of this and other demos the project provides by exploring the following sections of their documentation:
+* [Traffic Management](https://istio.io/latest/docs/tasks/traffic-management/)
+* [Security](https://istio.io/latest/docs/tasks/security/)
+* [Policy Enforcement / Rate Limits](https://istio.io/latest/docs/tasks/policy-enforcement/)
+* [Observability](https://istio.io/latest/docs/tasks/policy-enforcement/)
+
+### Carefully consider whether you need a Service Mesh like Istio
+Employing the Istio Service Mesh on your Kubernetes cluster(s) can offer significant benefits in terms of traffic management, observability, and security. However, teams should approach it with caution and careful consideration due to the associated costs, operational overhead, and potential risks involved. The classic Sidecar version, which remains the most common, *doubles* the number of containers that you are running by putting an Envoy sidecar into each Pod. And issues in a service mesh are often harder to debug because they involve multiple layers (application, sidecar proxies, mesh control plane, etc.). Plus there are often operational overhead/challenges in upgrading and maintaining this fairly complex yet critical system in production once you've standardized on it.
+
+Native Kubernetes features (e.g., Ingress controllers - especially for managed AWS ALBs with their controller, NetworkPolicy, etc.) may often suffice and with much less cost, complexity and overhead.
 
 ## Kustomize and Helm
 TODO

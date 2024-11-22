@@ -681,6 +681,10 @@ spec:
 
 This will just say if you to go to the Ingress's endpoint http://localhost it'll forward you through to the probe-test-app service.
 
+**NOTE:** This step assumes that the probe-test-app workload is still running (since we never cleaned that up above). If it isn't (you skipped the sections above) then you can run it with the following commands:
+* `kubectl apply -f ../probe-test-app/probe-test-app-deployment.yaml`
+* `kubectl apply -f ../probe-test-app-service.yaml`
+
 To set that in action run `kubectl apply -f probe-test-app-ingress.yaml` and then go to http://localhost.
 
 For something more elaborate, let's add a second service at a different URI path:

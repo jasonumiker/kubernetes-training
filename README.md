@@ -31,6 +31,8 @@ This set of general Kubernetes training materials was designed to run on the Kub
   - [Istio](#istio)
     - [Carefully consider whether you need a Service Mesh like Istio](#carefully-consider-whether-you-need-a-service-mesh-like-istio)
   - [Kustomize and Helm](#kustomize-and-helm)
+    - [Kustomize](#kustomize)
+    - [Helm](#helm)
   - [Controllers/Operators](#controllersoperators)
     - [Admission Controllers / OPA Gatekeeper](#admission-controllers--opa-gatekeeper)
   - [Kubernetes Pod Security / Multi-tenancy Considerations](#kubernetes-pod-security--multi-tenancy-considerations)
@@ -760,7 +762,7 @@ To install Istio onto our cluster `cd istio` and run `./install-istio.sh`.
 
 **NOTE:** Istio (or at least its Kiali UI) requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
 
-**NOTE:** If you didn't remove the nginx ingress in the last step you need to do that before loading Istio (as it wants 80 and 443 instead) - run `helm uninstall ingress` before proceeding.
+**NOTE:** If you didn't remove the nginx ingress at the end of the last section then you need to do that before loading Istio (as it wants ports 80 and 443 instead) - run `helm uninstall ingress` before proceeding.
 
 Now that Istio is installed we'll be working with the most common sample Istio app - bookinfo.
 ![](https://istio.io/latest/docs/examples/bookinfo/withistio.svg)
@@ -820,6 +822,24 @@ Employing the Istio Service Mesh on your Kubernetes cluster(s) can offer signifi
 Native Kubernetes features (e.g., Ingress controllers - especially for managed AWS ALBs with their controller, NetworkPolicy, etc.) may often suffice and with much less cost, complexity and overhead.
 
 ## Kustomize and Helm
+There are two tools that are used to do templating and bundling of the Kubernetes YAML manifests needed for your app(s) - for example changing the manifests to accommodate the slight variations needed for different environments. Either can work - but people tend to have quite strong opinions on which they prefer based on preference and the sort of use-cases they tend to hit more internally. Also public projects and cluster add-ons tend to prefer Helm - so even if you don't use it for your own projects you tend to still need to understand it and deploy a few charts for 3rd party things you put on your cluster(s).
+
+### Kustomize
+TODO
+
+### Helm
+You've already deployed several Helm charts already as part of this workshop. You can see them by running `helm ls -A`:
+```
+% helm ls -A
+NAME        	NAMESPACE   	REVISION	UPDATED                              	STATUS  	CHART                       	APP VERSION
+adapter     	monitoring  	1       	2024-11-22 15:12:14.529373 +1100 AEDT	deployed	prometheus-adapter-4.11.0   	v0.12.0    
+istio-base  	istio-system	1       	2024-11-22 15:24:06.188291 +1100 AEDT	deployed	base-1.24.0                 	1.24.0     
+istiod      	istio-system	1       	2024-11-22 15:24:07.330316 +1100 AEDT	deployed	istiod-1.24.0               	1.24.0     
+keda        	keda        	1       	2024-11-22 15:16:31.410574 +1100 AEDT	deployed	keda-2.16.0                 	2.16.0     
+kiali-server	istio-system	1       	2024-11-22 15:24:16.176899 +1100 AEDT	deployed	kiali-server-2.1.0          	v2.1.0     
+prometheus  	monitoring  	1       	2024-11-22 15:11:47.902443 +1100 AEDT	deployed	kube-prometheus-stack-65.8.1	v0.77.2   
+```
+
 TODO
 
 ## Controllers/Operators

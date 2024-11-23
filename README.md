@@ -43,32 +43,34 @@ This set of general Kubernetes training materials was designed to run on the Kub
 ## Prerequisites
 1. Download and Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 1. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
-    1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
+  1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
 1. Install Helm
-    1. On Mac you can do this via Homebrew with a `brew install helm`
+  1. On Mac you can do this via Homebrew with a `brew install helm`
+1. Install Kustomize
+  1. On Mac you can do this via Homebrew with a `brew install kustomize`
 1. Install [k9s](https://k9scli.io/)
-    1. On Mac you can do this via Homebrew with a `brew install derailed/k9s/k9s`
+  1. On Mac you can do this via Homebrew with a `brew install derailed/k9s/k9s`
 1. Install git (if it's not already)
-    1. On Mac it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew)
+  1. On Mac it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew)
 1. Run `git clone https://github.com/jasonumiker/kubernetes-training.git`
 1. Make sure your kubeconfig is pointed at docker-desktop:
-    1. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
-        1. If you don't then run `export KUBECONFIG=~/.kube/config` which will point you there for the remainder of this Terminal session
-    1. Then run `kubectl config get-contexts` and you should see
-        ```
-        CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
-        *         docker-desktop   docker-desktop   docker-desktop   
+  1. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
+    1. If you don't then run `export KUBECONFIG=~/.kube/config` which will point you there for the remainder of this Terminal session
+  1. Then run `kubectl config get-contexts` and you should see
+    ```
+    CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
+    *         docker-desktop   docker-desktop   docker-desktop   
 
-        ```
-    1. And/or run `kubectl get nodes` and you should see
-      ```
-      NAME             STATUS   ROLES           AGE   VERSION
-      docker-desktop   Ready    control-plane   10s   v1.30.2
-      ```
-    1. If you don't see this then I'd suggest these troubleshooting steps:
-      1. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
-      1. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
-      1. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
+    ```
+  1. And/or run `kubectl get nodes` and you should see
+    ```
+    NAME             STATUS   ROLES           AGE   VERSION
+    docker-desktop   Ready    control-plane   10s   v1.30.2
+    ```
+  1. If you don't see this then I'd suggest these troubleshooting steps:
+    1. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
+    1. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
+    1. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
 
 TODO: Add Windows instructions
 
@@ -730,7 +732,14 @@ Once you're done you need to clean this up or Istio won't work (as it'll want po
 * `kubectl delete ingress probe-test-app`
 * `helm uninstall ingress`
 
-You could also have it route to different backends/services based on different hostnames as well (pointing different A records at the same Ingress endpoint(s)). For an example of that check [this](https://kubernetes.github.io/ingress-nginx/user-guide/basic-usage/) out.
+We can also now optionally remove probe-test-app and nyancat too:
+* `kubectl delete hpa probe-test-app`
+* `kubectl delete deployment probe-test-app`
+* `kubectl delete deployment nyancat`
+* `kubectl delete service probe-test-app`
+* `kubectl delete service nyancat`
+
+**NOTE:** You could also have had it route to different backends/services based on different hostnames as well (pointing different A records at the same Ingress endpoint(s)). For an example of that check [this](https://kubernetes.github.io/ingress-nginx/user-guide/basic-usage/) out.
 
 ### What is 'wrong' with Ingress for it to need to be eventually replaced (by Gateway)?
 Ingress will *eventually* go away and be replaced by Gateway. However, many of the providers such as [AWS](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1338) and [Microsoft](https://github.com/Azure/AKS/issues/3198) have not yet released new versions of their load balancer controllers that support that the new Gateway API. The only of the major cloud providers to release one at the time of writing this is [Google](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api). And, they still also offer an Ingress option alongside it too. So, Ingress remains the current solution in the industry - especially in places with AWS EKS or Azure AKS in the mix.
@@ -817,7 +826,9 @@ This is just an introduction to Istio - we could have an entire session just on 
 * [Observability](https://istio.io/latest/docs/tasks/policy-enforcement/)
 
 ### Carefully consider whether you need a Service Mesh like Istio
-Employing the Istio Service Mesh on your Kubernetes cluster(s) can offer significant benefits in terms of traffic management, observability, and security. However, teams should approach it with caution and careful consideration due to the associated costs, operational overhead, and potential risks involved. The classic Sidecar version, which remains the most common, *doubles* the number of containers that you are running by putting an Envoy sidecar into each Pod. And issues in a service mesh are often harder to debug because they involve multiple layers (application, sidecar proxies, mesh control plane, etc.). Plus there are often operational overhead/challenges in upgrading and maintaining this fairly complex yet critical system in production once you've standardized on it.
+Employing the Istio Service Mesh on your Kubernetes cluster(s) can offer significant benefits in terms of traffic management, observability, and security. However, teams should approach it with caution, and careful consideration, due to the associated costs, operational overhead, and potential risks involved. 
+
+The classic Sidecar version, which remains the most common, *doubles* the number of containers that you are running (by putting an Envoy sidecar into each Pod). And issues in a service mesh are often harder to debug because they involve multiple layers (application, sidecar proxies, mesh control plane, etc.). Plus there are often operational challenges in upgrading and maintaining this fairly complex yet system in production once you've standardized on it.
 
 Native Kubernetes features (e.g., Ingress controllers - especially for managed AWS ALBs with their controller, NetworkPolicy, etc.) may often suffice and with much less cost, complexity and overhead.
 
@@ -835,12 +846,31 @@ It is used really in two main ways (often together):
 * And/or you can type standard JSON patches in the kustomization.yaml file(s) to add/remove/change any parameters in the bases very specifically.
 ![](images/kustomize2.png)
 
-Also the kustomization.yaml file(s) that you put in each of these folders does a few nice things for you:
+Also the kustomization.yaml file(s) that you put in each of these folders with Kustomize does another few nice things:
 * It lets you specify the order in which to apply the K8s manifests
-  * If you just did a `kubectl apply -f .` in a folder then it won't know that the Namespace needs to be created before the Deployment that references it - and so that deploy will fail whereas a `kubectl apply -k .` will succeed if the files are in the right order there
+  * Whereas if you just did a `kubectl apply -f .` in a folder then it won't know that the Namespace needs to be created before the Deployment that references it - and so that deploy will fail whereas a `kubectl apply -k .` will succeed if the files are in the right order there
 * It has a few handy features/commands you can put in it to help with common transformations - you can see those [here](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#kustomize-feature-list)
 
-TODO
+We'll start with an example of bases and overlays. This is a very simple example that:
+* Has a base folder with: 
+  * A deployment and a service as well as a kustomization.yaml
+    * The kustomization.yaml forces the order of first deploying the deployment then the service (which in this case doesn't matter - but there are many cases where it would)
+* Has three environmental overlay folders that force a prefix on the Names of `dev-` for the dev environment, `stg-` for staging and `prod-` for the production
+
+First run `cd ../kustomise` then `kustomize build prod` - this will show you the rendered combination of the base and the prod overlay.
+
+You can deploy it right from kubectl with a `kubectl apply -k prod`
+
+If you then run `kubectl get pods` you'll see that it appended prod- to the names of the resources.
+
+Then run `kubectl apply -k dev` - this does the same thing but also reduces the Deployment to one replica (for a cheaper non-HA dev environment). You can see all you need to do is put enough of the file to for Kustomise to match on in [kustomize/dev/deployment.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/kustomize/dev/deployment.yaml) and then the values you want to override - then list it as a patch file in the overlay's kustomization.yaml.
+
+To see the alternative of doing an in-line JSON patch in the kustomization.yaml file (rather than getting it to merge manifests) have a look at [kustomize/dev/deployment.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/kustomize/stg/kustomization.yaml). This makes the same cahnge as we did in dev (replace the bases's replicas parameter of 2 with 1) but in a different more explicit way that Kustomize also allows.
+
+You can clean this all up by running:
+* kubectl delete -k prod`
+* kubectl delete -k stg`
+* kubectl delete -k dev`
 
 ### Helm
 The big advantages (or disadvantages depending on your personal preference) of Helm vs. Kustomize is that it:

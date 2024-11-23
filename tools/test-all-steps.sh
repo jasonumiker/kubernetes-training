@@ -511,6 +511,14 @@ echo "helm uninstall ingress"
 helm uninstall ingress
 echo "--------------------"
 sleep 1
+echo "Cleaning up probe-test-app and nyancat..."
+kubectl delete hpa probe-test-app
+kubectl delete deployment probe-test-app
+kubectl delete deployment nyancat
+kubectl delete service probe-test-app
+kubectl delete service nyancat
+echo "--------------------"
+sleep 1
 echo "cd ../istio"
 cd ../istio
 echo "--------------------"

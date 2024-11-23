@@ -546,4 +546,7 @@ echo "--------------------"
 sleep 1
 echo "kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml"
 kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml
-
+echo "--------------------"
+sleep 1
+echo "bookinfo/platform/kube/cleanup.sh"
+bookinfo/platform/kube/cleanup.sh

@@ -982,6 +982,8 @@ To satisfy the request we not only need an owner label but there was some regex 
 
 Before proceeding lets remove the Constraint (we can leave the ConstraintTemplate unapplied as that won't hurt anything) - `kubectl delete constraint pods-in-default-must-have-owner`. You can delete the pod too with `kubectl delete pod probe-test-app`.
 
+**NOTE:** You need to be careful with Pod Constraints because people usually don't launch them directly - they do it via ReplicaSets/Deployments/StatefulSets etc. And so they won't hit the Constraint when you do the `kubectl apply` like you did here - but instead it'll take their Deployment and then that will tell a ReplicaSet to do it and then the ReplicaSet will fail to be able to launch the Pods in the end. If you are going to do constraints on Pods then you should have some form of testing/linting in the pipeline etc. to catch things before they are deployed as well - and treat Gatekeeper as a fail-safe last-resort control used in tandem.
+
 ## GitOps with Argo CD
 TODO
 

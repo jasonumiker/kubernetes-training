@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: probe-test-app
+  labels:
+    app.kubernetes.io/name: probe-test-app
+    owner: jane.agilebank.demo
+spec:
+  containers:
+  - name: probe-test-app
+    image: jasonumiker/probe-test-app:v1
+    ports:
+    - containerPort: 8080
+    resources:
+      requests:
+        cpu: 50m
+        memory: 52Mi
+    # For the probes I have explicty listed all the default fields with default settings
+    # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+    livenessProbe:
+      httpGet:
+        path: /livez
+        port: 8080
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8080
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 1
+      successThreshold: 1
+      failureThreshold: 3

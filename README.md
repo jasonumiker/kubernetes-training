@@ -36,9 +36,9 @@ This set of general Kubernetes training materials was designed to run on the Kub
     - [What is a Custom Resource Definition (CRD)?](#what-is-a-custom-resource-definition-crd)
   - [Controllers/Operators](#controllersoperators)
     - [Admission Controllers / OPA Gatekeeper](#admission-controllers--opa-gatekeeper)
-  - [Kubernetes Pod Security / Multi-tenancy Considerations](#kubernetes-pod-security--multi-tenancy-considerations)
   - [GitOps with Argo CD](#gitops-with-argo-cd)
   - [Progressive Delivery with Argo Rollouts](#progressive-delivery-with-argo-rollouts)
+  - [Kubernetes Pod Security / Multi-tenancy Considerations](#kubernetes-pod-security--multi-tenancy-considerations)
   - [Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them](#other-topics-that-we-didnt-cover-because-docker-desktops-k8s-is-not-suitable-for-exploring-them)
 
 ## Prerequisites
@@ -955,15 +955,40 @@ Another example, beyond simply the setup of the initial Postgres server Pod, tha
 So, the power of Operators and their Custom Resources is we can manage everything - even the Jobs of a Prometheus to scrape metrics endpoints - in this same declarative YAML format in Kubernetes as we do for its built-in resources.
 
 ### Admission Controllers / OPA Gatekeeper
-TODO
+There is a special kind of Kubernetes controller called an [Admission Controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/). The job of these is to be almost a "firewall for the YAML" that you apply to the cluster - they can quite granularly reject any `kubectl apply` if the parameters in the YAML spec file don't meet the defined requirements of the organisation.
 
-## Kubernetes Pod Security / Multi-tenancy Considerations
-TODO
+The most popular Kubernetes Admission Controller is [Gatekeeper](https://open-policy-agent.github.io/gatekeeper/website/) - which is a sub-project of the [Open Policy Agent (OPA)](https://www.openpolicyagent.org/). This is a full graduated project of the [CNCF](https://www.cncf.io/) - the same organisation that governs Kubernetes. OPA has its own high-level declarative language called for expressing the policies of what is or isn't acceptable in a JSON/YAML document (which it calls constraints) - [rego](https://www.openpolicyagent.org/docs/latest/policy-language/).
+
+Gatekeeper integrates Open Policy Agent, which is not Kubernetes-specific, into Kubernetes as an admission controller. It also is an operator allowing you to declaratively define your constraints in custom resources in K8s YAML files as well.
+
+With Gatekeeper you have [ConstraintTemplates](https://open-policy-agent.github.io/gatekeeper/website/docs/constrainttemplates/), which are the policies that you could apply, and Constraints which is where you say where/when you want to apply them in your cluster.
+
+There is a public library these OPA Gatekeeper ConstraintTemplates/Constraints available at https://open-policy-agent.github.io/gatekeeper-library/website/. Chances are whatever constraint you are looking for is already written for you there. Let's apply one of them to our cluster.
+
+To see this in action:
+* `helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts`
+* `helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.17.1`
+* `cd ../opa-gatekeeper`
+* `kubectl apply -f k8srequiredlabels-constraint-template.yaml` - this applies the ConstraintTemplate to let us require that any Pods must have certain labels
+* `kubectl apply -f pods-in-default-must-have-owner.yaml` - this constraint specifies the required labels and where they are required (in this case the owner label needs to be there on any Pods in the default Namespace)
+* `kubectl apply -f ../probe-test-app/probe-test-app-pod.yaml`
+  * And you'll see:
+    ```
+    Error from server (Forbidden): error when creating "../probe-test-app/probe-test-app-pod.yaml": admission webhook "validation.gatekeeper.sh" denied the request: [pods-in-default-must-have-owner] missing required label, requires all of: owner
+    [pods-in-default-must-have-owner] regex mismatch
+    ```
+
+To satisfy the request we not only need an owner label but there was some regex to make sure the values are in the right format of [name].agilebank.demo. We've prepared an example pod with that label that will work and you can see it work with `kubectl apply -f probe-test-app-pod.yaml`
+
+Before proceeding lets remove the Constraint (we can leave the ConstraintTemplate unapplied as that won't hurt anything) - `kubectl delete constraint pods-in-default-must-have-owner`. You can delete the pod too with `kubectl delete pod probe-test-app`.
 
 ## GitOps with Argo CD
 TODO
 
 ## Progressive Delivery with Argo Rollouts
+TODO
+
+## Kubernetes Pod Security / Multi-tenancy Considerations
 TODO
 
 ## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them

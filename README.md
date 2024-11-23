@@ -33,6 +33,7 @@ This set of general Kubernetes training materials was designed to run on the Kub
   - [Kustomize and Helm](#kustomize-and-helm)
     - [Kustomize](#kustomize)
     - [Helm](#helm)
+    - [What is a Custom Resource Definition (CRD)?](#what-is-a-custom-resource-definition-crd)
   - [Controllers/Operators](#controllersoperators)
     - [Admission Controllers / OPA Gatekeeper](#admission-controllers--opa-gatekeeper)
   - [Kubernetes Pod Security / Multi-tenancy Considerations](#kubernetes-pod-security--multi-tenancy-considerations)
@@ -649,6 +650,12 @@ Let's explore how this all works:
 
 So, that was a very quick overview of how to configure multi-tenancy of Kubernetes at the control plane level via Namespaces and Roles. And, how much YAML it takes to move away from *'s for the resources and verbs in your Role definitions.
 
+**NOTE:** Once you're done with this section you should remove the jane and john contexts from your KUBECONFIG:
+* `kubectl config delete-user jane`
+* `kubectl config delete-user john`
+* `kubectl config delete-context docker-desktop-jane`
+* `kubectl config delete-context docker-desktop-john`
+
 ## Ingress
 The initial Kubernetes approach to Layer 7 LoadBalancing is [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Unlike Services, which are built-in to Kubernetes, Ingress is more a standard for plugins/controllers to provide the capability in a (somewhat) consistent way.
 
@@ -932,14 +939,18 @@ This Helm chart actually installs an operator that installs/runs the Prometheus 
 
 A CRD is a way to extend Kubernetes to be able to give it more YAML documents to represent other things than what is built-in to Kubernetes. This chart/operator installs several but lets look at one key one (Prometheuses) - `kubectl get prometheuses -n monitoring -o yaml`.
 
-This operator is waiting for you to create a `kind: Prometheus` document - and it in response will install and manage a Prometheus server on the cluster for you.
+This operator is waiting for you to create/update/delete YAML documents of `kind: Prometheus` document (as defined in the CRD) - and, in response, it will install/update/delete prometheus server(s) on the cluster.
 
-The reason why we had to update those CRDs is the schema of what parameters the operator supports/expects form these custom resources will have changed.
+The reason why we had to update those CRDs is the schema of what parameters the operator supports/expects form these custom resources will have changed from version 65 to 66.
 
 We'll look more at what an operator is in the next section.
 
 ## Controllers/Operators
-TODO
+Kubernetes controllers are control loops that track your resource clusters and alter them to match the desired state that you declared in a continuous cycle. Kubernetes operators are a type of controller that uses API extensions — or custom resources — to complete tasks. Given that a operator is a type of controller the two terms are often (if slightly incorrectly) used interchangeably.
+
+As we discussed in the [last section](#what-is-a-custom-resource-definition-crd) a custom resource definition, or CRD, extends Kubernetes to let you define things beyond Pods and Deployments to things like Prometheuses. And then you couple that with a controller that knows how to create, update and delete Prometheus servers in response to what you define in those custom resource documents of `kind: Prometheus` once you've defined them and their schema to the system with a CRD.
+
+
 
 ### Admission Controllers / OPA Gatekeeper
 TODO
@@ -956,6 +967,6 @@ TODO
 ## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them
 * Since Docker Desktop is a single-Node Kubernetes, anything that involves multiple Nodes (draining them, updating them, scaling them in/out, etc.)
 * Since Docker Desktop doesn't have a network plugin (CNI) that supports NetworkPolicies (the K8s native firewall), anything that involves the implementation of those
-* Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS IAM, AWS SecurityGroups, external-dns of Route53, Crossplane, etc.)
+* Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS Load Balancer controller, AWS IAM Roles for Service Acounts (IRSA), AWS SecurityGroups for Pods, external-dns of Route53, Crossplane, etc.)
 
-We'll develop another training with a cloud environment that can support these items to cover them. Stay tuned!
+I'll develop another training with a cloud environment that can support these items to cover them. Stay tuned!

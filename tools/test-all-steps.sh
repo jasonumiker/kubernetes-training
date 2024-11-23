@@ -469,6 +469,13 @@ echo "kubectl config use-context docker-desktop"
 kubectl config use-context docker-desktop
 echo "--------------------"
 sleep 1
+echo "Cleaning up Jane and John..."
+kubectl config delete-user jane
+kubectl config delete-user john
+kubectl config delete-context docker-desktop-jane
+kubectl config delete-context docker-desktop-john
+echo "--------------------"
+sleep 1
 echo "cd ../ingress"
 cd ../ingress
 echo "--------------------"
@@ -560,8 +567,8 @@ echo "bookinfo/platform/kube/cleanup.sh"
 bookinfo/platform/kube/cleanup.sh
 echo "--------------------"
 sleep 1
-echo "cd ../kustomise"
-cd ../kustomise
+echo "cd ../kustomize"
+cd ../kustomize
 echo "--------------------"
 sleep 1
 echo "kustomize build prod"
@@ -584,7 +591,7 @@ echo "kubectl get pods"
 kubectl get pods
 echo "--------------------"
 sleep 1
-echo "Cleaning up Kustomization example...
+echo "Cleaning up Kustomization example..."
 kubectl delete -k prod
 kubectl delete -k dev
 echo "--------------------"

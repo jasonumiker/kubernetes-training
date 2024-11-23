@@ -15,26 +15,7 @@
 #   limitations under the License.
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-
-# only ask if in interactive mode
-if [[ -t 0 && -z ${NAMESPACE} ]];then
-  echo -n "namespace ? [default] "
-  read -r NAMESPACE
-fi
-
-# verify if the namespace exists, otherwise use default namespace
-if [[ -n ${NAMESPACE} ]];then
-  ns=$(kubectl get namespace "${NAMESPACE}" --no-headers --output=go-template="{{.metadata.name}}" 2>/dev/null)
-  if [[ -z ${ns} ]];then
-    echo "NAMESPACE ${NAMESPACE} not found."
-    NAMESPACE=default
-  fi
-fi
-
-# if no namespace is provided, use default namespace
-if [[ -z ${NAMESPACE} ]];then
-  NAMESPACE=default
-fi
+NAMESPACE=default
 
 echo "using NAMESPACE=${NAMESPACE}"
 

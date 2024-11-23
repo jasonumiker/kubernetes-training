@@ -6,4 +6,4 @@ metadata:
 resources:
 - probe-test-app-deployment.yaml
 - probe-test-app-hpa.yaml
-- probe-test-service.yaml
+- probe-test-app-service.yaml

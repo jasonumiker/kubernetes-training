@@ -84,7 +84,7 @@ In this section you'll learn about:
 * [DaemonSets](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) - which is how we can say we want to deploy something once on every Node in the cluster
 
 ### A Pod
-Have a look at the PodSpec at [probetest-app/probe-test-app-pod.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-pod.yaml). You'll see the following:
+Have a look at the PodSpec at [probetest-testapp/probe-test-app-pod.yaml](probe-test-app/probe-test-app-pod.yaml). You'll see the following:
 ```
 apiVersion: v1 #Everything in K8s has to set an explicit apiVersion
 kind: Pod #It is a Pod we're creating
@@ -132,7 +132,7 @@ But normally we don't want to go directly to individual Pods. We want a load bal
 
 Kubernetes has a built-in layer 4 loadbalancer in Services.
 
-Let's have a look at an example of a Service at [probe-test-app/probe-test-app-service.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-service.yaml)
+Let's have a look at an example of a Service at [probe-test-app/probe-test-app-service.yaml](probe-test-app/probe-test-app-service.yaml)
 ```
 apiVersion: v1
 kind: Service
@@ -222,7 +222,7 @@ Alternatively you could have deleted the Pod and recreated it to heal it (`kubec
 ### ReplicaSets
 First, lets delete our two Pods. Since they are the only two that are running in the default Namespace so far we can run `kubectl delete pods --all` to delete them both.
 
-Now we're going to let a ReplicaSet create them for us. Let's have a look at the ReplicaSet YAML spec at [probe-test-app/probe-test-app-replicaset.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-replicaset.yaml)
+Now we're going to let a ReplicaSet create them for us. Let's have a look at the ReplicaSet YAML spec at [probe-test-app/probe-test-app-replicaset.yaml](probe-test-app/probe-test-app-replicaset.yaml)
 
 ```
 apiVersion: apps/v1
@@ -276,7 +276,7 @@ That is where Deployments come in.
 
 You can remove the ReplicaSet by running `kubectl delete replicaset probe-test-app`. We'll replace it with a Deployment.
 
-If you look at the Deployment YAML spec at [probe-test-app/probe-test-app-deployment.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-deployment.yaml) it is nearly identical to the ReplicaSet one. The difference comes when you update a Deployment vs. a ReplicaSet.
+If you look at the Deployment YAML spec at [probe-test-app/probe-test-app-deployment.yaml](probe-test-app/probe-test-app-deployment.yaml) it is nearly identical to the ReplicaSet one. The difference comes when you update a Deployment vs. a ReplicaSet.
 
 Run `kubectl apply -f probe-test-app-deployment.yaml` to see this in action.
 
@@ -442,7 +442,7 @@ Run `k9s` to see that in action. Some useful k9s keyboard shortcuts are:
 ![](images/k9s.png)
 
 ### The Horizontal Pod Autoscaler (HPA)
-You tell Kubernetes that you want to auto-scale a ReplicaSet or Deployment with a Horizontal Pod Autoscaler manifest - which includes what metrics and when/how to do that. Have a look at the example at [probetest-app/probe-test-app-hpa.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/probe-test-app/probe-test-app-hpa.yaml)]
+You tell Kubernetes that you want to auto-scale a ReplicaSet or Deployment with a Horizontal Pod Autoscaler manifest - which includes what metrics and when/how to do that. Have a look at the example at [probetest-test-app/probe-test-app-hpa.yaml](probe-test-app/probe-test-app-hpa.yaml)]
 
 ![](images/hpa.png)
 
@@ -553,7 +553,7 @@ Now that we have KEDA installed our goal is to:
 * Set up KEDA to scale that service based on the queue length
 * And then put a bunch of work to be done in the queue (in order to see it do the scaling as we requested)
 
-The main logic for this is in [keda-example/keda-scaled-object.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/keda-example/keda-scaled-object.yaml):
+The main logic for this is in [keda-example/keda-scaled-object.yaml](keda-example/keda-scaled-object.yaml):
 ```
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -589,7 +589,7 @@ If you want to run it again run `kubectl replace -f ./publisher.yaml --force` (t
 ## Jobs and CronJobs
 We just used a Job in the KEDA example. A Job in Kubernetes starts a container to runs a task (like a cron job or a batch process) and then stops when it is done. It can be either 'Complete' or 'Failed' based on the return code of the command that gets run in the container.
 
-Have a look at [keda-example/publisher.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/keda-example/publisher.yaml) as well as `kubectl describe job rabbitmq-publish` to see the details of that Job we just ran. This was a very simple Job that was just running a single container to run a single command only once.
+Have a look at [keda-example/publisher.yaml](keda-example/publisher.yaml) as well as `kubectl describe job rabbitmq-publish` to see the details of that Job we just ran. This was a very simple Job that was just running a single container to run a single command only once.
 
 There are many other options documented [here](https://kubernetes.io/docs/concepts/workloads/controllers/job/). These include:
 * How many Pods the Job should run in parallel
@@ -601,7 +601,7 @@ While kicking off a Job right when you want it to run can be useful, you usually
 
 As you can assume from the name, this lets you run a Job in the future as well as regularly on a schedule like cron.
 
-There is an example cronjob at [cronjob/cronjob.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/cronjob/cronjob.yaml) that will run once a minute and output the current time as well as a hello message and stop.
+There is an example cronjob at [cronjob/cronjob.yaml](cronjob/cronjob.yaml) that will run once a minute and output the current time as well as a hello message and stop.
 
 Run `cd ../cronjob` and then run `kubectl apply -f cronjob.yaml` and then `k9s`. You'll then see a Job Pod launch once a minute. You can hit Enter/Return twice to see the logs of that container. If this was a 'real' Job there would be log lines of the work it did and/or they would have put that work into a stateful service like a bucket or database etc.
 
@@ -863,14 +863,14 @@ You can deploy it right from kubectl with a `kubectl apply -k prod`
 
 If you then run `kubectl get pods` you'll see that it appended prod- to the names of the resources.
 
-Then run `kubectl apply -k dev` - this does the same thing but also reduces the Deployment to one replica (for a cheaper non-HA dev environment). You can see all you need to do is put enough of the file to for Kustomise to match on in [kustomize/dev/deployment.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/kustomize/dev/deployment.yaml) and then the values you want to override - then list it as a patch file in the overlay's kustomization.yaml.
+Then run `kubectl apply -k dev` - this does the same thing but also reduces the Deployment to one replica (for a cheaper non-HA dev environment). You can see all you need to do is put enough of the file to for Kustomise to match on in [kustomize/dev/deployment.yaml](kustomize/dev/deployment.yaml) and then the values you want to override - then list it as a patch file in the overlay's kustomization.yaml.
 
-To see the alternative of doing an in-line JSON patch in the kustomization.yaml file (rather than getting it to merge manifests) have a look at [kustomize/dev/deployment.yaml](https://github.com/jasonumiker/kubernetes-training/blob/main/kustomize/stg/kustomization.yaml). This makes the same cahnge as we did in dev (replace the bases's replicas parameter of 2 with 1) but in a different more explicit way that Kustomize also allows.
+To see the alternative of doing an in-line JSON patch in the kustomization.yaml file (rather than getting it to merge manifests) have a look at [kustomize/stg/kustomization.yaml](kustomize/stg/kustomization.yaml). This makes the same cahnge as we did in dev (replace the bases's replicas parameter of 2 with 1) but in a different more explicit way that Kustomize also allows.
 
 You can clean this all up by running:
 * kubectl delete -k prod`
-* kubectl delete -k stg`
 * kubectl delete -k dev`
+* kubectl delete -k stg`
 
 ### Helm
 The big advantages (or disadvantages depending on your personal preference) of Helm vs. Kustomize is that it:
@@ -892,8 +892,35 @@ keda        	keda        	1       	2024-11-22 15:16:31.410574 +1100 AEDT	deploye
 kiali-server	istio-system	1       	2024-11-22 15:24:16.176899 +1100 AEDT	deployed	kiali-server-2.1.0          	v2.1.0     
 prometheus  	monitoring  	1       	2024-11-22 15:11:47.902443 +1100 AEDT	deployed	kube-prometheus-stack-65.8.1	v0.77.2   
 ```
+If we look closer at the prometheus we deployed via Helm:
+* That was installed with the command `helm install prometheus prometheus-community/kube-prometheus-stack --values prometheus-stack-values.yaml --version 65.8.1 -n monitoring`
+  * That comes from this GitHub repository - https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+    * You can see how values are templated in to the manifests with Helm within that repository in examples like [this](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/templates/prometheus/prometheus.yaml)
+  * We asked for the specific version of the chart 65.8.1 - the best practice is to pin a specific version so you can count on the values.yaml parameters being the same - and can explicitly update to what new version you want in the future too
+  * If you look at [monitoring/prometheus-stack-default-values.yaml](monitoring/prometheus-stack-default-values.yaml) these are all the possible parameters and their default values for the Helm chart
+  * We chose to override some of those for our needs in [monitoring/prometheus-stack-values.yaml](monitoring/prometheus-stack-values.yaml) - which we specified in the `helm install` command
 
-TODO
+If we wanted to update, there is actually a new version of this chart since when we initially pinned the version. You usually want to check the repo for any instructions on going up major versions - and in this case we would be (from 65 to 66) - https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#from-65x-to-66x. If we needed to change our values it would usually be called out in the documentation as well - but in this case they don't mention it (so we should be safe). So, first we follow their instructions to run the following commands to update the CRDs before trying to update the Chart:
+
+```
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+```
+
+Then we can update to the latest (at the time of writing) version of the chart - 66.2.1. 
+`helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring`
+
+That should be successful.
+
+This time we didn't need to specify the values because it'll keep the same ones from before. To see that you can run `helm get values prometheus -n monitoring` to see it still knows the ones we specified when we first installed it from [monitoring/prometheus-stack-values](monitoring/prometheus-stack-values.yaml).
 
 ## Controllers/Operators
 TODO

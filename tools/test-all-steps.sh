@@ -558,3 +558,57 @@ echo "--------------------"
 sleep 1
 echo "bookinfo/platform/kube/cleanup.sh"
 bookinfo/platform/kube/cleanup.sh
+echo "--------------------"
+sleep 1
+echo "cd ../kustomise"
+cd ../kustomise
+echo "--------------------"
+sleep 1
+echo "kustomize build prod"
+kustomize build prod
+echo "--------------------"
+sleep 1
+echo "kubectl apply -k prod"
+kubectl apply -k prod
+echo "--------------------"
+sleep 1
+echo "kubectl get pods"
+kubectl get pods
+echo "--------------------"
+sleep 1
+echo "kubectl apply -k dev"
+kubectl apply -k dev
+echo "--------------------"
+sleep 1
+echo "kubectl get pods"
+kubectl get pods
+echo "--------------------"
+sleep 1
+echo "Cleaning up Kustomization example...
+kubectl delete -k prod
+kubectl delete -k dev
+echo "--------------------"
+sleep 1
+echo "helm ls -A"
+helm ls -A
+echo "--------------------"
+sleep 1
+echo "Installing required CRD updates for prometheus chart upgrade from 65 to 66..."
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+echo "--------------------"
+sleep 10
+echo "helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring"
+helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring
+echo "--------------------"
+sleep 10
+echo "helm get values prometheus -n monitoring"
+helm get values prometheus -n monitoring

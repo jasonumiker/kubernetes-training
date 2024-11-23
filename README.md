@@ -922,6 +922,22 @@ That should be successful.
 
 This time we didn't need to specify the values because it'll keep the same ones from before. To see that you can run `helm get values prometheus -n monitoring` to see it still knows the ones we specified when we first installed it from [monitoring/prometheus-stack-values](monitoring/prometheus-stack-values.yaml).
 
+### What is a Custom Resource Definition (CRD)?
+It may not have been clear why we needed to update those Custom Resource Definitions (CRDs) before we could upgrade the chart? What is a CRD anyway?
+
+This Helm chart actually installs an operator that installs/runs the Prometheus on our cluster. So, it is a two-step process:
+1. Helm installs the Operator
+1. Then the Operator installs Prometheus and all its associated other components (e.g. Grafana)
+  1. And the Helm chart also created the requried YAML documents for the operator to know that it then had to install the prometheus once it was online
+
+A CRD is a way to extend Kubernetes to be able to give it more YAML documents to represent other things than what is built-in to Kubernetes. This chart/operator installs several but lets look at one key one (Prometheuses) - `kubectl get prometheuses -n monitoring -o yaml`.
+
+This operator is waiting for you to create a `kind: Prometheus` document - and it in response will install and manage a Prometheus server on the cluster for you.
+
+The reason why we had to update those CRDs is the schema of what parameters the operator supports/expects form these custom resources will have changed.
+
+We'll look more at what an operator is in the next section.
+
 ## Controllers/Operators
 TODO
 

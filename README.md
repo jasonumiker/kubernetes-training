@@ -822,12 +822,35 @@ Employing the Istio Service Mesh on your Kubernetes cluster(s) can offer signifi
 Native Kubernetes features (e.g., Ingress controllers - especially for managed AWS ALBs with their controller, NetworkPolicy, etc.) may often suffice and with much less cost, complexity and overhead.
 
 ## Kustomize and Helm
-There are two tools that are used to do templating and bundling of the Kubernetes YAML manifests needed for your app(s) - for example changing the manifests to accommodate the slight variations needed for different environments. Either can work - but people tend to have quite strong opinions on which they prefer based on preference and the sort of use-cases they tend to hit more internally. Also public projects and cluster add-ons tend to prefer Helm - so even if you don't use it for your own projects you tend to still need to understand it and deploy a few charts for 3rd party things you put on your cluster(s).
+There are two tools that are used to do templating and bundling of the Kubernetes YAML manifests needed for your app(s) - for example changing the manifests to accommodate the slight variations needed for different environments. These are [Kustomize](https://kustomize.io/) and [Helm](https://helm.sh/). 
+
+Either can work - but people tend to have quite strong opinions on which of the two they prefer (based on personal preference and the sort of use-cases they tend to encounter). Also, public projects and cluster add-ons tend to prefer Helm - so, even if you don't use it for your own code/apps, you still will usually need to understand it for required 3rd party applications/add-ons that you need to deploy to your cluster(s).
 
 ### Kustomize
+Kustomize is a pretty simple tool focused on templating your Kubernetes YAML. In addition to its own CLI, it is built right into kubectl with `kubectl apply -k`.
+
+It is used really in two main ways (often together):
+* If you structure your YAML into folders in a particular way (known as [bases and overlays](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#bases-and-overlays)) then it'll merge in the parameters from the files in the relevant overlay folder that differ for that environment (e.g. labels, the size or number of replicas of the Pods (maybe HA in prod but not to save money in dev etc.), what secrets to use to connect to your database, etc.)
+![](images/kustomize.png) with those in the base.
+* And/or you can type standard JSON patches in the kustomization.yaml file(s) to add/remove/change any parameters in the bases very specifically.
+![](images/kustomize2.png)
+
+Also the kustomization.yaml file(s) that you put in each of these folders does a few nice things for you:
+* It lets you specify the order in which to apply the K8s manifests
+  * If you just did a `kubectl apply -f .` in a folder then it won't know that the Namespace needs to be created before the Deployment that references it - and so that deploy will fail whereas a `kubectl apply -k .` will succeed if the files are in the right order there
+* It has a few handy features/commands you can put in it to help with common transformations - you can see those [here](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#kustomize-feature-list)
+
 TODO
 
 ### Helm
+The big advantages (or disadvantages depending on your personal preference) of Helm vs. Kustomize is that it:
+* Handles deploying new versions of your container images, K8s IaC or the values you template into them in an opinionated way
+  * This includes a [three-way strategic merge] (https://helm.sh/docs/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches) of the YAML involved
+  * And optional runtime parameters to `helm upgrade` like `--atomic` and `--cleanup-on-fail` that will automatically rollback and clean up failed upgrades
+* It imposes its own versioning over the top of the whole bundle of IaC (abstracted from the app's version/tag - though you *can* just make them match if you want)
+
+Some customers, especially those doing GitOps (like we'll see in the next section), really just want to focus on the straight K8s YAML and setting that to be what they want without this other CLI and optionated abstraction that comes with Helm in the middle. While others really like and lean into them and ensure everything in the cluster is deployed via Helm.
+
 You've already deployed several Helm charts already as part of this workshop. You can see them by running `helm ls -A`:
 ```
 % helm ls -A

@@ -432,7 +432,7 @@ sleep 1
 echo "cat team1.yaml"
 cat team1.yaml
 echo "--------------------"
-sleep 10
+sleep 30
 echo "kubectl apply -f team1.yaml && kubectl apply -f team2.yaml"
 kubectl apply -f team1.yaml && kubectl apply -f team2.yaml
 echo "--------------------"

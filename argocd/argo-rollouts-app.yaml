@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts
+spec:
+  project: default
+  source:
+    chart: argo-rollouts
+    repoURL: https://argoproj.github.io/argo-helm
+    targetRevision: 2.37.7
+    helm:
+      releaseName: argo-rollouts
+      values: |
+        controller:
+          replicas: 1
+          resources:
+            limits:
+              ephemeral-storage: 1Gi
+            requests:
+              cpu: 100m
+              ephemeral-storage: 1Gi
+              memory: 103Mi        
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

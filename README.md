@@ -1,6 +1,6 @@
 # Kubernetes Training
 
-This set of general Kubernetes training materials was designed to run on the Kubernetes that is part of Docker Desktop on a Mac or Windows machine. It should actually run on *any* Kubernetes - but it hasn't been documented/tested outside of Docker Desktop.
+This set of general Kubernetes training materials was designed to run on the Kubernetes that is part of Docker Desktop on a Mac or Windows machine. It should actually run on *any* Kubernetes - but it hasn't been documented/tested outside of Docker Desktop. On Windows it will require not just Docker Desktop but also WSL2 (where everything here should be run).
 
 ## Table of Contents
 - [Kubernetes Training](#kubernetes-training)
@@ -73,7 +73,7 @@ This set of general Kubernetes training materials was designed to run on the Kub
     1. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
     1. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
 
-TODO: Add Windows instructions
+TODO: Add Windows WSL2 instructions
 
 ## Pods, Probes, Services, ReplicaSets, Deployments and StatefulSets
 In this section you'll learn about:
@@ -985,7 +985,36 @@ Before proceeding lets remove the Constraint (we can leave the ConstraintTemplat
 **NOTE:** You need to be careful with Pod Constraints because people usually don't launch them directly - they do it via ReplicaSets/Deployments/StatefulSets etc. And so they won't hit the Constraint when you do the `kubectl apply` like you did here - but instead it'll take their Deployment and then that will tell a ReplicaSet to do it and then the ReplicaSet will fail to be able to launch the Pods in the end. If you are going to do constraints on Pods then you should have some form of testing/linting in the pipeline etc. to catch things before they are deployed as well - and treat Gatekeeper as a fail-safe last-resort control used in tandem.
 
 ## GitOps with Argo CD
-TODO
+GitOps is the idea that, since literally *everything* in Kubernetes is declarative YAML, and git is a really good way to manage lots of files (keep all the history, enforce peer review via pull requests, etc.) that we should make a git repo the "source of truth" for what is going on in our clusters.
+
+The way that this works is that a controller, the most popular of which is [Argo CD](https://argo-cd.readthedocs.io/en/stable/), sits in the cluster watching the git repo on a particular branch in particular folders etc., and syncs the resources on your cluster(s) with what is in git. 
+
+The way that this works is that Argo has extended your kubernetes with the custom resource [Application](https://argo-cd.readthedocs.io/en/latest/user-guide/application-specification/) - and this tells Argo what it should be syncing. This can point to a folder with a kustomization.yaml in it and it'll do Kustomize. Or it can specify a Helm chart you'd like to deploy along with the version and the requied values and it'll do that too. And you can mix and match the two as you'll see below.
+
+**NOTE:** What this means is that you don't need access to the cluster make various changes to it any longer - you just need access to merge the changes to the git repo that Argo is pulling from. So this requires more careful attention/control over who has access to merge in that git repo and under what conditions. For example, you could require both pull requests for peer review as well as for the change to pass some pre-merge tests before it can be merged. Because, once it is merged there, Argo CD *will* pull it in and deploy it in this model!
+
+To install and log into Argo CD:
+* `helm repo add argo-helm https://argoproj.github.io/argo-helm`
+* `helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.6.1`
+* `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d` - retrieve the password for the Argo UI
+* `kubectl port-forward service/argo-cd-argocd-server -n argocd 8081:443`
+* Go to https://localhost:8081, accept the self-signed cert, and log in with the username admin and the password you retrieved from the secret
+
+To deploy two applications via Argo CD:
+* `kubectl apply -f probe-test-app.yaml` - this is re-deploying our probe-test-app - this time using the kustomization.yaml which will deploy the deployment, service and hpa
+* `kubectl apply -f argo-rollouts-app.yaml` - this is deploying the Helm chart for Argo Rollouts - which we'll be looking at in the next section
+
+**NOTE:** There will be a delay of 3 minutes by default here for the automatic sync of these apps - since this is argo polling the git repo. You can eliminate the delay if you set up a webhook where your git repo will trigger the sync on merge. You can read more about that [here](https://argo-cd.readthedocs.io/en/stable/operator-manual/webhook/).
+
+This is the list of Applications Argo CD knows about:
+![](images/argocd.png)
+
+And here is the details if you click into one - it'll show you all the resources that were created and any that they created. For example, the YAML only deployed a Deployment - but it created a ReplicaSet which created Pods and you see that all here.
+![](images/argocd-2.png)
+
+Argo CD will restore things to the way that they were in git if they deviate. This includes 'pruning' which we've enabled - if we remove them from git it'll remove them from the cluster. We've told it explicity one exception to that in the [probe-test-app.yaml](argocd/probe-test-app.yaml) - to ignore the replica count on the Deployment - since the Horizontal Pod Autoscaler will be changing that (and we don't want them to fight each other).
+
+To see this in action, run `kubectl delete deployment probe-test-app` and then `kubectl get pods` - and you'll see Argo CD noticed it wasn't there and put it back right away.
 
 ## Progressive Delivery with Argo Rollouts
 TODO

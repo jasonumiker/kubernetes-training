@@ -16,7 +16,12 @@ echo "Updating kube-proxy configmap..."
 MOD_YAML="/tmp/modify.yaml"
 kubectl get configmap/kube-proxy -n kube-system -o yaml > $MOD_YAML
 if cat $MOD_YAML | grep -q "metricsBindAddress: 127.0.0.1:10249"; then
-    sed -i '' 's/metricsBindAddress: 127.0.0.1:10249/metricsBindAddress: 0.0.0.0:10249/g' $MOD_YAML     # non-standard sed for mac
+    # sed is different on the mac - cater for that
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' 's/metricsBindAddress: 127.0.0.1:10249/metricsBindAddress: 0.0.0.0:10249/g' $MOD_YAML
+    else
+        sed -i 's/metricsBindAddress: 127.0.0.1:10249/metricsBindAddress: 0.0.0.0:10249/g' $MOD_YAML
+    fi
     kubectl delete configmap/kube-proxy -n kube-system
     kubectl create -f $MOD_YAML
     echo "Restarting the kube-proxy pod"

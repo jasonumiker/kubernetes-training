@@ -1094,8 +1094,28 @@ NAME                                        KIND        STATUS     AGE  INFO
 ```
 * If we change our mind and want to roll it back we can run `kubectl argo rollouts undo bluegreen-demo` and it'll make a new revision 3 putting it back to the blue tag and flip the main gateway to that
 
-What about a fully automated flow:
-TODO
+What about a fully automated flow? In this example we are:
+* Spinning up the new version on the preview gateway
+* Testing it every 30s x 3 attamptes to see if there was a less than 5% error rate in the requests that flowed through the gateway (based on the Prometheus metrics)
+* Then, if it passes that, we flip the preview to the main gateway (stopping if there was)
+* And test it again every 30s x 3 attempts to see if there is still a less than 5% error rate in the requests after we flipped it
+* And if there was a spike in the error rates we'll automatically roll it back to the old version (which we kept running)
+* Five minutes after this all finishes one way or the other the inactive version will be scaled down
+
+To see it in action:
+* Run `kubectl apply -f bluegreen-rollout-automatic.yaml` to roll back to blue and with this new automation
+* Open http://localhost:81 - as you'll need to generate some traffic there for it to work out the less than 5% error rate
+  * Note that there is a slider there where you can increase it if you want to see this fail instead
+* You can run `kubectl argo rollouts dashboard` and then go to http://localhost:3100 in another window/tab to see a more interactive UI for Argo Rollouts and its progress
+* Open http://localhost and you'll see it flip to blue after 90 seconds (it has passed 3 times) if you left the slider below 5%
+  * If you want to see it fail back at this point you can move the slider to fail the post deployment checks
+* If you let both pass you'll see the rollout was successful and it will scale down the old version after 5 minutes
+  * During this period you could roll it back instantly with a `kubectl argo rollouts undo bluegreen-demo` as the old version is still running
+
+What you'll see in the dashboard UI if you click on the analysis details - this one failed (because we increased the error rate slider). Since this one was a prePromotionAnalysis it prevented the rollout from ever proceeding.
+![](images/rollouts-failure.png)
+
+Argo rollouts can do much more elaborate [canary/progressive](https://argo-rollouts.readthedocs.io/en/stable/features/canary/) deployment scenarios as well as tests that involve [running Kubernetes Jobs](https://argo-rollouts.readthedocs.io/en/stable/analysis/job/) instead of 'just' looking at Metrics. Those Jobs could, for example, have a headless Selenium browser-based test to make sure the app is truly working the way you expect. And you can require it to pass multiple such metrics and/or job-based tests to proceed with the rollout as required.
 
 ## Kubernetes Pod Security / Multi-tenancy Considerations
 TODO

@@ -43,37 +43,37 @@ This set of general Kubernetes training materials was designed to run on the Kub
 
 ## Prerequisites
 1. Download and Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-1. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
+2. On Windows, install [Ubuntu on Windows Subsystem for Linux (WSL) v2](https://documentation.ubuntu.com/wsl/en/latest/guides/install-ubuntu-wsl2/)
+3. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
   1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
-1. Install Helm
-  1. On Mac you can do this via Homebrew with a `brew install helm`
-1. Install Kustomize
-  1. On Mac you can do this via Homebrew with a `brew install kustomize`
-1. Install [k9s](https://k9scli.io/)
-  1. On Mac you can do this via Homebrew with a `brew install derailed/k9s/k9s`
-1. Install git (if it's not already)
-  1. On Mac it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew)
-1. Run `git clone https://github.com/jasonumiker/kubernetes-training.git`
-1. Make sure your kubeconfig is pointed at docker-desktop:
-  1. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
-    1. If you don't then run `export KUBECONFIG=~/.kube/config` which will point you there for the remainder of this Terminal session
-  1. Then run `kubectl config get-contexts` and you should see
+4. On Windows, while still in Settings, go to Resources then WSL Integration and make sure it is turned on for Ubuntu
+5. Install Homebrew (on either Mac or Ubuntu WSL2 - if you do not have it installed already) - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+   1. Note that there is a `Next steps:` section at the end of that install script - make sure you do those to or it won't be in your path etc.
+6. Install Helm via Homebrew with a `brew install helm`
+7. Install Kustomize via Homebrew with a `brew install kustomize`
+8. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install derailed/k9s/k9s`
+9. Install git (if it's not already)
+  1. On Mac, it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew so it should have installed them)
+  2. On WSL2 Ubuntu on Windows it should be already there by default
+10. Run `git clone https://github.com/jasonumiker/kubernetes-training.git`
+11. Make sure your kubeconfig is pointed at docker-desktop:
+  12. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
+    13. If you don't then run `export KUBECONFIG=~/.kube/config` which will point you there for the remainder of this Terminal session
+  13. Then run `kubectl config get-contexts` and you should see
     ```
     CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
     *         docker-desktop   docker-desktop   docker-desktop   
 
     ```
-  1. And/or run `kubectl get nodes` and you should see
+  14. And/or run `kubectl get nodes` and you should see
     ```
     NAME             STATUS   ROLES           AGE   VERSION
     docker-desktop   Ready    control-plane   10s   v1.30.2
     ```
-  1. If you don't see this then I'd suggest these troubleshooting steps:
-    1. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
-    1. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
-    1. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
-
-TODO: Add Windows WSL2 instructions
+  15. If you don't see this then I'd suggest these troubleshooting steps:
+    16. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
+    17. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
+    18. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
 
 ## Pods, Probes, Services, ReplicaSets, Deployments and StatefulSets
 In this section you'll learn about:
@@ -980,7 +980,7 @@ To see this in action:
 
 To satisfy the request we not only need an owner label but there was some regex to make sure the values are in the right format of [name].agilebank.demo. We've prepared an example pod with that label that will work and you can see it work with `kubectl apply -f probe-test-app-pod.yaml`
 
-Before proceeding lets remove the Constraint (we can leave the ConstraintTemplate unapplied as that won't hurt anything) - `kubectl delete constraint pods-in-default-must-have-owner`. You can delete the pod too with `kubectl delete pod probe-test-app`.
+Before proceeding lets remove the Constraint (we can leave the ConstraintTemplate unapplied as that won't hurt anything) - `kubectl delete constraint pods-in-default-must-have-owner`. You can delete the pod that we spun up successfully too with `kubectl delete pod probe-test-app`.
 
 **NOTE:** You need to be careful with Pod Constraints because people usually don't launch them directly - they do it via ReplicaSets/Deployments/StatefulSets etc. And so they won't hit the Constraint when you do the `kubectl apply` like you did here - but instead it'll take their Deployment and then that will tell a ReplicaSet to do it and then the ReplicaSet will fail to be able to launch the Pods in the end. If you are going to do constraints on Pods then you should have some form of testing/linting in the pipeline etc. to catch things before they are deployed as well - and treat Gatekeeper as a fail-safe last-resort control used in tandem.
 
@@ -1001,8 +1001,9 @@ To install and log into Argo CD:
 * Go to https://localhost:8081, accept the self-signed cert, and log in with the username admin and the password you retrieved from the secret
 
 To deploy two applications via Argo CD:
-* `kubectl apply -f probe-test-app.yaml` - this is re-deploying our probe-test-app - this time using the kustomization.yaml which will deploy the deployment, service and hpa
-* `kubectl apply -f argo-rollouts-app.yaml` - this is deploying the Helm chart for Argo Rollouts - which we'll be looking at in the next section
+* `cd ../argocd`
+* `kubectl apply -f probe-test-app.yaml -n argocd` - this is re-deploying our probe-test-app - this time using the kustomization.yaml which will deploy the deployment, service and hpa
+* `kubectl apply -f argo-rollouts-app.yaml -n argocd` - this is deploying the Helm chart for Argo Rollouts - which we'll be looking at in the next section
 
 **NOTE:** There will be a delay of 3 minutes by default here for the automatic sync of these apps - since this is argo polling the git repo. You can eliminate the delay if you set up a webhook where your git repo will trigger the sync on merge. You can read more about that [here](https://argo-cd.readthedocs.io/en/stable/operator-manual/webhook/).
 
@@ -1015,6 +1016,8 @@ And here is the details if you click into one - it'll show you all the resources
 Argo CD will restore things to the way that they were in git if they deviate. This includes 'pruning' which we've enabled - if we remove them from git it'll remove them from the cluster. We've told it explicity one exception to that in the [probe-test-app.yaml](argocd/probe-test-app.yaml) - to ignore the replica count on the Deployment - since the Horizontal Pod Autoscaler will be changing that (and we don't want them to fight each other).
 
 To see this in action, run `kubectl delete deployment probe-test-app` and then `kubectl get pods` - and you'll see Argo CD noticed it wasn't there and put it back right away.
+
+You can now remove the probe-test-app and see that Argo CD does prune it away as well with a `kubectl delete application probe-test-app -n argocd`
 
 ## Progressive Delivery with Argo Rollouts
 TODO

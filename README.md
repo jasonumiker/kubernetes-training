@@ -152,7 +152,7 @@ spec:
   selector:
     app.kubernetes.io/name: probe-test-app #And our target Pods have this label
   type: LoadBalancer #More about the various types below
-  ```
+```
 There are several types of services:
 * ClusterIP - given an IP that is only reachable by Pods within the Cluster
 * NodePort - this assigns a port on each and every Node in the cluster that will route through to this Pod (even if it isn't on the Node)

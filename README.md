@@ -43,37 +43,39 @@ This set of general Kubernetes training materials was designed to run on the Kub
 
 ## Prerequisites
 1. Download and Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-2. On Windows, install [Ubuntu on Windows Subsystem for Linux (WSL) v2](https://documentation.ubuntu.com/wsl/en/latest/guides/install-ubuntu-wsl2/)
-3. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
+1. On Windows, install [Ubuntu on Windows Subsystem for Linux (WSL) v2](https://documentation.ubuntu.com/wsl/en/latest/guides/install-ubuntu-wsl2/)
+  1. You also will need to ensure your Ubuntu user in in the docker group by running `sudo usermod -aG docker $USER` and `newgrp docker`
+1. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
   1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
-4. On Windows, while still in Settings, go to Resources then WSL Integration and make sure it is turned on for Ubuntu
-5. Install Homebrew (on either Mac or Ubuntu WSL2 - if you do not have it installed already) - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+1. On Windows, while still in Settings, go to Resources then WSL Integration and make sure it is turned on for Ubuntu
+1. Install Homebrew (on either Mac or Ubuntu WSL2 - if you do not have it installed already) - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
    1. Note that there is a `Next steps:` section at the end of that install script - make sure you do those to or it won't be in your path etc.
-6. Install Helm via Homebrew with a `brew install helm`
-7. Install Kustomize via Homebrew with a `brew install kustomize`
-8. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install derailed/k9s/k9s`
-9. Install git (if it's not already)
+1. Install Helm via Homebrew with a `brew install helm`
+1. Install Kustomize via Homebrew with a `brew install kustomize`
+1. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install derailed/k9s/k9s`
+1. Install the Argo Rollouts CLI wiht a `brew install argoproj/tap/kubectl-argo-rollouts`
+1. Install git (if it's not already)
   1. On Mac, it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew so it should have installed them)
-  2. On WSL2 Ubuntu on Windows it should be already there by default
-10. Run `git clone https://github.com/jasonumiker/kubernetes-training.git`
-11. Make sure your kubeconfig is pointed at docker-desktop:
-  12. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
-    13. If you don't then run `export KUBECONFIG=~/.kube/config` which will point you there for the remainder of this Terminal session
-  13. Then run `kubectl config get-contexts` and you should see
+  1. On WSL2 Ubuntu on Windows it should be already there by default
+1. Run `git clone https://github.com/jasonumiker/kubernetes-training.git`
+1. Make sure your kubeconfig is pointed at docker-desktop:
+  1. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
+    1. If you don't then run `export KUBECONFIG=~/.kube/config` which will point you there for the remainder of this Terminal session
+  1. Then run `kubectl config get-contexts` and you should see
     ```
     CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
     *         docker-desktop   docker-desktop   docker-desktop   
 
     ```
-  14. And/or run `kubectl get nodes` and you should see
+  1. And/or run `kubectl get nodes` and you should see
     ```
     NAME             STATUS   ROLES           AGE   VERSION
     docker-desktop   Ready    control-plane   10s   v1.30.2
     ```
-  15. If you don't see this then I'd suggest these troubleshooting steps:
-    16. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
-    17. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
-    18. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
+  1. If you don't see this then I'd suggest these troubleshooting steps:
+    1. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
+    1. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
+    1. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
 
 ## Pods, Probes, Services, ReplicaSets, Deployments and StatefulSets
 In this section you'll learn about:
@@ -985,9 +987,9 @@ Before proceeding lets remove the Constraint (we can leave the ConstraintTemplat
 **NOTE:** You need to be careful with Pod Constraints because people usually don't launch them directly - they do it via ReplicaSets/Deployments/StatefulSets etc. And so they won't hit the Constraint when you do the `kubectl apply` like you did here - but instead it'll take their Deployment and then that will tell a ReplicaSet to do it and then the ReplicaSet will fail to be able to launch the Pods in the end. If you are going to do constraints on Pods then you should have some form of testing/linting in the pipeline etc. to catch things before they are deployed as well - and treat Gatekeeper as a fail-safe last-resort control used in tandem.
 
 ## GitOps with Argo CD
-GitOps is the idea that, since literally *everything* in Kubernetes is declarative YAML, and git is a really good way to manage lots of files (keep all the history, enforce peer review via pull requests, etc.) that we should make a git repo the "source of truth" for what is going on in our clusters.
+GitOps is the idea that, since literally *everything* in Kubernetes is declarative YAML (even imperative commands you run with kubectl either generate a new YAML document or edit an existing one against the Kubernetes API behind the scenes), and git is a really good way to manage lots of files (keep all the history, enforce peer review via pull requests, etc.) that we should make a git repo the "source of truth" for what is going on in our clusters.
 
-The way that this works is that a controller, the most popular of which is [Argo CD](https://argo-cd.readthedocs.io/en/stable/), sits in the cluster watching the git repo on a particular branch in particular folders etc., and syncs the resources on your cluster(s) with what is in git. 
+The way that this works is that a controller, the most popular of which is [Argo CD](https://argo-cd.readthedocs.io/en/stable/), sits in the cluster watching the git repo on a particular branch for K8s YAML manifests in particular folders etc., and continually syncs the resources on your cluster(s) with what it sees in git.
 
 The way that this works is that Argo has extended your kubernetes with the custom resource [Application](https://argo-cd.readthedocs.io/en/latest/user-guide/application-specification/) - and this tells Argo what it should be syncing. This can point to a folder with a kustomization.yaml in it and it'll do Kustomize. Or it can specify a Helm chart you'd like to deploy along with the version and the requied values and it'll do that too. And you can mix and match the two as you'll see below.
 
@@ -1020,6 +1022,79 @@ To see this in action, run `kubectl delete deployment probe-test-app` and then `
 You can now remove the probe-test-app and see that Argo CD does prune it away as well with a `kubectl delete application probe-test-app -n argocd`
 
 ## Progressive Delivery with Argo Rollouts
+One of the challanges with the GitOps approach is how to test whether the change you just merged to master was successful - and to automatically roll it back if it wasn't. Or perhaps you want to do advanced progressive rollout patterns where you gradually ramp up traffic to the new version say shifting it from the old version in 10% increments and then pausing to make sure everything is still good. This is where [Argo Rollouts](https://argo-rollouts.readthedocs.io/en/stable/) comes in.
+
+The way that it works is that it replaces the Kuberntes built-in Deployment with a new Contoller called [Rollout](https://argo-rollouts.readthedocs.io/en/stable/features/specification/). In here you can specify things like prePromotionAnalysis and/or postPromotionAnalysis tests to see whether you should shift traffic - and if you have just done so if you should roll it back. Or, alternatively, you can control deployments manually - where it will wait for you to call a `kubectl argo rollouts promote XXX` after you merged your change for it to actually roll it out.
+
+**NOTE:** Since this is a replacement for Deployment it can't help you to manage change for other objects like ConfigMaps or CRDs etc. It is only really useful for helping you to automatically test and rollback application Pods that would be deployed traditionally as part of a Kubernetes Deployment. You also will need to change your applications to use a Rollout instead of the built-in Deployment to use Argo Rollouts - moving to it isn't something that can be done automatically for you since you need to provide it with more details about your app than you did for a Deployment for it to work properly.
+
+**NOTE:** Argo Rollouts decouples what is running in your cluster slightly from GitOps. For example, if it decided to roll back your change that you merged to git of the Rollout object due to a failed postPromotionAnalysis, you now need to check with the Rollout resource/controller for what is currently deployed and why via a `kubectl argo rollouts get rollout XXX` or via its web UI with a `kubectl argo rollouts dashboard` (and then visit http://localhost:3100).
+
+Let's start with the manual promotion flow:
+* `cd ../argo-rollouts`
+* `kubectl apply -f bluegreen-service.yaml` - create a service for our app
+* `kubectl apply bluegreen-gateway.yaml` - create a service to read the upcoming version before it's really deployed
+* `kubectl apply -f bluegreen-preview-service.yaml` - create a Gateway to reach it on our laptop vis Istio
+* `kubectl apply -f bluegreen-preview-gateway.yaml` - create a Gateway to reach it on our laptop via Istio
+* `kubectl apply -f bluegreen-rollout-manual.yaml` - do the initial deployment of the 'blue' version - this will happen automatically as there is nothing running yet
+* `kubectl apply -f bluegreen-rollout-manual-green.yaml` - update the existing rollout to a new image tag - this will not happen automatically because it is a change and we are using a manual change promotion
+* `kubectl argo rollouts get rollout bluegreen-demo` - see the status of our rollout - and as we expect it is paused having spun up the new version on the preview service/gateway but not replaced it on the main service/gateway.
+```
+jumiker@COMPUTER:~/kubernetes-training/argo-rollouts$ kubectl argo rollouts get rollout bluegreen-demo
+Name:            bluegreen-demo
+Namespace:       default
+Status:          ॥ Paused
+Message:         BlueGreenPause
+Strategy:        BlueGreen
+Images:          argoproj/rollouts-demo:blue (stable, active)
+                 argoproj/rollouts-demo:green (preview)
+Replicas:
+  Desired:       1
+  Current:       2
+  Updated:       1
+  Ready:         1
+  Available:     1
+
+NAME                                        KIND        STATUS     AGE    INFO
+⟳ bluegreen-demo                            Rollout     ॥ Paused   4m34s
+├──# revision:2
+│  └──⧉ bluegreen-demo-fbc7b7f55            ReplicaSet  ✔ Healthy  3m17s  preview
+│     └──□ bluegreen-demo-fbc7b7f55-9tgbn   Pod         ✔ Running  3m17s  ready:2/2
+└──# revision:1
+   └──⧉ bluegreen-demo-7d6459646d           ReplicaSet  ✔ Healthy  4m34s  stable,active
+      └──□ bluegreen-demo-7d6459646d-dqvbc  Pod         ✔ Running  4m34s  ready:2/2
+```
+* We can reach it and do some manual testing/verification on the preview gateway of http://localhost:81 - you note the boxes are green. If you go to the main version of the app on http://localhost you'll see they are blue.
+* To tell Argo Rollouts to proceed we run `kubectl argo rollouts promote bluegreen-demo`
+* You'll see the boxes go green at http://localhost (indicating we flipped the main gateway to the new version
+* If you run `kubectl argo rollouts get rollout bluegreen-demo` again you'll see that it flipped and how long before the old version is scaled down to zero (which we set to 5 minutes)
+```
+jumiker@COMPUTER:~/kubernetes-training/argo-rollouts$ kubectl argo rollouts get rollout bluegreen-demo
+Name:            bluegreen-demo
+Namespace:       default
+Status:          ✔ Healthy
+Strategy:        BlueGreen
+Images:          argoproj/rollouts-demo:blue
+                 argoproj/rollouts-demo:green (stable, active)
+Replicas:
+  Desired:       1
+  Current:       2
+  Updated:       1
+  Ready:         1
+  Available:     1
+
+NAME                                        KIND        STATUS     AGE  INFO
+⟳ bluegreen-demo                            Rollout     ✔ Healthy  11m
+├──# revision:2
+│  └──⧉ bluegreen-demo-fbc7b7f55            ReplicaSet  ✔ Healthy  10m  stable,active
+│     └──□ bluegreen-demo-fbc7b7f55-9tgbn   Pod         ✔ Running  10m  ready:2/2
+└──# revision:1
+   └──⧉ bluegreen-demo-7d6459646d           ReplicaSet  ✔ Healthy  11m  delay:4m5s
+      └──□ bluegreen-demo-7d6459646d-dqvbc  Pod         ✔ Running  11m  ready:2/2
+```
+* If we change our mind and want to roll it back we can run `kubectl argo rollouts undo bluegreen-demo` and it'll make a new revision 3 putting it back to the blue tag and flip the main gateway to that
+
+What about a fully automated flow:
 TODO
 
 ## Kubernetes Pod Security / Multi-tenancy Considerations

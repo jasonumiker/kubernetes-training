@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: success-rate
+    interval: 30s
+    count: 3
+    # NOTE: prometheus queries return results in the form of a vector.
+    # So it is common to access the index 0 of the returned array to obtain the value
+    successCondition: result[0] >= 0.95
+    failureLimit: 0
+    provider:
+      prometheus:
+        address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        # timeout is expressed in seconds
+        timeout: 40
+        headers:
+        - key: X-Scope-OrgID
+          value: tenant_a
+        query: |
+          sum(irate(
+            istio_requests_total{reporter="source",destination_service_name=~"{{args.service-name}}",response_code!~"5.*"}[5m]
+          )) /
+          sum(irate(
+            istio_requests_total{reporter="source",destination_service_name=~"{{args.service-name}}"}[5m]
+          ))

@@ -1115,10 +1115,89 @@ To see it in action:
 What you'll see in the dashboard UI if you click on the analysis details - this one failed (because we increased the error rate slider). Since this one was a prePromotionAnalysis it prevented the rollout from ever proceeding.
 ![](images/rollouts-failure.png)
 
-Argo rollouts can do much more elaborate [canary/progressive](https://argo-rollouts.readthedocs.io/en/stable/features/canary/) deployment scenarios as well as tests that involve [running Kubernetes Jobs](https://argo-rollouts.readthedocs.io/en/stable/analysis/job/) instead of 'just' looking at Metrics. Those Jobs could, for example, have a headless Selenium browser-based test to make sure the app is truly working the way you expect. And you can require it to pass multiple such metrics and/or job-based tests to proceed with the rollout as required.
+Argo rollouts can do much more elaborate [canary/progressive](https://argo-rollouts.readthedocs.io/en/stable/features/canary/) deployment scenarios as well as tests that involve [running Kubernetes Jobs](https://argo-rollouts.readthedocs.io/en/stable/analysis/job/) instead of 'just' looking at Metrics. Those Jobs could, for example, have a headless Selenium browser-based test make sure the app is truly working the way you expect. And you can require it to pass multiple such metrics and/or job-based tests to proceed with the rollout as required.
 
 ## Kubernetes Pod Security / Multi-tenancy Considerations
-TODO
+Kubernetes likes to deploy parts of Kubernetes with Kubernetes (think the network (CNI) add-on, the storage (CSI) add-on, tools to export Node/container metrics, and all the container logs, etc.) - often as privileged DaemonSets. It does this via Kubernetes for a few reasons:
+* You don't need to pre-bake them into the image/AMI
+* They can be upgrade independently from each other and without having to roll the Nodes with a new image/AMI
+* When Kubernetes schedules them it is aware of any reqeusts and limits the Pods have - and takes them into account to avoid over-filling the Nodes
+
+But this has a downside. In order for most of these critical infrastructure add-ons to function they need way more access to the host and the other containers than you would generally want. And Kubernetes by default lets any Pod ask for these privileges - not just those things that need it.
+
+For example, have a look at this:
+* `cd ../pod-security`
+* `cat interactive-shell-node-via-pod.sh`
+```
+kubectl run nsenter-pod --restart=Never -it --rm --image overriden --overrides '
+{
+  "spec": {
+    "hostPID": true,
+    "hostNetwork": true,
+    "tolerations": [{
+        "operator": "Exists"
+    }],
+    "containers": [
+      {
+        "name": "nsenter",
+        "image": "debian:12.8",
+        "command": [
+          "nsenter", "--all", "--target=1", "--", "su", "-"
+        ],
+        "stdin": true,
+        "tty": true,
+        "securityContext": {
+          "privileged": true
+        },
+        "resources": {
+          "requests": {
+            "cpu": "10m"
+          }
+        }
+      }
+    ]
+  }
+}' --attach "$@"
+```
+  * This will give us an interactive shell not in the nsenter-pod but actually out on the Node - as root!
+* `./interactive-shell-node-via-pod.sh`
+* `whomami` - I'm root - on the Node (not in my Pod)
+* `ps aux` - I can see all the processes from all the Pods - and could kill them etc. as well
+* `exit`
+
+Why did that work exactly?
+* The Pod/container is running as root
+* The Pod asked for `hostPID: true`
+* The Pod asked for a privileged securityContext
+* We had access to the Linux commandline tool nsenter (which is part of Debian's non-slim images) that allows you to switch Linux namespaces
+
+It actually all of those to be true to get this sort of interactive shell - so preventing any one of them would help.
+
+### Why is this a concern?
+The above example means if anybody has access to launch a Pod in any Kubernetes Namespace (e.g. they even have a Role and not a ClusterRole) with the Kubernetes defaults then they can break out of their container and manipulate both the Node as well as any other containers that were scheduled there. The Node actually has some access to the Kubernetes control plane that can be exploited to move laterally throughout the cluster as well in some scenarios.
+
+So if we are expecting people in one Kubernetes Namespace to be "safe" from those in another then we need to do something rather than accept these defaults.
+
+### How to strengenth pod-level security?
+There are two main ways to prevent people from requesting those parameters in their PodSpecs - and therefore to prevent them from escaping their container bounadary in this way:
+* OPA Gatekeeper (which we covered earlier) - you'll see various compliance templates to help in their [library](https://open-policy-agent.github.io/gatekeeper-library/website/pspintro)
+* [Pod Security Admission (PSA)](https://kubernetes.io/docs/concepts/security/pod-security-admission/) which became built-in to Kubernets at version 1.25
+
+PSAs are not just built-in but also are very simple to use - you just need to add some [labels to the Namespace(s)](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/). There are three standards you can enforce:
+* priveleged - don't do anything- like the default 
+* baseline - pragrmatically prevent most options like the ones above while still working with most PodSpecs (that aren't trying to do the wrong thing) unchanged
+* restricted - you need to explictly say the most secure options in your PodSpecs - will require most people to make changes to their PodSpecs to pass and also to not run their Pod as root (which is still quite common)
+
+Usually baseline is a good comprimise of preventing the worst container-escape things while also not being too disruptive.
+
+For example, this is how to prevent this from happening on the default Namespace where we did it:
+* `kubectl label namespace default pod-security.kubernetes.io/enforce=baseline`
+* `./interactive-shell-node-via-pod.sh* - note how it is now denied:
+```
+jumiker@COMPUTER:~/kubernetes-training/pod-security$ ./interactive-shell-node-via-pod.sh
+Error from server (Forbidden): pods "nsenter-pod" is forbidden: violates PodSecurity "baseline:latest": host namespaces (hostNetwork=true, hostPID=true), privileged (container "nsenter" must not set securityContext.privileged=true)
+```
+* Let's re-remove that for now with `kubectl label namespace default pod-security.kubernetes.io/enforce-`
 
 ## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them
 * Since Docker Desktop is a single-Node Kubernetes, anything that involves multiple Nodes (draining them, updating them, scaling them in/out, etc.)

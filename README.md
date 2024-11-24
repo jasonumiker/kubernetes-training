@@ -46,41 +46,42 @@ This set of general Kubernetes training materials was designed to run on the Kub
 ## Prerequisites
 1. Download and Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 1. On Windows, install [Ubuntu on Windows Subsystem for Linux (WSL) v2](https://documentation.ubuntu.com/wsl/en/latest/guides/install-ubuntu-wsl2/)
-  1. You also will need to ensure your Ubuntu user in in the docker group by running `sudo usermod -aG docker $USER` and `newgrp docker`
+    1. You also will need to ensure your Ubuntu user in in the docker group by running `sudo usermod -aG docker $USER` and `newgrp docker`
 1. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
-  1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
+    1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
 1. On Windows, while still in Settings, go to Resources then WSL Integration and make sure it is turned on for Ubuntu
 1. Install Homebrew (on either Mac or Ubuntu WSL2 - if you do not have it installed already) - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-   1. Note that there is a `Next steps:` section at the end of that install script - make sure you do those to or it won't be in your path etc.
+    1. Note that there is a `Next steps:` section at the end of that install script - make sure you do those to or it won't be in your path etc.
 1. Install Helm via Homebrew with a `brew install helm`
 1. Install Kustomize via Homebrew with a `brew install kustomize`
 1. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install derailed/k9s/k9s`
 1. Install the Argo Rollouts CLI with a `brew install argoproj/tap/kubectl-argo-rollouts`
-1. Install git (if it's not already)
-  1. On Mac, it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew so it should have installed them)
-  1. On WSL2 Ubuntu on Windows it should be already there by default
+1.  Install git (if it's not already)
+    1.  On Mac, it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew so it should have installed them)
+    1.  On WSL2 Ubuntu on Windows it should be already there by default
 1. Run `git clone https://github.com/jasonumiker/kubernetes-training.git`
 1. Make sure your kubeconfig is pointed at docker-desktop:
-  1. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
+    1. Run `echo $KUBECONFIG` - you should see `~/.kube/config`
     1. If you don't then run `export KUBECONFIG=~/.kube/config` which will point you there for the remainder of this Terminal session
-  1. Then run `kubectl config get-contexts` and you should see
+    1. Then run `kubectl config get-contexts` and you should see
     ```
     CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
     *         docker-desktop   docker-desktop   docker-desktop   
 
     ```
-  1. And/or run `kubectl get nodes` and you should see
+    1. And/or run `kubectl get nodes` and you should see
     ```
     NAME             STATUS   ROLES           AGE   VERSION
     docker-desktop   Ready    control-plane   10s   v1.30.2
     ```
-  1. If you don't see this then I'd suggest these troubleshooting steps:
-    1. Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
-    1. Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
-    1. Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
+    1. If you don't see this then I'd suggest these troubleshooting steps:
+        1.  Doing a `mv ~/.kube/config ~/.kube/config.old` and then restarting Docker Desktop (for it to create your KUBECONFIG from fresh)
+        1.  Go to Troubleshooting in Docker Desktop and click the `Clean/Purge Data` button (to fully restore the whole Linux VM to fresh)
+        1.  Double-check your KUBECONFIG is set to the right/default path by running `echo $KUBECONFIG`
 
 ## Pods, Probes, Services, ReplicaSets, Deployments and StatefulSets
 In this section you'll learn about:
+
 * [Pods](https://kubernetes.io/docs/concepts/workloads/pods/) - including how Kubernetes ensures they are healthy and ready for traffic via [Probes](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/)
 * [Services](https://kubernetes.io/docs/concepts/services-networking/service/) - which is how to expose them outside your cluster and load-balance them
 * [ReplicaSets](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) - which is how to scale them out as many 'replica' Pods as you need as well as scale them back in when you no longer need as many
@@ -113,6 +114,7 @@ On the subject of labels, the name can't be used in a Label selector for things 
 And we'll look more closely at the Probes in a moment. And a bit more on CPU/Memory Requests and Limits later on as well.
 
 Let's launch this Pod:
+
 * cd into probe-test-app
 * Run `kubectl apply -f probe-test-app-pod.yaml`
 * Run `kubectl get pods -o wide` - note that you can't get to the Pod's IP which is an overlay network without going through the Node (a local Linux VM running Docker and Kubernetes) or the K8s API
@@ -127,6 +129,7 @@ NOTE: You are tunneling *through* the Kubernetes control plane to the Pod. So ev
 Once you're done you can ctrl-c out of that port-forward in your terminal.
 
 If you wanted to get an interactive shell within the Pod you can do that via the control plane as well:
+
 * `kubectl exec -it probe-test-app -- /bin/bash` - open an interactive bash shell within the pod probe-test-app
 * `whoami` - this container is running as the user python
 * `ps aux` - I can only see the processes within the container's Linux Namespace
@@ -154,6 +157,7 @@ spec:
   type: LoadBalancer #More about the various types below
 ```
 There are several types of services:
+
 * ClusterIP - given an IP that is only reachable by Pods within the Cluster
 * NodePort - this assigns a port on each and every Node in the cluster that will route through to this Pod (even if it isn't on the Node)
 * LoadBalancer - this sets up a LoadBalancer external to Kubernetes to front this service (e.g. AWS NLB)
@@ -163,6 +167,7 @@ In the case of Docker Desktop they've mapped the LoadBalancer Service type to yo
 Deploy the service by running `kubectl apply -f probe-test-app-service.yaml`
 
 You can see the details by running `kubectl get services -o wide`. You'll see that:
+
 * The probe-test-app service is of a LoadBalancer type 
 * With an EXTERNAL-IP (usually the DNS address of the external load balancer you should be able to reach it on) of localhost 
 * And that it is actually mapping port 8000 on the LoadBalancer through a random NodePort in the 30000-ish range on its way in.
@@ -216,6 +221,7 @@ To see this in action click the **Toggle Liveness** button. Then run `kubectl ge
 To see the readinessProbe in action click the **Toggle Readiness** button. If you refresh http://localhost:8000 after 30 second you'll see it no longer balances you between the two pods but, instead, is only sending you to the Pod that is still passing its readinessProbe.
 
 Unlike the livenessProbe this won't automatically heal - you can heal it by connecting directly to the Pod and clicking the Toggle button again. As we saw you can do that by running:
+
 * `kubectl get pods` - note which of the two has a 0/1 for READY
 * `kubectl port-forward pod/probe-test-app(-2) 8001:8080` - Point the port-forward at the not ready Pod Name so that you can go to port 8081 on your laptop to reach it directly (bypassing the Service that won't send you there any longer)
 * Click the **Toggle Readiness** button again to 'heal' the service.
@@ -288,6 +294,7 @@ Run `kubectl apply -f probe-test-app-deployment.yaml` to see this in action.
 If you run `kubectl get pods` you get the first clue there is a difference - it is't just the random 5 characters appended on the name but another random 9 appended before that one. That is because the Deployment manages ReplicaSets with a random name which manages Pods with a random name. If you run `kubectl get replicasets` you'll see that the 9 digits is indeed the one it appended on the ReplicaSet it created.
 
 Now let's say we wanted to upgrade our app to v2 and see what happens. To do so we'd run: 
+
 * `kubectl set image deployment/probe-test-app probe-test-app=jasonumiker/probe-test-app:v2`
 * Then quickly run `kubectl get replicasets -w` - you'll see the new ReplicaSet gradually have its DESIRED increased and the old one have its decreased all the way to zero.
 * Once you've seen that ctrl-c out of that
@@ -303,6 +310,7 @@ One interesting common thread with Services and ReplicaSets have in common is th
 If you take a pod and remove the label that they are looking for (which is often the same for both) then it will stop getting Service traffic and/or it won't be killed by the ReplicaSet (which feels that it is no longer managing it). The ReplicaSet will add another one to 'replace' it since it doesn't see it any longer as well.
 
 To see this in action:
+
 * Run `kubectl get pods` and copy the name of one of the probe-test-app Pods
   * If there aren't any running do a `kubectl apply -f probe-test-app-deployment.yaml` and a `kubectl apply -f probe-test-app-service.yaml` to ensure both are running
 * Run `kubectl label pod [copied pod name] app.kubernetes.io/name-` as if you put a minus sign after the label it in a `kubectl label` command it removes it
@@ -314,6 +322,7 @@ To see this in action:
 A Pod is made up of one or more containers. The containers section is a sequence/array and you can just specify more of them. When you specify more than one container in the Pod, the additional ones are called [Sidecar Containers](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/).
 
 These containers are:
+
 * Scheduled together on the same Node
   * So, they always scale in/out together in ReplicaSets etc.
 * Put in the same Linux Namespace / Security Boundary so that:
@@ -323,10 +332,14 @@ These containers are:
   * They share the same storage Namespace and can share [emptyDir Volumes](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir) between each other (these exist just to have an ephemeral Volume to share some data between containers in the same Pod)
 
 And there is also a special type of additional container called [Init Containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that run before the other container(s) in the Pod and can contain utilities or setup scripts not present in an app image (e.g. to load the schema into an empty database that the app expects to be there etc.). These:
+
  * Always run to completion (rather than stay running all the time like the main or sidecar containers)
  * Each init container in the YAML sequence/array must complete successfully before the next one starts (so you can count on that ordering)
 
-First, we have a sidecar container example. In this example there is an 'app' container which is generating a log file. That is being written to a shared emptyDir Volume that is also mounted in our 'sidecar' container. That, in turn, is running nginx to share the contents of this log file out on port 80. This is meant to represent a logging sidecar that maybe would send the logs on to Splunk etc. instead. To see this in action:
+First, we have a sidecar container example. In this example there is an 'app' container which is generating a log file. That is being written to a shared emptyDir Volume that is also mounted in our 'sidecar' container. That, in turn, is running nginx to share the contents of this log file out on port 80. This is meant to represent a logging sidecar that maybe would send the logs on to Splunk etc. instead. 
+
+To see this in action:
+
 * `cd ../sidecar-and-init-containers`
 * `kubectl apply -f sidecar.yaml`
 * `kubectl exec pod-with-sidecar -c sidecar-container -it bash` - connect to the sidecar container within the Pod
@@ -335,6 +348,7 @@ First, we have a sidecar container example. In this example there is an 'app' co
 * `exit` to exit out of our interactive kubectl exec session
 
 Next, we have an init container example. In this example we will only start our main application once two Kubernetes Services exist. We have two different initContainers which check for each of these two services.
+
 * `kubectl apply -f init.yaml`
 * `kubectl get pod myapp-pod` - you'll see it is waiting on the first init container to be successful
 * `kubectl apply -f services-init-requires.yaml` - create those services it is looking for
@@ -350,6 +364,7 @@ Kubernetes hands the creation, updating and deletion of these volumes out on the
 For the purposes of this environment we have a sort of 'dummy' CSI driver called hostpath-provisioner. The "volumes" it creates are just folders on the Node that it is running on (making them persist across Pod restarts but not against the termination of the Node and its local disk). 
 
 First install that by:
+
 * `cd pvs-and-statefulsets`
 * `kubectl apply -f hostpath-provisioner.yaml`
 * `kubectl get storageclass` - you'll see our new 'mock' CSI driver listed there now as hostpath-provisioner
@@ -359,6 +374,7 @@ Pods ask for PersistentVolumes via PersistentVolumeClaims. The CSI driver takes 
 First, have a look at pvc.yaml and pod.yaml in pvs-and-statefulsets/
 
 Then see this in action by:
+
 * `kubectl apply -f pvc.yaml`
 * `kubectl get pvc` - note it is there as Pending because no Pod has used it yet
 * `kubectl apply -f pod.yaml`
@@ -379,6 +395,7 @@ Then see this in action by:
 Deployments are good for stateless applications that need to scale in and out with load - but they are not really appropriate for stateful ones. That is where StatefulSets come in.
 
 These do a few things:
+
 * The keep consistent Pod names (kill the Pod and it'll get the same name back) - which in K8s also means the same DNS-resolvable service-discovery as well. And it uses a nice naming convention for them.
   * These pod names go [podname]-0, [podname]-1 etc. as you scale it out
     * The application needs to cluster and replicate between these Pods for a scale out to be effective - K8s can't do that bit for the app
@@ -388,6 +405,7 @@ These do a few things:
   * It also works if you kill a Pod it'll get it's particular volume back when it is relaunched - including on another Node when it is running in AWS/GCP or even in a place with a real Storage Area Network (SAN)-backed PersistentVolume.
 
 There is a good example of a StatefulSet in the RabbitMQ that we'll also need for the KEDA example below. Let's deploy that now just to have a look at how the StatefulSet and PVs work before we get to KEDA:
+
 * `cd ../keda-example/rabbitmq`
 * `kubectl apply -k .` - This deploys everything in the kustomization.yaml file in the order it is listed there (due to the -k) - we'll cover more about Kustomize in a later section
 * `kubectl describe statefulset rabbitmq` to see more about our new StatefulSet
@@ -408,6 +426,7 @@ Note also that, as you see in this example, with a `get` with a `-o yaml` you ca
 
 ## Requests, Limits and Scaling Pods
 In this section you'll learn about:
+
 * Using [Prometheus](https://prometheus.io/) for Metrics/Monitoring (as we require metrics to inform automatic scaling - but they also are necessary to operate your cluster and apps too...)
   * Prometheus is also a CNCF project like Kubernetes (in the same "Cloud Native ecosystem") - so while it isn't the only way to monitor it they often go together
 * The built-in [Horizontal Pod Autoscaler (HPA)](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) that will scale your Pods in/out based on metrics.
@@ -426,12 +445,14 @@ You can install that on your local Kubernetes cluster by:
 Once that is up and running it will have configured both Prometheus and Grafana with Services of type LoadBalancer - so you can reach them on localhost. Prometheus is at http://localhost:9090 with no login. And Grafana is on http://localhost:3000 with the login admin and the password prom-operator.
 
 You can see the all the data sources that Prometheus is scraping for metrics (its Targets) at http://localhost:9090/targets. They should all be healthy. The two main ones that are interesting are for our purposes here are:
+
 * Prometheus Node Exporter which gives it host-level metrics on the Node
 * And cAdvisor which gives it container-level metrics (which it is actually scraping through the Node's Kubelet)
 
 NOTE: Unfortunately, for some reason the Kubernetes in Docker Desktop is missing some usual/expected labels on its cAdvisor container-level metrics - container and image being two main ones. [I believe this is because it is using an uncommon container runtime for K8s (cri-docker)](https://github.com/kubernetes/kubernetes/issues/122182) to allow it to bridge back to Docker's container runtime in Docker Desktop. That means that many of the dashboards that ship built-in with this Grafana, that expect those labels, will appear empty unless we change their queries to omit them. It *does* still have the following labels - and so will still work for our needs here - instance, namespace, node, pod and service.
 
 We've also installed the adapter to let Prometheus serve the Kubernetes Metrics API - that serves `kubectl top` as well as the Horizontal Pod Autoscaler. To see that in action run the following:
+
 * `kubectl top nodes`
 * `kubectl top pods` to see the Pods in the default Namespace
 * `kubectl top pods -n monitoring` to see the Pods in the monitoring Namespace
@@ -440,6 +461,7 @@ We've also installed the adapter to let Prometheus serve the Kubernetes Metrics 
 One other nice thing is that k9s, which is a nice console UI for managing Kubernetes that we installed as a pre-req but haven't look at yet, ties into this metrics API data if it is available and shows both Node and Pod CPU and Memory information in its UI. 
 
 Run `k9s` to see that in action. Some useful k9s keyboard shortcuts are:
+
 * 0 - to see Pods in all namespaces instead of just the default one
 * Press enter/return on a Pod twice to see its logs
 * Then escape key twice to go back to the main page
@@ -475,6 +497,7 @@ spec:
 In this case we are saying we want to scale out when the average CPU utilization is greater than 50% and in when it is less than that. There are many options you can choose to scale on instead - the various options you can put in this file is well documented [here](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/).
 
 Let's apply that HPA by running:
+
 * `cd ../probe-test-app`
 * `kubectl apply -f probe-test-app-hpa.yaml`
 
@@ -490,6 +513,7 @@ Note that there is a "Downscale Stabilization Window" which defaults to 5 minute
 A request is telling Kubernetes that your Pod needs at least that much CPU time and Memory. It won't constrain it unless it needs to in order to fulfil the requests of other Pods - that is what Limits are for which we'll look at next.
 
 Putting appropriate CPU and Memory Requests on your workloads is important for two reasons:
+
 * The Kubernetes Scheduler will only put it on a Node where it 'fits' based on its Requests (it has that much CPU and Memory that hasn't hasn't been requested by other Pods it has scheduled there)
   * If there isn't enough free space on any Node it'll mark the Pod as Unschedulable. This is where the [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler) or [Karpenter](https://karpenter.sh/) come in to add more Nodes so they can be scheduled. We can't really simulate that in our single-node Docker Desktop so will leave that for a future training session that is in cloud.
 * The Kubelet configures the local Linux kernel control groups (cgroups) to ensure that Pod gets at least the CPU and Memory that it requested.
@@ -511,6 +535,7 @@ The issue is if you have a busy multi-threaded app running across many Cores at 
 It isn't just CPU Limits that can throttle your Pod(s) - the Linux cgroups as configured will also throttle you if they need to in order to satisfy the CPU Reservations of other Pods (i.e. if needed to give them the amount of CPU they have 'reserved' if you have exhausted your reservation).
 
 Let's see this in action:
+
 * `cd ../limit-examples`
 * `kubectl apply -f cpu-stressor.yaml` - this will kick off an app that is trying to use 2 full CPUs (i.e. 2 fully utilized threads) but with a CPU limit of 1 CPU
   * This means we should get 50ms of CPU and then get throttled for 50ms each accounting period of 100ms
@@ -531,6 +556,7 @@ The best way to 'fix' this for an app is to control how many threads it uses and
 A controversial opinion here is that, as long as you ensure that everything has an adequate CPU Reservation set, that CPU Limits often do more harm than good and you should avoid them. If you don't set Limits then it will allow Pods to burst into additional CPU that isn't being used if it is available and still wouldn't hurt other apps getting what they Reserved.
 
 That was CPU Limits - now let's see a Memory Limit OOMKill:
+
 * `kubectl apply -f memory-stressor.yaml` - this deploys a workload that has a limit of 100Mi and tries to consume 150Mi of memory
 * `kubectl get pods -w` - you'll see it alternate between STATUS OOMKilled and CrashLoopBackOff (ctrl-c to exit)
 * `kubectl delete pod memory-stressor` - clean this up
@@ -550,10 +576,12 @@ You should have already installed RabbitMQ above in the StatefulSet section. If 
 **NOTE:** We deployed the RabbitMQ container a bit 'manually' here via a StatefulSet to show you how those work. You wouldn't usually do this for stateful popular databases/caches/queues etc. - instead you would use their Operator (and they will almost always have one). In the case of RabbitMQ their operator is documented [here](https://www.rabbitmq.com/kubernetes/operator/operator-overview).
 
 The next step is installing KEDA via its Helm Chart. To do that:
+
 * `cd ../keda-example`
 * `./install-keda.sh` - we'll cover Helm in more detail in a later section
 
 Now that we have KEDA installed our goal is to:
+
 * Implement a service that does work when it is in the RabbitMQ queue (that we want to scale based on the queue length)
 * Set up KEDA to scale that service based on the queue length
 * And then put a bunch of work to be done in the queue (in order to see it do the scaling as we requested)
@@ -580,6 +608,7 @@ spec:
 The settings are to scale to a minimum of 0 replicas (when there is no work in the queue) and up to a maximum of 30 replicas - optimizing for a queue length of 5 messages per replica.
 
 Let's see it in action:
+
 * `kubectl apply -f consumer.yaml` - deploying our RabbitMQ consumer service. This is set to consume one message per instance, sleep for 1 second, and then acknowledge completion of the message. This is used to simulate work.
 * `kubectl apply -f keda-scaled-object.yaml` - this configures KEDA on when to scale our new consumer as described above
   * KEDA will scale out the consumer pods until the queue is drained after about 2 minutes at the maximum of 30 concurrent Pods
@@ -597,6 +626,7 @@ We just used a Job in the KEDA example. A Job in Kubernetes starts a container t
 Have a look at [keda-example/publisher.yaml](keda-example/publisher.yaml) as well as `kubectl describe job rabbitmq-publish` to see the details of that Job we just ran. This was a very simple Job that was just running a single container to run a single command only once.
 
 There are many other options documented [here](https://kubernetes.io/docs/concepts/workloads/controllers/job/). These include:
+
 * How many Pods the Job should run in parallel
   * And whether to use a fixed completion count or expect the Jobs to work out among themselves based on an external queue (like the RabbitMQ we just used) instead
 * How many times to retry on failure (the `backoffLimit`)
@@ -655,6 +685,7 @@ Let's explore how this all works:
 So, that was a very quick overview of how to configure multi-tenancy of Kubernetes at the control plane level via Namespaces and Roles. And, how much YAML it takes to move away from *'s for the resources and verbs in your Role definitions.
 
 **NOTE:** Once you're done with this section you should remove the jane and john contexts from your KUBECONFIG:
+
 * `kubectl config delete-user jane`
 * `kubectl config delete-user john`
 * `kubectl config delete-context docker-desktop-jane`
@@ -697,6 +728,7 @@ spec:
 This will just say if you to go to the Ingress's endpoint http://localhost it'll forward you through to the probe-test-app service.
 
 **NOTE:** This step assumes that the probe-test-app workload is still running (since we never cleaned that up above). If it isn't (you skipped the sections above) then you can run it with the following commands:
+
 * `kubectl apply -f ../probe-test-app/probe-test-app-deployment.yaml`
 * `kubectl apply -f ../probe-test-app-service.yaml`
 
@@ -735,15 +767,18 @@ spec:
 **NOTE:** This is one area where nginx handles its path rewrites a bit differently to something like an AWS ALB - and so the Ingress document for the two controllers will vary a bit. We'll discuss why this is one of the sorts of things leading to Kubernetes from Ingress to Gateway below.
 
 To see this:
+
 * First run `kubectl apply -f nyancat.yaml` to add a new workload 
 * And then run `kubectl apply -f nyancat-ingress.yaml` to update our Ingress object to serve it under a separate /nyancat URI path via our single load application load balancer.
 * Finally check out our new service by going to http://localhost/nyancat
 
 Once you're done you need to clean this up or Istio won't work (as it'll want port 80 and 443 on localhost):
+
 * `kubectl delete ingress probe-test-app`
 * `helm uninstall ingress`
 
 We can also now optionally remove probe-test-app and nyancat too:
+
 * `kubectl delete hpa probe-test-app`
 * `kubectl delete deployment probe-test-app`
 * `kubectl delete deployment nyancat`
@@ -797,6 +832,7 @@ The Bookinfo application is broken into four separate microservices:
 * ratings - The ratings microservice contains book ranking information that accompanies a book review.
 
 There are 3 versions of the reviews microservice:
+
 * Version v1 doesn’t call the ratings service.
 * Version v2 calls the ratings service, and displays each rating as 1 to 5 black stars.
 * Version v3 calls the ratings service, and displays each rating as 1 to 5 red stars.
@@ -804,6 +840,7 @@ There are 3 versions of the reviews microservice:
 All of the services are written in different languages/runtimes/frameworks to illustrate that this solution, unlike incorporating shared libraries/packages into each microservice for traffic management and/or encryption and/or authx, can work with all of them in the same way by abstracting it all out to the network via the Envoy sidecars.
 
 To install the sample app run:
+
 * `kubectl label namespace default istio-injection=enabled` - This tells the Istio mutating admission controller to add the Istio sidecars to each Pod in the default Namespace (for new Pods that launch after the label was added)
 * `kubectl apply -f bookinfo/platform/kube/bookinfo.yaml` - This deploys our sample application as above
 * `kubectl apply -f bookinfo/gateway-api/bookinfo-gateway.yaml` - This deploys:
@@ -816,6 +853,7 @@ You won't see anything here in the Traffic Map until you generate traffic throug
 ![](images/kiali.png)
 
 One of the things that Istio can really help us with is traffic management. To see this in action:
+
 * Run `kubectl apply -f bookinfo/platform/kube/bookinfo-versions.yaml` to define the available versions via backend service definitions
 * Run `kubectl apply -f bookinfo/gateway-api/route-all-v1.yaml` to have it route to only the v1 version (so you'll stop seeing both the black and red stars)
   * See this by refreshing http://localhost/productpage and also by seeing the subsequent Traffic Map in Kiali
@@ -831,6 +869,7 @@ One of the things that Istio can really help us with is traffic management. To s
 We'll keep the Istio running as we'll leverage it in our Argo Rollouts example coming later on. We can remove the bookinfo sample app though by running `./bookinfo/platform/kube/cleanup.sh` and hitting enter to accept the [default] namespace.
 
 This is just an introduction to Istio - we could have an entire session just on it as there is so many capabilities here. And maybe we will in the future if you'd like. You can explore more of this and other demos the project provides by exploring the following sections of their documentation:
+
 * [Traffic Management](https://istio.io/latest/docs/tasks/traffic-management/)
 * [Security](https://istio.io/latest/docs/tasks/security/)
 * [Policy Enforcement / Rate Limits](https://istio.io/latest/docs/tasks/policy-enforcement/)
@@ -852,17 +891,20 @@ Either can work - but people tend to have quite strong opinions on which of the 
 Kustomize is a pretty simple tool focused on templating your Kubernetes YAML. In addition to its own CLI, it is built right into kubectl with `kubectl apply -k`.
 
 It is used really in two main ways (often together):
+
 * If you structure your YAML into folders in a particular way (known as [bases and overlays](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#bases-and-overlays)) then it'll merge in the parameters from the files in the relevant overlay folder that differ for that environment (e.g. labels, the size or number of replicas of the Pods (maybe HA in prod but not to save money in dev etc.), what secrets to use to connect to your database, etc.)
 ![](images/kustomize.png) with those in the base.
 * And/or you can type standard JSON patches in the kustomization.yaml file(s) to add/remove/change any parameters in the bases very specifically.
 ![](images/kustomize2.png)
 
 Also the kustomization.yaml file(s) that you put in each of these folders with Kustomize does another few nice things:
+
 * It lets you specify the order in which to apply the K8s manifests
   * Whereas if you just did a `kubectl apply -f .` in a folder then it won't know that the Namespace needs to be created before the Deployment that references it - and so that deploy will fail whereas a `kubectl apply -k .` will succeed if the files are in the right order there
 * It has a few handy features/commands you can put in it to help with common transformations - you can see those [here](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/#kustomize-feature-list)
 
 We'll start with an example of bases and overlays. This is a very simple example that:
+
 * Has a base folder with: 
   * A deployment and a service as well as a kustomization.yaml
     * The kustomization.yaml forces the order of first deploying the deployment then the service (which in this case doesn't matter - but there are many cases where it would)
@@ -879,12 +921,14 @@ Then run `kubectl apply -k dev` - this does the same thing but also reduces the 
 To see the alternative of doing an in-line JSON patch in the kustomization.yaml file (rather than getting it to merge manifests) have a look at [kustomize/stg/kustomization.yaml](kustomize/stg/kustomization.yaml). This makes the same change as we did in dev (replace the bases's replicas parameter of 2 with 1) but in a different more explicit way that Kustomize also allows.
 
 You can clean this all up by running:
+
 * kubectl delete -k prod`
 * kubectl delete -k dev`
 * kubectl delete -k stg`
 
 ### Helm
 The big advantages (or disadvantages depending on your personal preference) of Helm vs. Kustomize is that it:
+
 * Handles deploying new versions of your container images, K8s IaC or the values you template into them in an opinionated way
   * This includes a [three-way strategic merge] (https://helm.sh/docs/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches) of the YAML involved
   * And optional runtime parameters to `helm upgrade` like `--atomic` and `--cleanup-on-fail` that will automatically rollback and clean up failed upgrades
@@ -904,6 +948,7 @@ kiali-server	istio-system	1       	2024-11-22 15:24:16.176899 +1100 AEDT	deploye
 prometheus  	monitoring  	1       	2024-11-22 15:11:47.902443 +1100 AEDT	deployed	kube-prometheus-stack-65.8.1	v0.77.2   
 ```
 If we look closer at the prometheus we deployed via Helm:
+
 * That was installed with the command `helm install prometheus prometheus-community/kube-prometheus-stack --values prometheus-stack-values.yaml --version 65.8.1 -n monitoring`
   * That comes from this GitHub repository - https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
     * You can see how values are templated in to the manifests with Helm within that repository in examples like [this](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/templates/prometheus/prometheus.yaml)
@@ -970,6 +1015,7 @@ With Gatekeeper you have [ConstraintTemplates](https://open-policy-agent.github.
 There is a public library these OPA Gatekeeper ConstraintTemplates/Constraints available at https://open-policy-agent.github.io/gatekeeper-library/website/. Chances are whatever constraint you are looking for is already written for you there. Let's apply one of them to our cluster.
 
 To see this in action:
+
 * `helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts`
 * `helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.17.1`
 * `cd ../opa-gatekeeper`
@@ -998,6 +1044,7 @@ The way that this works is that Argo has extended your kubernetes with the custo
 **NOTE:** What this means is that you don't need access to the cluster make various changes to it any longer - you just need access to merge the changes to the git repo that Argo is pulling from. So this requires more careful attention/control over who has access to merge in that git repo and under what conditions. For example, you could require both pull requests for peer review as well as for the change to pass some pre-merge tests before it can be merged. Because, once it is merged there, Argo CD *will* pull it in and deploy it in this model!
 
 To install and log into Argo CD:
+
 * `helm repo add argo-helm https://argoproj.github.io/argo-helm`
 * `helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.6.1`
 * `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d` - retrieve the password for the Argo UI
@@ -1005,6 +1052,7 @@ To install and log into Argo CD:
 * Go to https://localhost:8081, accept the self-signed cert, and log in with the username admin and the password you retrieved from the secret
 
 To deploy two applications via Argo CD:
+
 * `cd ../argocd`
 * `kubectl apply -f probe-test-app.yaml -n argocd` - this is re-deploying our probe-test-app - this time using the kustomization.yaml which will deploy the deployment, service and hpa
 * `kubectl apply -f argo-rollouts-app.yaml -n argocd` - this is deploying the Helm chart for Argo Rollouts - which we'll be looking at in the next section
@@ -1033,6 +1081,7 @@ The way that it works is that it replaces the Kubernetes built-in Deployment wit
 **NOTE:** Argo Rollouts decouples what is running in your cluster slightly from GitOps. For example, if it decided to roll back your change that you merged to git of the Rollout object due to a failed postPromotionAnalysis, you now need to check with the Rollout resource/controller for what is currently deployed and why via a `kubectl argo rollouts get rollout XXX` or via its web UI with a `kubectl argo rollouts dashboard` (and then visit http://localhost:3100).
 
 Let's start with the manual promotion flow:
+
 * `cd ../argo-rollouts`
 * `kubectl apply -f bluegreen-service.yaml` - create a service for our app
 * `kubectl apply bluegreen-gateway.yaml` - create a service to read the upcoming version before it's really deployed
@@ -1094,9 +1143,11 @@ NAME                                        KIND        STATUS     AGE  INFO
    └──⧉ bluegreen-demo-7d6459646d           ReplicaSet  ✔ Healthy  11m  delay:4m5s
       └──□ bluegreen-demo-7d6459646d-dqvbc  Pod         ✔ Running  11m  ready:2/2
 ```
+
 * If we change our mind and want to roll it back we can run `kubectl argo rollouts undo bluegreen-demo` and it'll make a new revision 3 putting it back to the blue tag and flip the main gateway to that
 
 What about a fully automated flow? In this example we are:
+
 * Spinning up the new version on the preview gateway
 * Testing it every 30s x 3 attempts to see if there was a less than 5% error rate in the requests that flowed through the gateway (based on the Prometheus metrics)
 * Then, if it passes that, we flip the preview to the main gateway (stopping if there was)
@@ -1105,6 +1156,7 @@ What about a fully automated flow? In this example we are:
 * Five minutes after this all finishes one way or the other the inactive version will be scaled down
 
 To see it in action:
+
 * Run `kubectl apply -f bluegreen-rollout-automatic.yaml` to roll back to blue and with this new automation
 * Open http://localhost:81 - as you'll need to generate some traffic there for it to work out the less than 5% error rate
   * Note that there is a slider there where you can increase it if you want to see this fail instead
@@ -1121,6 +1173,7 @@ Argo rollouts can do much more elaborate [canary/progressive](https://argo-rollo
 
 ## Kubernetes Pod Security / Multi-tenancy Considerations
 Kubernetes likes to deploy parts of Kubernetes with Kubernetes (think the network (CNI) add-on, the storage (CSI) add-on, tools to export Node/container metrics, and all the container logs, etc.) - often as privileged DaemonSets. It does this via Kubernetes for a few reasons:
+
 * You don't need to pre-bake them into the image/AMI
 * They can be upgrade independently from each other and without having to roll the Nodes with a new image/AMI
 * When Kubernetes schedules them it is aware of any requests and limits the Pods have - and takes them into account to avoid over-filling the Nodes
@@ -1128,8 +1181,11 @@ Kubernetes likes to deploy parts of Kubernetes with Kubernetes (think the networ
 But this has a downside. In order for most of these critical infrastructure add-ons to function they need way more access to the host and the other containers than you would generally want. And Kubernetes by default lets any Pod ask for these privileges - not just those things that need it.
 
 For example, have a look at this:
+
 * `cd ../pod-security`
 * `cat interactive-shell-node-via-pod.sh`
+    * This will give us an interactive shell not in the nsenter-pod but actually out on the Node - as root!
+  
 ```
 kubectl run nsenter-pod --restart=Never -it --rm --image overriden --overrides '
 {
@@ -1161,13 +1217,14 @@ kubectl run nsenter-pod --restart=Never -it --rm --image overriden --overrides '
   }
 }' --attach "$@"
 ```
-  * This will give us an interactive shell not in the nsenter-pod but actually out on the Node - as root!
+
 * `./interactive-shell-node-via-pod.sh`
 * `whomami` - I'm root - on the Node (not in my Pod)
 * `ps aux` - I can see all the processes from all the Pods - and could kill them etc. as well
 * `exit`
 
 Why did that work exactly?
+
 * The Pod/container is running as root
 * The Pod asked for `hostPID: true`
 * The Pod asked for a privileged securityContext
@@ -1182,10 +1239,12 @@ So if we are expecting people in one Kubernetes Namespace to be "safe" from thos
 
 ### How to strengthen pod-level security?
 There are two main ways to prevent people from requesting those parameters in their PodSpecs - and therefore to prevent them from escaping their container boundary in this way:
+
 * OPA Gatekeeper (which we covered earlier) - you'll see various compliance templates to help in their [library](https://open-policy-agent.github.io/gatekeeper-library/website/pspintro)
 * [Pod Security Admission (PSA)](https://kubernetes.io/docs/concepts/security/pod-security-admission/) which became built-in to Kubernetes at version 1.25
 
 PSAs are not just built-in but also are very simple to use - you just need to add some [labels to the Namespace(s)](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/). There are three standards you can enforce:
+
 * privileged - don't do anything- like the default 
 * baseline - pragmatically prevent most options like the ones above while still working with most PodSpecs (that aren't trying to do the wrong thing) unchanged
 * restricted - you need to explictly say the most secure options in your PodSpecs - will require most people to make changes to their PodSpecs to pass and also to not run their Pod as root (which is still quite common)
@@ -1193,15 +1252,19 @@ PSAs are not just built-in but also are very simple to use - you just need to ad
 Usually baseline is a good compromise of preventing the worst container-escape things while also not being too disruptive.
 
 For example, this is how to prevent this from happening on the default Namespace where we did it:
+
 * `kubectl label namespace default pod-security.kubernetes.io/enforce=baseline`
-* `./interactive-shell-node-via-pod.sh* - note how it is now denied:
+* `./interactive-shell-node-via-pod.sh` - note how it is now denied:
+  
 ```
 jumiker@COMPUTER:~/kubernetes-training/pod-security$ ./interactive-shell-node-via-pod.sh
 Error from server (Forbidden): pods "nsenter-pod" is forbidden: violates PodSecurity "baseline:latest": host namespaces (hostNetwork=true, hostPID=true), privileged (container "nsenter" must not set securityContext.privileged=true)
 ```
+
 * Let's re-remove that for now with `kubectl label namespace default pod-security.kubernetes.io/enforce-`
 
 ## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them
+
 * Since Docker Desktop is a single-Node Kubernetes, anything that involves multiple Nodes (draining them, updating them, scaling them in/out, etc.)
 * Since Docker Desktop doesn't have a network plugin (CNI) that supports NetworkPolicies (the K8s native firewall), anything that involves the implementation of those
 * Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS Load Balancer controller, AWS IAM Roles for Service Accounts (IRSA), AWS SecurityGroups for Pods, external-dns of Route53, Crossplane, etc.)

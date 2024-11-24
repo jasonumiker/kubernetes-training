@@ -39,6 +39,8 @@ This set of general Kubernetes training materials was designed to run on the Kub
   - [GitOps with Argo CD](#gitops-with-argo-cd)
   - [Progressive Delivery with Argo Rollouts](#progressive-delivery-with-argo-rollouts)
   - [Kubernetes Pod Security / Multi-tenancy Considerations](#kubernetes-pod-security--multi-tenancy-considerations)
+    - [Why is this a concern?](#why-is-this-a-concern)
+    - [How to strengthen pod-level security?](#how-to-strengthen-pod-level-security)
   - [Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them](#other-topics-that-we-didnt-cover-because-docker-desktops-k8s-is-not-suitable-for-exploring-them)
 
 ## Prerequisites
@@ -53,7 +55,7 @@ This set of general Kubernetes training materials was designed to run on the Kub
 1. Install Helm via Homebrew with a `brew install helm`
 1. Install Kustomize via Homebrew with a `brew install kustomize`
 1. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install derailed/k9s/k9s`
-1. Install the Argo Rollouts CLI wiht a `brew install argoproj/tap/kubectl-argo-rollouts`
+1. Install the Argo Rollouts CLI with a `brew install argoproj/tap/kubectl-argo-rollouts`
 1. Install git (if it's not already)
   1. On Mac, it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew so it should have installed them)
   1. On WSL2 Ubuntu on Windows it should be already there by default
@@ -398,7 +400,7 @@ We'll look more closely at this RabbitMQ in the KEDA section later on...
 ### DaemonSets
 DaemonSets are a way to tell Kubernetes that you want to run a Pod on every Node. This is useful for Kubernetes components and host agents that facilitate networking, storage, security and observability in the cluster.
 
-We do have one installed in our cluster as part of the monitoring tooling - the prometheus-node-exporter. It collects host/Node-level metrics which is then scraped by Prometheus to get them into that where we can also visualise them with Grafana.
+We do have one installed in our cluster as part of the monitoring tooling - the prometheus-node-exporter. It collects host/Node-level metrics which is then scraped by Prometheus to get them into that where we can also visualize them with Grafana.
 
 You can run `kubectl get daemonset prometheus-prometheus-node-exporter -n monitoring -o yaml` to see the manifest for it. As you'll see it is quite similar to the other controllers like ReplicaSet or Deployment in that you're giving it an embedded PodSpec with some additional parameters about how you want to run it across all the Nodes.
 
@@ -771,7 +773,7 @@ So, in the examples below for Istio, we'll focus on the Gateway API option/path 
 
 Service Meshes like Istio have the following benefits:
 1. Security - Istio lets you enforce strong identity-based authentication, authorization, and encryption (via mTLS). It also allows you to enforce rate limits and quotas.
-2. Traffic management - Istio offers fine-grained control over traffic behavior with features like advanced routing rules (such as split traffic for A/B testing or canary/progressive deployments), retries, failovers, and fault injection.
+2. Traffic management - Istio offers fine-grained control over traffic behavior with features like advanced routing rules (such as split traffic for A/B testing or canary/progressive deployments), retries, fail-overs, and fault injection.
 3. Observability - Istio provides robust tracing, monitoring, and logging features to help you understand how service performance impacts upstream matters. You can collect telemetry data from individual microservices to gain visibility into their health.
 
 Traditionally, service meshes have been based on sidecar containers running a service like [Envoy](https://www.envoyproxy.io/) within each Pod. Many like Istio are starting to offer an alterative, which Istio calls [Ambient Mesh](https://istio.io/latest/blog/2022/introducing-ambient-mesh/), which can function without the overhead of so many sidecars. Ambient Mesh doesn't work with Docker Desktop (as it doesn't have a traditional CNI) though - and the traditional sidecar-based Istio are also still the most commonly used today - so we'll be looking at the traditional sidecar-based Istio here.
@@ -810,7 +812,7 @@ To install the sample app run:
 
 Then go to the Kiali UI at http://localhost:20001/. You'll need a token that you can get by running `kubectl -n istio-system create token kiali`.
 
-You won't see anything here in the Traffic Map until you generate traffic through the system by going to http://localhost/productpage. Refresh it 5-10 times and you'll see that it is balancing the load across those three versions of the service (one without stars, one with black stars and the other with red stars) which changes/impacts the customer experience. If you don't see anything ensure you've picked the default namespace in the dropdown up top - and note it also defaults to only showing you the laste minute so pick a longer time range if you last hit the service over a minute ago.
+You won't see anything here in the Traffic Map until you generate traffic through the system by going to http://localhost/productpage. Refresh it 5-10 times and you'll see that it is balancing the load across those three versions of the service (one without stars, one with black stars and the other with red stars) which changes/impacts the customer experience. If you don't see anything ensure you've picked the default namespace in the dropdown up top - and note it also defaults to only showing you the last minute so pick a longer time range if you last hit the service over a minute ago.
 ![](images/kiali.png)
 
 One of the things that Istio can really help us with is traffic management. To see this in action:
@@ -820,7 +822,7 @@ One of the things that Istio can really help us with is traffic management. To s
 * Run `kubectl apply -f bookinfo/gateway-api/route-reviews-90-10.yaml` to change it so that it sends 90% of the traffic to v1 and 10% of it to v2 (useful for progressive rollouts / canary deployments)
   * See this by refreshing http://localhost/productpage and also by seeing the subsequent Traffic Map in Kiali
 * Run `kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml` to change it to send the user Jason to v2 and everybody else to v1 - replacing some of what we may have previously needed feature flags in code for at the network/mesh layer
-  * It does this based on a header that is put on the downstream request betweeen the the productpage and the reviews service
+  * It does this based on a header that is put on the downstream request between the the productpage and the reviews service
   * On http://localhost/productpage log in as user jason (it doesn't validate the password - type anything for that) and refresh the browser to see the black stars of v2!
   * Open another browser or the existing one in incognito and see that non-Jason goes back to no stars
 
@@ -874,7 +876,7 @@ If you then run `kubectl get pods` you'll see that it appended prod- to the name
 
 Then run `kubectl apply -k dev` - this does the same thing but also reduces the Deployment to one replica (for a cheaper non-HA dev environment). You can see all you need to do is put enough of the file to for Kustomise to match on in [kustomize/dev/deployment.yaml](kustomize/dev/deployment.yaml) and then the values you want to override - then list it as a patch file in the overlay's kustomization.yaml.
 
-To see the alternative of doing an in-line JSON patch in the kustomization.yaml file (rather than getting it to merge manifests) have a look at [kustomize/stg/kustomization.yaml](kustomize/stg/kustomization.yaml). This makes the same cahnge as we did in dev (replace the bases's replicas parameter of 2 with 1) but in a different more explicit way that Kustomize also allows.
+To see the alternative of doing an in-line JSON patch in the kustomization.yaml file (rather than getting it to merge manifests) have a look at [kustomize/stg/kustomization.yaml](kustomize/stg/kustomization.yaml). This makes the same change as we did in dev (replace the bases's replicas parameter of 2 with 1) but in a different more explicit way that Kustomize also allows.
 
 You can clean this all up by running:
 * kubectl delete -k prod`
@@ -888,7 +890,7 @@ The big advantages (or disadvantages depending on your personal preference) of H
   * And optional runtime parameters to `helm upgrade` like `--atomic` and `--cleanup-on-fail` that will automatically rollback and clean up failed upgrades
 * It imposes its own versioning over the top of the whole bundle of IaC (abstracted from the app's version/tag - though you *can* just make them match if you want)
 
-Some customers, especially those doing GitOps (like we'll see in the next section), really just want to focus on the straight K8s YAML and setting that to be what they want without this other CLI and optionated abstraction that comes with Helm in the middle. While others really like and lean into them and ensure everything in the cluster is deployed via Helm.
+Some customers, especially those doing GitOps (like we'll see in the next section), really just want to focus on the straight K8s YAML and setting that to be what they want without this other CLI and opinionated abstraction that comes with Helm in the middle. While others really like and lean into them and ensure everything in the cluster is deployed via Helm.
 
 You've already deployed several Helm charts already as part of this workshop. You can see them by running `helm ls -A`:
 ```
@@ -957,9 +959,9 @@ Another example, beyond simply the setup of the initial Postgres server Pod, tha
 So, the power of Operators and their Custom Resources is we can manage everything - even the Jobs of a Prometheus to scrape metrics endpoints - in this same declarative YAML format in Kubernetes as we do for its built-in resources.
 
 ### Admission Controllers / OPA Gatekeeper
-There is a special kind of Kubernetes controller called an [Admission Controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/). The job of these is to be almost a "firewall for the YAML" that you apply to the cluster - they can quite granularly reject any `kubectl apply` if the parameters in the YAML spec file don't meet the defined requirements of the organisation.
+There is a special kind of Kubernetes controller called an [Admission Controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/). The job of these is to be almost a "firewall for the YAML" that you apply to the cluster - they can quite granularly reject any `kubectl apply` if the parameters in the YAML spec file don't meet the defined requirements of the organization.
 
-The most popular Kubernetes Admission Controller is [Gatekeeper](https://open-policy-agent.github.io/gatekeeper/website/) - which is a sub-project of the [Open Policy Agent (OPA)](https://www.openpolicyagent.org/). This is a full graduated project of the [CNCF](https://www.cncf.io/) - the same organisation that governs Kubernetes. OPA has its own high-level declarative language called for expressing the policies of what is or isn't acceptable in a JSON/YAML document (which it calls constraints) - [rego](https://www.openpolicyagent.org/docs/latest/policy-language/).
+The most popular Kubernetes Admission Controller is [Gatekeeper](https://open-policy-agent.github.io/gatekeeper/website/) - which is a sub-project of the [Open Policy Agent (OPA)](https://www.openpolicyagent.org/). This is a full graduated project of the [CNCF](https://www.cncf.io/) - the same organization that governs Kubernetes. OPA has its own high-level declarative language called for expressing the policies of what is or isn't acceptable in a JSON/YAML document (which it calls constraints) - [rego](https://www.openpolicyagent.org/docs/latest/policy-language/).
 
 Gatekeeper integrates Open Policy Agent, which is not Kubernetes-specific, into Kubernetes as an admission controller. It also is an operator allowing you to declaratively define your constraints in custom resources in K8s YAML files as well.
 
@@ -991,7 +993,7 @@ GitOps is the idea that, since literally *everything* in Kubernetes is declarati
 
 The way that this works is that a controller, the most popular of which is [Argo CD](https://argo-cd.readthedocs.io/en/stable/), sits in the cluster watching the git repo on a particular branch for K8s YAML manifests in particular folders etc., and continually syncs the resources on your cluster(s) with what it sees in git.
 
-The way that this works is that Argo has extended your kubernetes with the custom resource [Application](https://argo-cd.readthedocs.io/en/latest/user-guide/application-specification/) - and this tells Argo what it should be syncing. This can point to a folder with a kustomization.yaml in it and it'll do Kustomize. Or it can specify a Helm chart you'd like to deploy along with the version and the requied values and it'll do that too. And you can mix and match the two as you'll see below.
+The way that this works is that Argo has extended your kubernetes with the custom resource [Application](https://argo-cd.readthedocs.io/en/latest/user-guide/application-specification/) - and this tells Argo what it should be syncing. This can point to a folder with a kustomization.yaml in it and it'll do Kustomize. Or it can specify a Helm chart you'd like to deploy along with the version and the required values and it'll do that too. And you can mix and match the two as you'll see below.
 
 **NOTE:** What this means is that you don't need access to the cluster make various changes to it any longer - you just need access to merge the changes to the git repo that Argo is pulling from. So this requires more careful attention/control over who has access to merge in that git repo and under what conditions. For example, you could require both pull requests for peer review as well as for the change to pass some pre-merge tests before it can be merged. Because, once it is merged there, Argo CD *will* pull it in and deploy it in this model!
 
@@ -1015,16 +1017,16 @@ This is the list of Applications Argo CD knows about:
 And here is the details if you click into one - it'll show you all the resources that were created and any that they created. For example, the YAML only deployed a Deployment - but it created a ReplicaSet which created Pods and you see that all here.
 ![](images/argocd-2.png)
 
-Argo CD will restore things to the way that they were in git if they deviate. This includes 'pruning' which we've enabled - if we remove them from git it'll remove them from the cluster. We've told it explicity one exception to that in the [probe-test-app.yaml](argocd/probe-test-app.yaml) - to ignore the replica count on the Deployment - since the Horizontal Pod Autoscaler will be changing that (and we don't want them to fight each other).
+Argo CD will restore things to the way that they were in git if they deviate. This includes 'pruning' which we've enabled - if we remove them from git it'll remove them from the cluster. We've told it explicitly one exception to that in the [probe-test-app.yaml](argocd/probe-test-app.yaml) - to ignore the replica count on the Deployment - since the Horizontal Pod Autoscaler will be changing that (and we don't want them to fight each other).
 
 To see this in action, run `kubectl delete deployment probe-test-app` and then `kubectl get pods` - and you'll see Argo CD noticed it wasn't there and put it back right away.
 
 You can now remove the probe-test-app and see that Argo CD does prune it away as well with a `kubectl delete application probe-test-app -n argocd`
 
 ## Progressive Delivery with Argo Rollouts
-One of the challanges with the GitOps approach is how to test whether the change you just merged to master was successful - and to automatically roll it back if it wasn't. Or perhaps you want to do advanced progressive rollout patterns where you gradually ramp up traffic to the new version say shifting it from the old version in 10% increments and then pausing to make sure everything is still good. This is where [Argo Rollouts](https://argo-rollouts.readthedocs.io/en/stable/) comes in.
+One of the challenges with the GitOps approach is how to test whether the change you just merged to master was successful - and to automatically roll it back if it wasn't. Or perhaps you want to do advanced progressive rollout patterns where you gradually ramp up traffic to the new version say shifting it from the old version in 10% increments and then pausing to make sure everything is still good. This is where [Argo Rollouts](https://argo-rollouts.readthedocs.io/en/stable/) comes in.
 
-The way that it works is that it replaces the Kuberntes built-in Deployment with a new Contoller called [Rollout](https://argo-rollouts.readthedocs.io/en/stable/features/specification/). In here you can specify things like prePromotionAnalysis and/or postPromotionAnalysis tests to see whether you should shift traffic - and if you have just done so if you should roll it back. Or, alternatively, you can control deployments manually - where it will wait for you to call a `kubectl argo rollouts promote XXX` after you merged your change for it to actually roll it out.
+The way that it works is that it replaces the Kubernetes built-in Deployment with a new Controller called [Rollout](https://argo-rollouts.readthedocs.io/en/stable/features/specification/). In here you can specify things like prePromotionAnalysis and/or postPromotionAnalysis tests to see whether you should shift traffic - and if you have just done so if you should roll it back. Or, alternatively, you can control deployments manually - where it will wait for you to call a `kubectl argo rollouts promote XXX` after you merged your change for it to actually roll it out.
 
 **NOTE:** Since this is a replacement for Deployment it can't help you to manage change for other objects like ConfigMaps or CRDs etc. It is only really useful for helping you to automatically test and rollback application Pods that would be deployed traditionally as part of a Kubernetes Deployment. You also will need to change your applications to use a Rollout instead of the built-in Deployment to use Argo Rollouts - moving to it isn't something that can be done automatically for you since you need to provide it with more details about your app than you did for a Deployment for it to work properly.
 
@@ -1096,7 +1098,7 @@ NAME                                        KIND        STATUS     AGE  INFO
 
 What about a fully automated flow? In this example we are:
 * Spinning up the new version on the preview gateway
-* Testing it every 30s x 3 attamptes to see if there was a less than 5% error rate in the requests that flowed through the gateway (based on the Prometheus metrics)
+* Testing it every 30s x 3 attempts to see if there was a less than 5% error rate in the requests that flowed through the gateway (based on the Prometheus metrics)
 * Then, if it passes that, we flip the preview to the main gateway (stopping if there was)
 * And test it again every 30s x 3 attempts to see if there is still a less than 5% error rate in the requests after we flipped it
 * And if there was a spike in the error rates we'll automatically roll it back to the old version (which we kept running)
@@ -1121,7 +1123,7 @@ Argo rollouts can do much more elaborate [canary/progressive](https://argo-rollo
 Kubernetes likes to deploy parts of Kubernetes with Kubernetes (think the network (CNI) add-on, the storage (CSI) add-on, tools to export Node/container metrics, and all the container logs, etc.) - often as privileged DaemonSets. It does this via Kubernetes for a few reasons:
 * You don't need to pre-bake them into the image/AMI
 * They can be upgrade independently from each other and without having to roll the Nodes with a new image/AMI
-* When Kubernetes schedules them it is aware of any reqeusts and limits the Pods have - and takes them into account to avoid over-filling the Nodes
+* When Kubernetes schedules them it is aware of any requests and limits the Pods have - and takes them into account to avoid over-filling the Nodes
 
 But this has a downside. In order for most of these critical infrastructure add-ons to function they need way more access to the host and the other containers than you would generally want. And Kubernetes by default lets any Pod ask for these privileges - not just those things that need it.
 
@@ -1178,17 +1180,17 @@ The above example means if anybody has access to launch a Pod in any Kubernetes 
 
 So if we are expecting people in one Kubernetes Namespace to be "safe" from those in another then we need to do something rather than accept these defaults.
 
-### How to strengenth pod-level security?
-There are two main ways to prevent people from requesting those parameters in their PodSpecs - and therefore to prevent them from escaping their container bounadary in this way:
+### How to strengthen pod-level security?
+There are two main ways to prevent people from requesting those parameters in their PodSpecs - and therefore to prevent them from escaping their container boundary in this way:
 * OPA Gatekeeper (which we covered earlier) - you'll see various compliance templates to help in their [library](https://open-policy-agent.github.io/gatekeeper-library/website/pspintro)
-* [Pod Security Admission (PSA)](https://kubernetes.io/docs/concepts/security/pod-security-admission/) which became built-in to Kubernets at version 1.25
+* [Pod Security Admission (PSA)](https://kubernetes.io/docs/concepts/security/pod-security-admission/) which became built-in to Kubernetes at version 1.25
 
 PSAs are not just built-in but also are very simple to use - you just need to add some [labels to the Namespace(s)](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/). There are three standards you can enforce:
-* priveleged - don't do anything- like the default 
-* baseline - pragrmatically prevent most options like the ones above while still working with most PodSpecs (that aren't trying to do the wrong thing) unchanged
+* privileged - don't do anything- like the default 
+* baseline - pragmatically prevent most options like the ones above while still working with most PodSpecs (that aren't trying to do the wrong thing) unchanged
 * restricted - you need to explictly say the most secure options in your PodSpecs - will require most people to make changes to their PodSpecs to pass and also to not run their Pod as root (which is still quite common)
 
-Usually baseline is a good comprimise of preventing the worst container-escape things while also not being too disruptive.
+Usually baseline is a good compromise of preventing the worst container-escape things while also not being too disruptive.
 
 For example, this is how to prevent this from happening on the default Namespace where we did it:
 * `kubectl label namespace default pod-security.kubernetes.io/enforce=baseline`
@@ -1202,6 +1204,6 @@ Error from server (Forbidden): pods "nsenter-pod" is forbidden: violates PodSecu
 ## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them
 * Since Docker Desktop is a single-Node Kubernetes, anything that involves multiple Nodes (draining them, updating them, scaling them in/out, etc.)
 * Since Docker Desktop doesn't have a network plugin (CNI) that supports NetworkPolicies (the K8s native firewall), anything that involves the implementation of those
-* Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS Load Balancer controller, AWS IAM Roles for Service Acounts (IRSA), AWS SecurityGroups for Pods, external-dns of Route53, Crossplane, etc.)
+* Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS Load Balancer controller, AWS IAM Roles for Service Accounts (IRSA), AWS SecurityGroups for Pods, external-dns of Route53, Crossplane, etc.)
 
 I'll develop another training with a cloud environment that can support these items to cover them. Stay tuned!

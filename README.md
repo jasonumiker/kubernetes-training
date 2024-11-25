@@ -16,6 +16,7 @@ This set of general Kubernetes training materials was designed to run on the Kub
     - [Sidecar and Init containers within a Pod](#sidecar-and-init-containers-within-a-pod)
     - [PersistentVolumes, PersistentVolumeClaims and StorageClasses](#persistentvolumes-persistentvolumeclaims-and-storageclasses)
     - [StatefulSets](#statefulsets)
+    - [ConfigMaps and Secrets](#configmaps-and-secrets)
     - [DaemonSets](#daemonsets)
   - [Requests, Limits and Scaling Pods](#requests-limits-and-scaling-pods)
     - [First let's install Prometheus for Metrics/Monitoring](#first-lets-install-prometheus-for-metricsmonitoring)
@@ -414,6 +415,57 @@ There is a good example of a StatefulSet in the RabbitMQ that we'll also need fo
 * `kubectl delete pod rabbit-mq-0` and `kubectl get pods` - you'll see that the Pod comes back with the same name and the same PersistentVolume with its state in it
 
 We'll look more closely at this RabbitMQ in the KEDA section later on...
+
+### ConfigMaps and Secrets
+There is a another couple special kinds of Volumes in Kubernetes - [ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/) and [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) - to allow you to mount in your runtime configuration as config files and/or environment variables.
+
+A ConfigMap is not for secrets - just configuration files that you want mounted in at runtime and don't want to bake into the container image (usually because they change per environment). Whereas a Secret is meant to store your passwords or private certificates and other such things that *are* secret.
+
+The RabbitMQ that we just deployed above uses both of these so lets have a look at them:
+
+* [keda-example/rabbitmq/configmap.yaml](keda-example/rabbitmq/configmap.yaml)
+    * The two keys in this are mounted into two different files within the container at runtime:
+    ```
+    volumes:
+    - name: rabbitmq-config
+      configMap:
+        name: rabbitmq-config
+        optional: false
+        items:
+        - key: enabled_plugins
+          path: "enabled_plugins"
+        - key: rabbitmq.conf
+          path: "rabbitmq.conf"
+    ```
+* [keda-example/rabbitmq/secrets.yaml](keda-example/rabbitmq/secrets.yaml)
+    * These are mounted into environment variables at runtime:
+    ```
+    env:
+    - name: RABBITMQ_DEFAULT_PASS
+      valueFrom:
+        secretKeyRef:
+          name: rabbitmq-admin
+          key: pass
+    - name: RABBITMQ_DEFAULT_USER
+      valueFrom:
+        secretKeyRef:
+          name: rabbitmq-admin
+          key: user
+    - name: RABBITMQ_ERLANG_COOKIE
+      valueFrom:
+        secretKeyRef:
+          name: erlang-cookie
+          key: cookie
+    ```
+
+Kubernetes secrets are base64 encoded. They are in clear text in this YAML file because we specified `stringData` - asking Kubernetes to base64 encode it on the way in for us. That means we'll need to base64 decode it if we want to look at it from the API later. Though, when mounting it in your container at runtime, K8s'll decode it for you too. To see this run:
+
+* `kubectl get secret rabbitmq-admin -o yaml` - see the encoded values in pass and user
+* Copy/paste the user or pass value into a command like this to decode it `echo "YWRtaW4=" | base64 --decode` - it'll reveal it as admin
+
+**NOTE**: Normally you shouldn't check a secret into the git repo like this - it is something that should be added to the cluster out-of-band and only live in Kubernetes where it is the source-of-truth for it. And access to it is tightly controlled via the Kubernetes API's authentication - which we'll cover in a later section.
+
+Also, in addition to built-in Kubernetes Secrets there is the popular [External Secrets Operator](https://github.com/external-secrets/external-secrets) that will let you store your secrets in tools like AWS Secrets Manager, Google Secrets Manager, Azure Key Vault, Hashicorp Vault, etc. and reference/mount them at runtime from within Kubernetes. There can be advantages to externalizing the secrets this way - mainly that they can be referenced from other clusters or services that are not running on Kubernetes within that public cloud etc.
 
 ### DaemonSets
 DaemonSets are a way to tell Kubernetes that you want to run a Pod on every Node. This is useful for Kubernetes components and host agents that facilitate networking, storage, security and observability in the cluster.

@@ -73,9 +73,9 @@ else
     docker run -it --privileged --pid=host debian:12.8 nsenter -t 1 -m -u -n -i \
         sh -c "sed -i 's/--listen-metrics-urls=http:\/\/127.0.0.1\:2381/--listen-metrics-urls=http:\/\/127.0.0.1\:2381,http:\/\/${NODE_IP}\:2381/g' /etc/kubernetes/manifests/etcd.yaml"
     echo "Waiting for etcd to restart, this can take some time..."
-    kubectl wait pod -l component=etcd -n kube-system --timeout=3m --for=delete                         # as soon as etcd goes down this will respond with an error from the api server
+    kubectl wait pod -l component=etcd -n kube-system --timeout=4m --for=delete                         # as soon as etcd goes down this will respond with an error from the api server
     sleep 10                                                                                            # so we wait for a few seconds for the api server to reboot & then we can run kubectl commands again
-    if ! kubectl wait pod -l component=etcd -n kube-system --timeout=3m --for=condition=Ready; then     # if all gone well this should respond immediately
+    if ! kubectl wait pod -l component=etcd -n kube-system --timeout=4m --for=condition=Ready; then     # if all gone well this should respond immediately
         echo "etcd pod did not restart in time - this may just be the api server still rebooting, give it a few minutes before panicking."
     fi
 fi

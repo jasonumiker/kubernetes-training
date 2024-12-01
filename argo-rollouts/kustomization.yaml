@@ -5,9 +5,9 @@ metadata:
 
 resources:
 - bluegreen-service.yaml
-- bluegreen-ingress.yaml
+- bluegreen-gateway.yaml
 - bluegreen-preview-service.yaml
-- bluegreen-preview-ingress.yaml
+- bluegreen-preview-gateway.yaml
 - success-rate-analysis.yaml
 - bluegreen-rollout-manual.yaml
 

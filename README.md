@@ -56,6 +56,7 @@ This set of general Kubernetes training materials was designed to run on the Kub
 1. Install Helm via Homebrew with a `brew install helm`
 1. Install Kustomize via Homebrew with a `brew install kustomize`
 1. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install derailed/k9s/k9s`
+1. Install the Argo CD CLI with a `brew install argocd`
 1. Install the Argo Rollouts CLI with a `brew install argoproj/tap/kubectl-argo-rollouts`
 1.  Install git (if it's not already)
     1.  On Mac, it should already be there if you have installed XCode and/or its Command Line Tools (which are a prerequisite for Homebrew so it should have installed them)

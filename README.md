@@ -344,7 +344,7 @@ To see this in action:
 
 * `cd ../sidecar-and-init-containers`
 * `kubectl apply -f sidecar.yaml`
-* `kubectl exec pod-with-sidecar -c sidecar-container -it bash` - connect to the sidecar container within the Pod
+* `kubectl exec pod-with-sidecar -c sidecar-container -it -- bash` - connect to the sidecar container within the Pod
 * `apt-get update && apt-get install curl` - install curl within that sidecar
 * `curl 'http://localhost:80/app.txt'` - access the log file via the sidecar's nginx service
 * `exit` to exit out of our interactive kubectl exec session
@@ -367,7 +367,7 @@ For the purposes of this environment we have a sort of 'dummy' CSI driver called
 
 First install that by:
 
-* `cd pvs-and-statefulsets`
+* `cd ../pvs-and-statefulsets`
 * `kubectl apply -f hostpath-provisioner.yaml`
 * `kubectl get storageclass` - you'll see our new 'mock' CSI driver listed there now as hostpath-provisioner
 
@@ -471,9 +471,9 @@ Also, in addition to built-in Kubernetes Secrets there is the popular [External 
 ### DaemonSets
 DaemonSets are a way to tell Kubernetes that you want to run a Pod on every Node. This is useful for Kubernetes components and host agents that facilitate networking, storage, security and observability in the cluster.
 
-We do have one installed in our cluster as part of the monitoring tooling - the prometheus-node-exporter. It collects host/Node-level metrics which is then scraped by Prometheus to get them into that where we can also visualize them with Grafana.
+We will have one installed in our cluster as part of the monitoring tooling - the prometheus-node-exporter. It collects host/Node-level metrics which is then scraped by Prometheus to get them into that where we can also visualize them with Grafana.
 
-You can run `kubectl get daemonset prometheus-prometheus-node-exporter -n monitoring -o yaml` to see the manifest for it. As you'll see it is quite similar to the other controllers like ReplicaSet or Deployment in that you're giving it an embedded PodSpec with some additional parameters about how you want to run it across all the Nodes.
+Once installed (in the [section below](#first-lets-install-prometheus-for-metricsmonitoring)), you can run `kubectl get daemonset prometheus-prometheus-node-exporter -n monitoring -o yaml` to see the manifest for it. As you'll see it is quite similar to the other controllers like ReplicaSet or Deployment in that you're giving it an embedded PodSpec with some additional parameters about how you want to run it across all the Nodes.
 
 Note also that, as you see in this example, with a `get` with a `-o yaml` you can basically export the YAML manifests out of any running object and do a `> output.yaml` at the end to save it. You can then re-import that back into the cluster with a `kubectl apply -f` if you need to.
 
@@ -783,7 +783,7 @@ This will just say if you to go to the Ingress's endpoint http://localhost it'll
 **NOTE:** This step assumes that the probe-test-app workload is still running (since we never cleaned that up above). If it isn't (you skipped the sections above) then you can run it with the following commands:
 
 * `kubectl apply -f ../probe-test-app/probe-test-app-deployment.yaml`
-* `kubectl apply -f ../probe-test-app-service.yaml`
+* `kubectl apply -f ../probe-test-app/probe-test-app-service.yaml`
 
 To set that in action run `kubectl apply -f probe-test-app-ingress.yaml` and then go to http://localhost.
 
@@ -866,7 +866,7 @@ Service Meshes like Istio have the following benefits:
 
 Traditionally, service meshes have been based on sidecar containers running a service like [Envoy](https://www.envoyproxy.io/) within each Pod. Many like Istio are starting to offer an alterative, which Istio calls [Ambient Mesh](https://istio.io/latest/blog/2022/introducing-ambient-mesh/), which can function without the overhead of so many sidecars. Ambient Mesh doesn't work with Docker Desktop (as it doesn't have a traditional CNI) though - and the traditional sidecar-based Istio are also still the most commonly used today - so we'll be looking at the traditional sidecar-based Istio here.
 
-To install Istio onto our cluster `cd istio` and run `./install-istio.sh`. 
+To install Istio onto our cluster `cd ../istio` and run `./install-istio.sh`. 
 
 **NOTE:** Istio (or at least its Kiali UI) requires Prometheus so you'll need to still have that installed in your cluster as we did in the earlier steps. If you don't have it then you can re-install it by running `cd ../monitoring` and then `./install-prometheus.sh`.
 
@@ -963,7 +963,7 @@ We'll start with an example of bases and overlays. This is a very simple example
     * The kustomization.yaml forces the order of first deploying the deployment then the service (which in this case doesn't matter - but there are many cases where it would)
 * Has three environmental overlay folders that force a prefix on the Names of `dev-` for the dev environment, `stg-` for staging and `prod-` for the production
 
-First run `cd ../kustomise` then `kustomize build prod` - this will show you the rendered combination of the base and the prod overlay.
+First run `cd ../kustomize` then `kustomize build prod` - this will show you the rendered combination of the base and the prod overlay.
 
 You can deploy it right from kubectl with a `kubectl apply -k prod`
 
@@ -975,9 +975,9 @@ To see the alternative of doing an in-line JSON patch in the kustomization.yaml 
 
 You can clean this all up by running:
 
-* kubectl delete -k prod`
-* kubectl delete -k dev`
-* kubectl delete -k stg`
+* `kubectl delete -k prod`
+* `kubectl delete -k dev`
+* `kubectl delete -k stg` (if you ran the stg one as well)
 
 ### Helm
 The big advantages (or disadvantages depending on your personal preference) of Helm vs. Kustomize is that it:
@@ -1137,7 +1137,7 @@ Let's start with the manual promotion flow:
 
 * `cd ../argo-rollouts`
 * `kubectl apply -f bluegreen-service.yaml` - create a service for our app
-* `kubectl apply bluegreen-gateway.yaml` - create a service to read the upcoming version before it's really deployed
+* `kubectl apply -f bluegreen-gateway.yaml` - create a service to read the upcoming version before it's really deployed
 * `kubectl apply -f bluegreen-preview-service.yaml` - create a Gateway to reach it on our laptop vis Istio
 * `kubectl apply -f bluegreen-preview-gateway.yaml` - create a Gateway to reach it on our laptop via Istio
 * `kubectl apply -f bluegreen-rollout-manual.yaml` - do the initial deployment of the 'blue' version - this will happen automatically as there is nothing running yet

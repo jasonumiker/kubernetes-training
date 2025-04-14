@@ -7,7 +7,7 @@ metadata:
 spec:  
   containers:  
     - name: nginx
-      image: nginx:1.27.2
+      image: mirror.gcr.io/nginx:1.27.4-bookworm
       volumeMounts:  
         - mountPath: "/usr/share/nginx/html"
           name: test-pv

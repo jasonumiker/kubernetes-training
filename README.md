@@ -1009,19 +1009,19 @@ If we look closer at the prometheus we deployed via Helm:
   * If you look at [monitoring/prometheus-stack-default-values.yaml](monitoring/prometheus-stack-default-values.yaml) these are all the possible parameters and their default values for the Helm chart
   * We chose to override some of those for our needs in [monitoring/prometheus-stack-values.yaml](monitoring/prometheus-stack-values.yaml) - which we specified in the `helm install` command
 
-If we wanted to update, there is actually a new version of this chart since when we initially pinned the version. You usually want to check the repo for any instructions on going up major versions - and in this case we would be (from 65 to 66) - https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#from-65x-to-66x. If we needed to change our values it would usually be called out in the documentation as well - but in this case they don't mention it (so we should be safe). So, first we follow their instructions to run the following commands to update the CRDs before trying to update the Chart:
+If we wanted to update, there is actually a new version of this chart since when we initially pinned the version. You usually want to check the repo for any instructions on going up major versions - and in this case we would be (from 65 to 66) - https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/UPGRADE.md#from-65x-to-66x. If we needed to change our values it would usually be called out in the documentation as well - but in this case they don't mention it (so we should be safe). So, first we follow their instructions to run the following commands to update the CRDs before trying to update the Chart:
 
 ```
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
 ```
 
 Then we can update to the latest (at the time of writing) version of the chart - 66.2.1. 
@@ -1070,7 +1070,7 @@ There is a public library these OPA Gatekeeper ConstraintTemplates/Constraints a
 To see this in action:
 
 * `helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts`
-* `helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.17.1`
+* `helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.19.0`
 * `cd ../opa-gatekeeper`
 * `kubectl apply -f k8srequiredlabels-constraint-template.yaml` - this applies the ConstraintTemplate to let us require that any Pods must have certain labels
 * `kubectl apply -f pods-in-default-must-have-owner.yaml` - this constraint specifies the required labels and where they are required (in this case the owner label needs to be there on any Pods in the default Namespace)
@@ -1099,7 +1099,7 @@ The way that this works is that Argo has extended your kubernetes with the custo
 To install and log into Argo CD:
 
 * `helm repo add argo-helm https://argoproj.github.io/argo-helm`
-* `helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.6.1`
+* `helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.8.24`
 * `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d` - retrieve the password for the Argo UI
 * `kubectl port-forward service/argo-cd-argocd-server -n argocd 8081:443`
 * Go to https://localhost:8081, accept the self-signed cert, and log in with the username admin and the password you retrieved from the secret
@@ -1251,7 +1251,7 @@ kubectl run nsenter-pod --restart=Never -it --rm --image overriden --overrides '
     "containers": [
       {
         "name": "nsenter",
-        "image": "debian:12.8",
+        "image": "mirror.gcr.io/debian:12.10",
         "command": [
           "nsenter", "--all", "--target=1", "--", "su", "-"
         ],

@@ -27,7 +27,7 @@ spec:
       initContainers:
       # We use an init container to copy from the read-only ConfigMap to a read-write path
       - name: "rabbitmq-config"
-        image: busybox:1.37.0
+        image: mirror.gcr.io/busybox:1.37.0
         volumeMounts:
         - name: rabbitmq-config
           mountPath: /tmp/rabbitmq
@@ -69,8 +69,9 @@ spec:
         runAsGroup: 999
       containers:
       - name: rabbitmq
-        # Community Docker Image
-        image: rabbitmq:3.8.34
+        # This is the last version that supported these env vars for config
+        # TODO: Redo this to support current Rabbit MQ image
+        image: mirror.gcr.io/rabbitmq:3.8.34
         volumeMounts:
         # mounting rabbitmq.conf and enabled_plugins
         # this should have writeable access, this might be a problem

@@ -41,7 +41,7 @@ spec:
   - name: app-container
     # Simple application: write the current date
     # to the log file every five seconds
-    image: alpine:3.20.3 # alpine is a simple Linux OS image
+    image: mirror.gcr.io/alpine:3.21.3
     command: ["/bin/sh"]
     args: ["-c", "while true; do date >> /var/log/app.txt; sleep 5;done"]
 
@@ -56,7 +56,7 @@ spec:
     # Simple sidecar: display log files using nginx.
     # In reality, this sidecar would be a custom image
     # that uploads logs to a third-party or storage service.
-    image: nginx:1.27.2-bookworm
+    image: mirror.gcr.io/nginx:1.27.4-bookworm
     ports:
       - containerPort: 80
 

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: bluegreen-demo
-        image: argoproj/rollouts-demo:green
+        image: mirror.gcr.io/argoproj/rollouts-demo:green
         imagePullPolicy: Always
         ports:
         - name: http

@@ -19,7 +19,7 @@ spec:
       serviceAccountName: hostpath-provisioner
       containers:
         - name: hostpath-provisioner
-          image: cdkbot/hostpath-provisioner:1.5.0
+          image: mirror.gcr.io/cdkbot/hostpath-provisioner:1.5.0
           env:
             - name: NAMESPACE
               valueFrom:

@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: hello
-            image: busybox:1.37.0
+            image: mirror.gcr.io/busybox:1.37.0
             command:
             - /bin/sh
             - -c

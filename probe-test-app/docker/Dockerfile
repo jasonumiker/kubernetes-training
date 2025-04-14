@@ -1,4 +1,4 @@
-FROM python:3.12.7-bookworm
+FROM python:3.13.3-bookworm
 
 RUN useradd --user-group --system --no-log-init --create-home python
 USER python

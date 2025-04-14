@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: generate-load-app
-          image: busybox:1.37.0
+          image: mirror.gcr.io/busybox:1.37.0
           command: ["/bin/sh"]
           args: ["-c", "while sleep 0.01; do wget -q -O- http://probe-test-app:8000; done"]

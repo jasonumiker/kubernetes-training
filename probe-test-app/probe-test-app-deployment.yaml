@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: probe-test-app
-          image: jasonumiker/probe-test-app:v1
+          image: mirror.gcr.io/jasonumiker/probe-test-app:v1
           ports:
             - containerPort: 8080
           resources:

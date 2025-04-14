@@ -13,7 +13,7 @@ echo "--------------------"
 sleep 1
 echo "kubectl apply -f probe-test-app-pod.yaml"
 kubectl apply -f probe-test-app-pod.yaml
-kubectl wait --for=condition=ready pod probe-test-app
+kubectl wait --for=condition=ready --timeout=5m pod probe-test-app
 echo "--------------------"
 sleep 1
 echo "kubectl get pods -o wide"
@@ -125,7 +125,7 @@ kubectl apply -f sidecar.yaml
 kubectl wait --for=condition=ready pod pod-with-sidecar
 echo "--------------------"
 sleep 1
-#kubectl exec pod-with-sidecar -c sidecar-container -it bash
+#kubectl exec pod-with-sidecar -c sidecar-container -it -- bash
 #apt-get update && apt-get install curl
 #curl 'http://localhost:80/app.txt'
 #exit
@@ -277,7 +277,8 @@ echo "./install-prometheus.sh"
 ./install-prometheus.sh
 sleep 10
 kubectl rollout status deployment adapter-prometheus-adapter -n monitoring
-sleep 60
+kubectl rollout status statefulset prometheus-prometheus-kube-prometheus-prometheus -n monitoring
+sleep 10
 echo "--------------------"
 sleep 1
 echo "kubectl top nodes"
@@ -302,7 +303,7 @@ echo "--------------------"
 sleep 1
 echo "kubectl apply -f generate-load-app-replicaset.yaml"
 kubectl apply -f generate-load-app-replicaset.yaml
-sleep 30
+sleep 45
 echo "--------------------"
 sleep 1
 echo "kubectl get pods"
@@ -311,7 +312,7 @@ echo "--------------------"
 sleep 1
 echo "kubectl delete replicaset generate-load-app"
 kubectl delete replicaset generate-load-app
-sleep 30
+sleep 45
 echo "--------------------"
 sleep 1
 echo "kubectl describe hpa probe-test-app"
@@ -482,7 +483,7 @@ echo "--------------------"
 sleep 1
 echo "./install-nginx.sh"
 ./install-nginx.sh
-sleep 30
+kubectl rollout status deployment ingress-ingress-nginx-controller -n default
 echo "--------------------"
 sleep 1
 echo "kubectl apply -f probe-test-app-ingress.yaml"
@@ -601,16 +602,16 @@ helm ls -A
 echo "--------------------"
 sleep 1
 echo "Installing required CRD updates for prometheus chart upgrade from 65 to 66..."
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
-kubectl apply --server-side -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
+kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
 echo "--------------------"
 sleep 10
 echo "helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring"
@@ -625,8 +626,8 @@ echo "helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/ch
 helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
 echo "--------------------"
 sleep 1
-echo "helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.17.1"
-helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.17.1
+echo "helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.19.0"
+helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.19.0
 echo "--------------------"
 sleep 10
 echo "cd ../opa-gatekeeper"
@@ -661,8 +662,8 @@ echo "helm repo add argo-helm https://argoproj.github.io/argo-helm"
 helm repo add argo-helm https://argoproj.github.io/argo-helm
 echo "--------------------"
 sleep 1
-echo "helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.6.1"
-helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.6.1
+echo "helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.8.24"
+helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.8.24
 echo "--------------------"
 sleep 10
 echo "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d"

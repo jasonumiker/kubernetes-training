@@ -4,7 +4,7 @@ CURRENT   NAME             CLUSTER          AUTHINFO         NAMESPACE
 --------------------
 kubectl get nodes
 NAME             STATUS   ROLES           AGE   VERSION
-docker-desktop   Ready    control-plane   25s   v1.30.5
+docker-desktop   Ready    control-plane   57s   v1.32.2
 --------------------
 cd probe-test-app
 --------------------
@@ -14,20 +14,20 @@ pod/probe-test-app condition met
 --------------------
 kubectl get pods -o wide
 NAME             READY   STATUS    RESTARTS   AGE   IP         NODE             NOMINATED NODE   READINESS GATES
-probe-test-app   1/1     Running   0          19s   10.1.0.6   docker-desktop   <none>           <none>
+probe-test-app   1/1     Running   0          33s   10.1.0.6   docker-desktop   <none>           <none>
 --------------------
 kubectl apply -f probe-test-app-service.yaml
 service/probe-test-app created
 --------------------
 kubectl get services -o wide
 NAME             TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE   SELECTOR
-kubernetes       ClusterIP      10.96.0.1        <none>        443/TCP          44s   <none>
-probe-test-app   LoadBalancer   10.105.100.236   localhost     8000:32035/TCP   1s    app.kubernetes.io/name=probe-test-app
+kubernetes       ClusterIP      10.96.0.1        <none>        443/TCP          93s   <none>
+probe-test-app   LoadBalancer   10.105.115.102   localhost     8000:30862/TCP   2s    app.kubernetes.io/name=probe-test-app
 --------------------
 kubectl get endpoints
 NAME             ENDPOINTS           AGE
-kubernetes       192.168.65.3:6443   45s
-probe-test-app   10.1.0.6:8080       2s
+kubernetes       192.168.65.3:6443   94s
+probe-test-app   10.1.0.6:8080       3s
 --------------------
 kubectl apply -f probe-test-app-pod-2.yaml
 pod/probe-test-app-2 created
@@ -35,8 +35,8 @@ pod/probe-test-app-2 condition met
 --------------------
 kubectl get endpoints
 NAME             ENDPOINTS                     AGE
-kubernetes       192.168.65.3:6443             49s
-probe-test-app   10.1.0.6:8080,10.1.0.7:8080   6s
+kubernetes       192.168.65.3:6443             98s
+probe-test-app   10.1.0.6:8080,10.1.0.7:8080   7s
 --------------------
 kubectl delete pods --all
 pod "probe-test-app" deleted
@@ -44,39 +44,38 @@ pod "probe-test-app-2" deleted
 --------------------
 kubectl apply -f probe-test-app-replicaset.yaml
 replicaset.apps/probe-test-app created
-pod/probe-test-app-4d692 condition met
-pod/probe-test-app-cz7bw condition met
-pod/probe-test-app-pfz9x condition met
+pod/probe-test-app-76gnb condition met
+pod/probe-test-app-g4rcl condition met
+pod/probe-test-app-ts5fr condition met
 --------------------
 kubectl scale replicaset probe-test-app --replicas=2
 replicaset.apps/probe-test-app scaled
 --------------------
 kubectl get pods
 NAME                   READY   STATUS        RESTARTS   AGE
-probe-test-app-4d692   1/1     Running       0          3s
-probe-test-app-cz7bw   1/1     Terminating   0          3s
-probe-test-app-pfz9x   1/1     Running       0          3s
+probe-test-app-76gnb   1/1     Running       0          4s
+probe-test-app-g4rcl   1/1     Terminating   0          4s
+probe-test-app-ts5fr   1/1     Running       0          4s
 --------------------
 kubectl delete replicaset probe-test-app
 replicaset.apps "probe-test-app" deleted
 --------------------
 kubectl apply -f probe-test-app-deployment.yaml
 deployment.apps/probe-test-app created
-Waiting for deployment "probe-test-app" rollout to finish: 0 out of 3 new replicas have been updated...
 Waiting for deployment "probe-test-app" rollout to finish: 0 of 3 updated replicas are available...
 Waiting for deployment "probe-test-app" rollout to finish: 1 of 3 updated replicas are available...
 Waiting for deployment "probe-test-app" rollout to finish: 2 of 3 updated replicas are available...
 deployment "probe-test-app" successfully rolled out
 --------------------
 kubectl get pods
-NAME                             READY   STATUS    RESTARTS   AGE
-probe-test-app-fc7776cb8-cdbrd   1/1     Running   0          4s
-probe-test-app-fc7776cb8-ldmd2   1/1     Running   0          4s
-probe-test-app-fc7776cb8-w6v8w   1/1     Running   0          4s
+NAME                              READY   STATUS    RESTARTS   AGE
+probe-test-app-685956d4cf-5wsjr   1/1     Running   0          3s
+probe-test-app-685956d4cf-75g8d   1/1     Running   0          3s
+probe-test-app-685956d4cf-rd6qf   1/1     Running   0          3s
 --------------------
 kubectl get replicasets
-NAME                       DESIRED   CURRENT   READY   AGE
-probe-test-app-fc7776cb8   3         3         3       5s
+NAME                        DESIRED   CURRENT   READY   AGE
+probe-test-app-685956d4cf   3         3         3       4s
 --------------------
 kubectl set image deployment/probe-test-app probe-test-app=jasonumiker/probe-test-app:v2
 deployment.apps/probe-test-app image updated
@@ -91,91 +90,95 @@ Waiting for deployment "probe-test-app" rollout to finish: 1 old replicas are pe
 deployment "probe-test-app" successfully rolled out
 --------------------
 kubectl events
-LAST SEEN           TYPE      REASON                    OBJECT                                MESSAGE
-80s (x8 over 80s)   Normal    NodeHasSufficientMemory   Node/docker-desktop                   Node docker-desktop status is now: NodeHasSufficientMemory
-80s (x8 over 80s)   Normal    NodeHasNoDiskPressure     Node/docker-desktop                   Node docker-desktop status is now: NodeHasNoDiskPressure
-80s (x7 over 80s)   Normal    NodeHasSufficientPID      Node/docker-desktop                   Node docker-desktop status is now: NodeHasSufficientPID
-80s                 Normal    NodeAllocatableEnforced   Node/docker-desktop                   Updated Node Allocatable limit across pods
-80s                 Normal    Starting                  Node/docker-desktop                   Starting kubelet.
-72s                 Normal    RegisteredNode            Node/docker-desktop                   Node docker-desktop event: Registered Node docker-desktop in Controller
-69s                 Normal    Starting                  Node/docker-desktop                   
-53s                 Normal    Scheduled                 Pod/probe-test-app                    Successfully assigned default/probe-test-app to docker-desktop
-52s                 Normal    Pulling                   Pod/probe-test-app                    Pulling image "jasonumiker/probe-test-app:v1"
-37s                 Normal    Pulled                    Pod/probe-test-app                    Successfully pulled image "jasonumiker/probe-test-app:v1" in 14.603s (14.603s including waiting). Image size: 383887660 bytes.
-36s                 Normal    Started                   Pod/probe-test-app                    Started container probe-test-app
-36s                 Normal    Created                   Pod/probe-test-app                    Created container probe-test-app
-30s                 Normal    Scheduled                 Pod/probe-test-app-2                  Successfully assigned default/probe-test-app-2 to docker-desktop
-29s                 Warning   Unhealthy                 Pod/probe-test-app-2                  Readiness probe failed: Get "http://10.1.0.7:8080/readyz": dial tcp 10.1.0.7:8080: connect: connection refused
-29s                 Normal    Pulled                    Pod/probe-test-app-2                  Container image "jasonumiker/probe-test-app:v1" already present on machine
-29s                 Normal    Created                   Pod/probe-test-app-2                  Created container probe-test-app
-29s                 Normal    Started                   Pod/probe-test-app-2                  Started container probe-test-app
-26s                 Normal    Killing                   Pod/probe-test-app                    Stopping container probe-test-app
-26s                 Normal    Killing                   Pod/probe-test-app-2                  Stopping container probe-test-app
-24s                 Normal    Pulled                    Pod/probe-test-app-cz7bw              Container image "jasonumiker/probe-test-app:v1" already present on machine
-24s                 Normal    Created                   Pod/probe-test-app-cz7bw              Created container probe-test-app
-24s                 Normal    Started                   Pod/probe-test-app-cz7bw              Started container probe-test-app
-24s                 Normal    Pulled                    Pod/probe-test-app-4d692              Container image "jasonumiker/probe-test-app:v1" already present on machine
-24s                 Normal    Started                   Pod/probe-test-app-4d692              Started container probe-test-app
-24s                 Normal    Created                   Pod/probe-test-app-4d692              Created container probe-test-app
-24s                 Normal    Pulled                    Pod/probe-test-app-pfz9x              Container image "jasonumiker/probe-test-app:v1" already present on machine
-24s                 Normal    Started                   Pod/probe-test-app-pfz9x              Started container probe-test-app
-24s                 Normal    Created                   Pod/probe-test-app-pfz9x              Created container probe-test-app
-23s                 Normal    Scheduled                 Pod/probe-test-app-cz7bw              Successfully assigned default/probe-test-app-cz7bw to docker-desktop
-23s                 Normal    Scheduled                 Pod/probe-test-app-4d692              Successfully assigned default/probe-test-app-4d692 to docker-desktop
-23s                 Normal    Scheduled                 Pod/probe-test-app-pfz9x              Successfully assigned default/probe-test-app-pfz9x to docker-desktop
-23s                 Normal    SuccessfulCreate          ReplicaSet/probe-test-app             Created pod: probe-test-app-cz7bw
-23s                 Normal    SuccessfulCreate          ReplicaSet/probe-test-app             Created pod: probe-test-app-pfz9x
-23s                 Normal    SuccessfulCreate          ReplicaSet/probe-test-app             Created pod: probe-test-app-4d692
-21s                 Normal    SuccessfulDelete          ReplicaSet/probe-test-app             Deleted pod: probe-test-app-cz7bw
-19s                 Normal    Killing                   Pod/probe-test-app-cz7bw              Stopping container probe-test-app
-19s                 Normal    Killing                   Pod/probe-test-app-4d692              Stopping container probe-test-app
-19s                 Normal    Killing                   Pod/probe-test-app-pfz9x              Stopping container probe-test-app
-18s                 Normal    ScalingReplicaSet         Deployment/probe-test-app             Scaled up replica set probe-test-app-fc7776cb8 to 3
-18s                 Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8   Created pod: probe-test-app-fc7776cb8-cdbrd
-18s                 Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8   Created pod: probe-test-app-fc7776cb8-w6v8w
-18s                 Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8   Created pod: probe-test-app-fc7776cb8-ldmd2
-17s                 Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-w6v8w    Successfully assigned default/probe-test-app-fc7776cb8-w6v8w to docker-desktop
-17s                 Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-cdbrd    Successfully assigned default/probe-test-app-fc7776cb8-cdbrd to docker-desktop
-17s                 Normal    Pulled                    Pod/probe-test-app-fc7776cb8-cdbrd    Container image "jasonumiker/probe-test-app:v1" already present on machine
-17s                 Normal    Pulled                    Pod/probe-test-app-fc7776cb8-w6v8w    Container image "jasonumiker/probe-test-app:v1" already present on machine
-17s                 Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-ldmd2    Successfully assigned default/probe-test-app-fc7776cb8-ldmd2 to docker-desktop
-17s                 Normal    Pulled                    Pod/probe-test-app-fc7776cb8-ldmd2    Container image "jasonumiker/probe-test-app:v1" already present on machine
-16s                 Normal    Started                   Pod/probe-test-app-fc7776cb8-w6v8w    Started container probe-test-app
-16s                 Normal    Created                   Pod/probe-test-app-fc7776cb8-cdbrd    Created container probe-test-app
-16s                 Normal    Created                   Pod/probe-test-app-fc7776cb8-ldmd2    Created container probe-test-app
-16s                 Normal    Created                   Pod/probe-test-app-fc7776cb8-w6v8w    Created container probe-test-app
-16s                 Normal    Started                   Pod/probe-test-app-fc7776cb8-ldmd2    Started container probe-test-app
-16s                 Normal    Started                   Pod/probe-test-app-fc7776cb8-cdbrd    Started container probe-test-app
-12s                 Normal    ScalingReplicaSet         Deployment/probe-test-app             Scaled up replica set probe-test-app-fb95466cc to 1
-12s                 Normal    Scheduled                 Pod/probe-test-app-fb95466cc-n62j2    Successfully assigned default/probe-test-app-fb95466cc-n62j2 to docker-desktop
-12s                 Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fb95466cc   Created pod: probe-test-app-fb95466cc-n62j2
-11s                 Normal    Pulling                   Pod/probe-test-app-fb95466cc-n62j2    Pulling image "jasonumiker/probe-test-app:v2"
-8s                  Normal    Pulled                    Pod/probe-test-app-fb95466cc-n62j2    Successfully pulled image "jasonumiker/probe-test-app:v2" in 3.667s (3.667s including waiting). Image size: 383887659 bytes.
-8s                  Normal    Created                   Pod/probe-test-app-fb95466cc-n62j2    Created container probe-test-app
-7s                  Normal    Started                   Pod/probe-test-app-fb95466cc-n62j2    Started container probe-test-app
-7s                  Normal    ScalingReplicaSet         Deployment/probe-test-app             Scaled down replica set probe-test-app-fc7776cb8 to 2 from 3
-6s                  Normal    Started                   Pod/probe-test-app-fb95466cc-7lxf2    Started container probe-test-app
-6s                  Normal    ScalingReplicaSet         Deployment/probe-test-app             Scaled up replica set probe-test-app-fb95466cc to 2 from 1
-6s                  Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fb95466cc   Created pod: probe-test-app-fb95466cc-7lxf2
-6s                  Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fc7776cb8   Deleted pod: probe-test-app-fc7776cb8-cdbrd
-6s                  Normal    Created                   Pod/probe-test-app-fb95466cc-7lxf2    Created container probe-test-app
-6s                  Normal    Pulled                    Pod/probe-test-app-fb95466cc-7lxf2    Container image "jasonumiker/probe-test-app:v2" already present on machine
-6s                  Normal    Scheduled                 Pod/probe-test-app-fb95466cc-7lxf2    Successfully assigned default/probe-test-app-fb95466cc-7lxf2 to docker-desktop
-6s                  Normal    Killing                   Pod/probe-test-app-fc7776cb8-cdbrd    Stopping container probe-test-app
-5s                  Warning   Unhealthy                 Pod/probe-test-app-fb95466cc-7lxf2    Readiness probe failed: Get "http://10.1.0.15:8080/readyz": dial tcp 10.1.0.15:8080: connect: connection refused
-4s                  Normal    Pulled                    Pod/probe-test-app-fb95466cc-8dtct    Container image "jasonumiker/probe-test-app:v2" already present on machine
-4s                  Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fc7776cb8   Deleted pod: probe-test-app-fc7776cb8-ldmd2
-4s                  Normal    Scheduled                 Pod/probe-test-app-fb95466cc-8dtct    Successfully assigned default/probe-test-app-fb95466cc-8dtct to docker-desktop
-4s                  Normal    Killing                   Pod/probe-test-app-fc7776cb8-ldmd2    Stopping container probe-test-app
-4s                  Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fb95466cc   Created pod: probe-test-app-fb95466cc-8dtct
-4s                  Normal    ScalingReplicaSet         Deployment/probe-test-app             Scaled down replica set probe-test-app-fc7776cb8 to 1 from 2
-4s                  Normal    ScalingReplicaSet         Deployment/probe-test-app             Scaled up replica set probe-test-app-fb95466cc to 3 from 2
-3s                  Warning   Unhealthy                 Pod/probe-test-app-fb95466cc-8dtct    Readiness probe failed: Get "http://10.1.0.16:8080/readyz": dial tcp 10.1.0.16:8080: connect: connection refused
-3s                  Normal    Started                   Pod/probe-test-app-fb95466cc-8dtct    Started container probe-test-app
-3s                  Normal    Created                   Pod/probe-test-app-fb95466cc-8dtct    Created container probe-test-app
-2s                  Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fc7776cb8   Deleted pod: probe-test-app-fc7776cb8-w6v8w
-2s                  Normal    Killing                   Pod/probe-test-app-fc7776cb8-w6v8w    Stopping container probe-test-app
-2s                  Normal    ScalingReplicaSet         Deployment/probe-test-app             Scaled down replica set probe-test-app-fc7776cb8 to 0 from 1
+LAST SEEN               TYPE      REASON                              OBJECT                                 MESSAGE
+2m21s                   Warning   PossibleMemoryBackedVolumesOnDisk   Node/docker-desktop                    The tmpfs noswap option is not supported. Memory-backed volumes (e.g. secrets, emptyDirs, etc.) might be swapped to disk and should no longer be considered secure.
+2m21s                   Normal    Starting                            Node/docker-desktop                    Starting kubelet.
+2m21s                   Warning   CgroupV1                            Node/docker-desktop                    cgroup v1 support is in maintenance mode, please migrate to cgroup v2
+2m21s                   Warning   InvalidDiskCapacity                 Node/docker-desktop                    invalid capacity 0 on image filesystem
+2m21s (x8 over 2m21s)   Normal    NodeHasSufficientMemory             Node/docker-desktop                    Node docker-desktop status is now: NodeHasSufficientMemory
+2m21s (x8 over 2m21s)   Normal    NodeHasNoDiskPressure               Node/docker-desktop                    Node docker-desktop status is now: NodeHasNoDiskPressure
+2m21s (x7 over 2m21s)   Normal    NodeHasSufficientPID                Node/docker-desktop                    Node docker-desktop status is now: NodeHasSufficientPID
+2m21s                   Normal    NodeAllocatableEnforced             Node/docker-desktop                    Updated Node Allocatable limit across pods
+2m12s                   Normal    RegisteredNode                      Node/docker-desktop                    Node docker-desktop event: Registered Node docker-desktop in Controller
+2m9s                    Normal    Starting                            Node/docker-desktop                    
+79s                     Normal    Scheduled                           Pod/probe-test-app                     Successfully assigned default/probe-test-app to docker-desktop
+78s                     Normal    Pulling                             Pod/probe-test-app                     Pulling image "mirror.gcr.io/jasonumiker/probe-test-app:v1"
+49s                     Normal    Pulled                              Pod/probe-test-app                     Successfully pulled image "mirror.gcr.io/jasonumiker/probe-test-app:v1" in 29.405s (29.405s including waiting). Image size: 1024950162 bytes.
+48s                     Normal    Created                             Pod/probe-test-app                     Created container: probe-test-app
+47s                     Normal    Started                             Pod/probe-test-app                     Started container probe-test-app
+41s                     Normal    Pulled                              Pod/probe-test-app-2                   Container image "mirror.gcr.io/jasonumiker/probe-test-app:v1" already present on machine
+41s                     Normal    Created                             Pod/probe-test-app-2                   Created container: probe-test-app
+41s                     Normal    Scheduled                           Pod/probe-test-app-2                   Successfully assigned default/probe-test-app-2 to docker-desktop
+40s                     Normal    Started                             Pod/probe-test-app-2                   Started container probe-test-app
+37s                     Normal    Killing                             Pod/probe-test-app-2                   Stopping container probe-test-app
+37s                     Normal    Killing                             Pod/probe-test-app                     Stopping container probe-test-app
+36s                     Warning   Unhealthy                           Pod/probe-test-app                     Readiness probe failed: Get "http://10.1.0.6:8080/readyz": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+34s                     Normal    Created                             Pod/probe-test-app-g4rcl               Created container: probe-test-app
+34s                     Normal    Scheduled                           Pod/probe-test-app-g4rcl               Successfully assigned default/probe-test-app-g4rcl to docker-desktop
+34s                     Normal    Pulled                              Pod/probe-test-app-76gnb               Container image "mirror.gcr.io/jasonumiker/probe-test-app:v1" already present on machine
+34s                     Normal    Created                             Pod/probe-test-app-76gnb               Created container: probe-test-app
+34s                     Normal    Started                             Pod/probe-test-app-ts5fr               Started container probe-test-app
+34s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app              Created pod: probe-test-app-g4rcl
+34s                     Normal    Pulled                              Pod/probe-test-app-g4rcl               Container image "mirror.gcr.io/jasonumiker/probe-test-app:v1" already present on machine
+34s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app              Created pod: probe-test-app-ts5fr
+34s                     Normal    Scheduled                           Pod/probe-test-app-ts5fr               Successfully assigned default/probe-test-app-ts5fr to docker-desktop
+34s                     Normal    Pulled                              Pod/probe-test-app-ts5fr               Container image "mirror.gcr.io/jasonumiker/probe-test-app:v1" already present on machine
+34s                     Normal    Created                             Pod/probe-test-app-ts5fr               Created container: probe-test-app
+34s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app              Created pod: probe-test-app-76gnb
+34s                     Normal    Scheduled                           Pod/probe-test-app-76gnb               Successfully assigned default/probe-test-app-76gnb to docker-desktop
+33s                     Warning   Unhealthy                           Pod/probe-test-app-g4rcl               Readiness probe failed: Get "http://10.1.0.9:8080/readyz": dial tcp 10.1.0.9:8080: connect: connection refused
+33s                     Warning   Unhealthy                           Pod/probe-test-app-ts5fr               Readiness probe failed: Get "http://10.1.0.8:8080/readyz": dial tcp 10.1.0.8:8080: connect: connection refused
+33s                     Normal    Started                             Pod/probe-test-app-76gnb               Started container probe-test-app
+33s                     Normal    Started                             Pod/probe-test-app-g4rcl               Started container probe-test-app
+31s                     Normal    SuccessfulDelete                    ReplicaSet/probe-test-app              Deleted pod: probe-test-app-g4rcl
+29s                     Normal    Killing                             Pod/probe-test-app-g4rcl               Stopping container probe-test-app
+29s                     Normal    Killing                             Pod/probe-test-app-ts5fr               Stopping container probe-test-app
+29s                     Normal    Killing                             Pod/probe-test-app-76gnb               Stopping container probe-test-app
+28s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app-685956d4cf   Created pod: probe-test-app-685956d4cf-rd6qf
+28s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app-685956d4cf   Created pod: probe-test-app-685956d4cf-75g8d
+28s                     Normal    ScalingReplicaSet                   Deployment/probe-test-app              Scaled up replica set probe-test-app-685956d4cf from 0 to 3
+28s                     Normal    Scheduled                           Pod/probe-test-app-685956d4cf-5wsjr    Successfully assigned default/probe-test-app-685956d4cf-5wsjr to docker-desktop
+28s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app-685956d4cf   Created pod: probe-test-app-685956d4cf-5wsjr
+28s                     Normal    Scheduled                           Pod/probe-test-app-685956d4cf-rd6qf    Successfully assigned default/probe-test-app-685956d4cf-rd6qf to docker-desktop
+28s                     Normal    Scheduled                           Pod/probe-test-app-685956d4cf-75g8d    Successfully assigned default/probe-test-app-685956d4cf-75g8d to docker-desktop
+27s                     Normal    Created                             Pod/probe-test-app-685956d4cf-75g8d    Created container: probe-test-app
+27s                     Normal    Started                             Pod/probe-test-app-685956d4cf-5wsjr    Started container probe-test-app
+27s                     Normal    Pulled                              Pod/probe-test-app-685956d4cf-rd6qf    Container image "mirror.gcr.io/jasonumiker/probe-test-app:v1" already present on machine
+27s                     Normal    Pulled                              Pod/probe-test-app-685956d4cf-5wsjr    Container image "mirror.gcr.io/jasonumiker/probe-test-app:v1" already present on machine
+27s                     Normal    Created                             Pod/probe-test-app-685956d4cf-rd6qf    Created container: probe-test-app
+27s                     Normal    Started                             Pod/probe-test-app-685956d4cf-rd6qf    Started container probe-test-app
+27s                     Normal    Pulled                              Pod/probe-test-app-685956d4cf-75g8d    Container image "mirror.gcr.io/jasonumiker/probe-test-app:v1" already present on machine
+27s                     Normal    Created                             Pod/probe-test-app-685956d4cf-5wsjr    Created container: probe-test-app
+27s                     Normal    Started                             Pod/probe-test-app-685956d4cf-75g8d    Started container probe-test-app
+23s                     Normal    ScalingReplicaSet                   Deployment/probe-test-app              Scaled up replica set probe-test-app-68d99fdc94 from 0 to 1
+23s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app-68d99fdc94   Created pod: probe-test-app-68d99fdc94-lvxsx
+22s                     Normal    Pulling                             Pod/probe-test-app-68d99fdc94-lvxsx    Pulling image "jasonumiker/probe-test-app:v2"
+22s                     Normal    Scheduled                           Pod/probe-test-app-68d99fdc94-lvxsx    Successfully assigned default/probe-test-app-68d99fdc94-lvxsx to docker-desktop
+17s                     Normal    Created                             Pod/probe-test-app-68d99fdc94-lvxsx    Created container: probe-test-app
+17s                     Normal    Pulled                              Pod/probe-test-app-68d99fdc94-lvxsx    Successfully pulled image "jasonumiker/probe-test-app:v2" in 5.059s (5.059s including waiting). Image size: 1024950162 bytes.
+17s                     Normal    Started                             Pod/probe-test-app-68d99fdc94-lvxsx    Started container probe-test-app
+16s                     Normal    ScalingReplicaSet                   Deployment/probe-test-app              Scaled down replica set probe-test-app-685956d4cf from 3 to 2
+16s                     Normal    Scheduled                           Pod/probe-test-app-68d99fdc94-rbs6s    Successfully assigned default/probe-test-app-68d99fdc94-rbs6s to docker-desktop
+16s                     Normal    SuccessfulCreate                    ReplicaSet/probe-test-app-68d99fdc94   Created pod: probe-test-app-68d99fdc94-rbs6s
+16s                     Normal    SuccessfulDelete                    ReplicaSet/probe-test-app-685956d4cf   Deleted pod: probe-test-app-685956d4cf-rd6qf
+16s                     Normal    Killing                             Pod/probe-test-app-685956d4cf-rd6qf    Stopping container probe-test-app
+16s                     Normal    ScalingReplicaSet                   Deployment/probe-test-app              Scaled up replica set probe-test-app-68d99fdc94 from 1 to 2
+15s                     Normal    Pulled                              Pod/probe-test-app-68d99fdc94-rbs6s    Container image "jasonumiker/probe-test-app:v2" already present on machine
+15s                     Normal    Created                             Pod/probe-test-app-68d99fdc94-rbs6s    Created container: probe-test-app
+15s                     Normal    Started                             Pod/probe-test-app-68d99fdc94-rbs6s    Started container probe-test-app
+5s                      Normal    SuccessfulDelete                    ReplicaSet/probe-test-app-685956d4cf   Deleted pod: probe-test-app-685956d4cf-75g8d
+5s                      Normal    Killing                             Pod/probe-test-app-685956d4cf-75g8d    Stopping container probe-test-app
+5s                      Normal    Scheduled                           Pod/probe-test-app-68d99fdc94-6xd5h    Successfully assigned default/probe-test-app-68d99fdc94-6xd5h to docker-desktop
+5s                      Normal    SuccessfulCreate                    ReplicaSet/probe-test-app-68d99fdc94   Created pod: probe-test-app-68d99fdc94-6xd5h
+5s                      Normal    ScalingReplicaSet                   Deployment/probe-test-app              Scaled down replica set probe-test-app-685956d4cf from 2 to 1
+5s                      Normal    ScalingReplicaSet                   Deployment/probe-test-app              Scaled up replica set probe-test-app-68d99fdc94 from 2 to 3
+4s                      Normal    Pulled                              Pod/probe-test-app-68d99fdc94-6xd5h    Container image "jasonumiker/probe-test-app:v2" already present on machine
+4s                      Normal    Created                             Pod/probe-test-app-68d99fdc94-6xd5h    Created container: probe-test-app
+4s                      Normal    Started                             Pod/probe-test-app-68d99fdc94-6xd5h    Started container probe-test-app
+4s                      Warning   Unhealthy                           Pod/probe-test-app-68d99fdc94-6xd5h    Readiness probe failed: Get "http://10.1.0.16:8080/readyz": dial tcp 10.1.0.16:8080: connect: connection refused
+3s                      Normal    SuccessfulDelete                    ReplicaSet/probe-test-app-685956d4cf   Deleted pod: probe-test-app-685956d4cf-5wsjr
+3s                      Normal    Killing                             Pod/probe-test-app-685956d4cf-5wsjr    Stopping container probe-test-app
+3s                      Normal    ScalingReplicaSet                   Deployment/probe-test-app              Scaled down replica set probe-test-app-685956d4cf from 1 to 0
 --------------------
 kubectl rollout undo deployment/probe-test-app
 deployment.apps/probe-test-app rolled back
@@ -190,17 +193,60 @@ Waiting for deployment "probe-test-app" rollout to finish: 1 old replicas are pe
 deployment "probe-test-app" successfully rolled out
 --------------------
 kubectl get pods
-NAME                             READY   STATUS    RESTARTS   AGE
-probe-test-app-fc7776cb8-hlgfj   1/1     Running   0          4s
-probe-test-app-fc7776cb8-hqrdj   1/1     Running   0          4s
-probe-test-app-fc7776cb8-z4qmx   1/1     Running   0          7s
+NAME                              READY   STATUS    RESTARTS   AGE
+probe-test-app-685956d4cf-cmprb   1/1     Running   0          7s
+probe-test-app-685956d4cf-pvtn6   1/1     Running   0          5s
+probe-test-app-685956d4cf-vvv54   1/1     Running   0          3s
 --------------------
 kubectl describe replicaset probe-test-app
-Name:           probe-test-app-fb95466cc
+Name:           probe-test-app-685956d4cf
 Namespace:      default
-Selector:       app.kubernetes.io/name=probe-test-app,pod-template-hash=fb95466cc
+Selector:       app.kubernetes.io/name=probe-test-app,pod-template-hash=685956d4cf
 Labels:         app.kubernetes.io/name=probe-test-app
-                pod-template-hash=fb95466cc
+                pod-template-hash=685956d4cf
+Annotations:    deployment.kubernetes.io/desired-replicas: 3
+                deployment.kubernetes.io/max-replicas: 4
+                deployment.kubernetes.io/revision: 3
+                deployment.kubernetes.io/revision-history: 1
+Controlled By:  Deployment/probe-test-app
+Replicas:       3 current / 3 desired
+Pods Status:    3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app.kubernetes.io/name=probe-test-app
+           pod-template-hash=685956d4cf
+  Containers:
+   probe-test-app:
+    Image:      mirror.gcr.io/jasonumiker/probe-test-app:v1
+    Port:       8080/TCP
+    Host Port:  0/TCP
+    Requests:
+      cpu:         50m
+      memory:      52Mi
+    Liveness:      http-get http://:8080/livez delay=0s timeout=1s period=10s #success=1 #failure=3
+    Readiness:     http-get http://:8080/readyz delay=0s timeout=1s period=10s #success=1 #failure=3
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type    Reason            Age   From                   Message
+  ----    ------            ----  ----                   -------
+  Normal  SuccessfulCreate  39s   replicaset-controller  Created pod: probe-test-app-685956d4cf-rd6qf
+  Normal  SuccessfulCreate  39s   replicaset-controller  Created pod: probe-test-app-685956d4cf-75g8d
+  Normal  SuccessfulCreate  39s   replicaset-controller  Created pod: probe-test-app-685956d4cf-5wsjr
+  Normal  SuccessfulDelete  27s   replicaset-controller  Deleted pod: probe-test-app-685956d4cf-rd6qf
+  Normal  SuccessfulDelete  16s   replicaset-controller  Deleted pod: probe-test-app-685956d4cf-75g8d
+  Normal  SuccessfulDelete  14s   replicaset-controller  Deleted pod: probe-test-app-685956d4cf-5wsjr
+  Normal  SuccessfulCreate  10s   replicaset-controller  Created pod: probe-test-app-685956d4cf-cmprb
+  Normal  SuccessfulCreate  8s    replicaset-controller  Created pod: probe-test-app-685956d4cf-pvtn6
+  Normal  SuccessfulCreate  6s    replicaset-controller  Created pod: probe-test-app-685956d4cf-vvv54
+
+Name:           probe-test-app-68d99fdc94
+Namespace:      default
+Selector:       app.kubernetes.io/name=probe-test-app,pod-template-hash=68d99fdc94
+Labels:         app.kubernetes.io/name=probe-test-app
+                pod-template-hash=68d99fdc94
 Annotations:    deployment.kubernetes.io/desired-replicas: 3
                 deployment.kubernetes.io/max-replicas: 4
                 deployment.kubernetes.io/revision: 2
@@ -209,7 +255,7 @@ Replicas:       0 current / 0 desired
 Pods Status:    0 Running / 0 Waiting / 0 Succeeded / 0 Failed
 Pod Template:
   Labels:  app.kubernetes.io/name=probe-test-app
-           pod-template-hash=fb95466cc
+           pod-template-hash=68d99fdc94
   Containers:
    probe-test-app:
     Image:      jasonumiker/probe-test-app:v2
@@ -228,55 +274,12 @@ Pod Template:
 Events:
   Type    Reason            Age   From                   Message
   ----    ------            ----  ----                   -------
-  Normal  SuccessfulCreate  23s   replicaset-controller  Created pod: probe-test-app-fb95466cc-n62j2
-  Normal  SuccessfulCreate  17s   replicaset-controller  Created pod: probe-test-app-fb95466cc-7lxf2
-  Normal  SuccessfulCreate  15s   replicaset-controller  Created pod: probe-test-app-fb95466cc-8dtct
-  Normal  SuccessfulDelete  7s    replicaset-controller  Deleted pod: probe-test-app-fb95466cc-7lxf2
-  Normal  SuccessfulDelete  7s    replicaset-controller  Deleted pod: probe-test-app-fb95466cc-8dtct
-  Normal  SuccessfulDelete  5s    replicaset-controller  Deleted pod: probe-test-app-fb95466cc-n62j2
-
-Name:           probe-test-app-fc7776cb8
-Namespace:      default
-Selector:       app.kubernetes.io/name=probe-test-app,pod-template-hash=fc7776cb8
-Labels:         app.kubernetes.io/name=probe-test-app
-                pod-template-hash=fc7776cb8
-Annotations:    deployment.kubernetes.io/desired-replicas: 3
-                deployment.kubernetes.io/max-replicas: 4
-                deployment.kubernetes.io/revision: 3
-                deployment.kubernetes.io/revision-history: 1
-Controlled By:  Deployment/probe-test-app
-Replicas:       3 current / 3 desired
-Pods Status:    3 Running / 0 Waiting / 0 Succeeded / 0 Failed
-Pod Template:
-  Labels:  app.kubernetes.io/name=probe-test-app
-           pod-template-hash=fc7776cb8
-  Containers:
-   probe-test-app:
-    Image:      jasonumiker/probe-test-app:v1
-    Port:       8080/TCP
-    Host Port:  0/TCP
-    Requests:
-      cpu:         50m
-      memory:      52Mi
-    Liveness:      http-get http://:8080/livez delay=0s timeout=1s period=10s #success=1 #failure=3
-    Readiness:     http-get http://:8080/readyz delay=0s timeout=1s period=10s #success=1 #failure=3
-    Environment:   <none>
-    Mounts:        <none>
-  Volumes:         <none>
-  Node-Selectors:  <none>
-  Tolerations:     <none>
-Events:
-  Type    Reason            Age   From                   Message
-  ----    ------            ----  ----                   -------
-  Normal  SuccessfulCreate  29s   replicaset-controller  Created pod: probe-test-app-fc7776cb8-ldmd2
-  Normal  SuccessfulCreate  29s   replicaset-controller  Created pod: probe-test-app-fc7776cb8-w6v8w
-  Normal  SuccessfulCreate  29s   replicaset-controller  Created pod: probe-test-app-fc7776cb8-cdbrd
-  Normal  SuccessfulDelete  17s   replicaset-controller  Deleted pod: probe-test-app-fc7776cb8-cdbrd
-  Normal  SuccessfulDelete  15s   replicaset-controller  Deleted pod: probe-test-app-fc7776cb8-ldmd2
-  Normal  SuccessfulDelete  13s   replicaset-controller  Deleted pod: probe-test-app-fc7776cb8-w6v8w
-  Normal  SuccessfulCreate  10s   replicaset-controller  Created pod: probe-test-app-fc7776cb8-z4qmx
-  Normal  SuccessfulCreate  7s    replicaset-controller  Created pod: probe-test-app-fc7776cb8-hqrdj
-  Normal  SuccessfulCreate  7s    replicaset-controller  Created pod: probe-test-app-fc7776cb8-hlgfj
+  Normal  SuccessfulCreate  34s   replicaset-controller  Created pod: probe-test-app-68d99fdc94-lvxsx
+  Normal  SuccessfulCreate  27s   replicaset-controller  Created pod: probe-test-app-68d99fdc94-rbs6s
+  Normal  SuccessfulCreate  16s   replicaset-controller  Created pod: probe-test-app-68d99fdc94-6xd5h
+  Normal  SuccessfulDelete  8s    replicaset-controller  Deleted pod: probe-test-app-68d99fdc94-6xd5h
+  Normal  SuccessfulDelete  6s    replicaset-controller  Deleted pod: probe-test-app-68d99fdc94-rbs6s
+  Normal  SuccessfulDelete  4s    replicaset-controller  Deleted pod: probe-test-app-68d99fdc94-lvxsx
 
 --------------------
 cd ../sidecar-and-init-containers
@@ -297,7 +300,7 @@ service/myservice created
 service/mydb created
 --------------------
 NAME        READY   STATUS    RESTARTS   AGE
-myapp-pod   1/1     Running   0          11s
+myapp-pod   1/1     Running   0          13s
 --------------------
 pod "myapp-pod" deleted
 pod "pod-with-sidecar" deleted
@@ -315,7 +318,7 @@ clusterrolebinding.rbac.authorization.k8s.io/hostpath-provisioner created
 --------------------
 kubectl get storageclass
 NAME                   PROVISIONER            RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-hostpath (default)     docker.io/hostpath     Delete          Immediate              false                  2m50s
+hostpath (default)     docker.io/hostpath     Delete          Immediate              false                  4m2s
 hostpath-provisioner   microk8s.io/hostpath   Delete          WaitForFirstConsumer   false                  1s
 --------------------
 kubectl apply -f pvc.yaml
@@ -331,11 +334,11 @@ pod/nginx condition met
 --------------------
 kubectl get pvc
 NAME       STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS           VOLUMEATTRIBUTESCLASS   AGE
-test-pvc   Bound    pvc-821fa768-7e96-4ca9-95ff-fcc8586c9156   1Gi        RWO            hostpath-provisioner   <unset>                 14s
+test-pvc   Bound    pvc-5220e38e-f419-435e-8de3-93c5bd1229e8   1Gi        RWO            hostpath-provisioner   <unset>                 18s
 --------------------
 kubectl get pv
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM              STORAGECLASS           VOLUMEATTRIBUTESCLASS   REASON   AGE
-pvc-821fa768-7e96-4ca9-95ff-fcc8586c9156   1Gi        RWO            Delete           Bound    default/test-pvc   hostpath-provisioner   <unset>                          7s
+pvc-5220e38e-f419-435e-8de3-93c5bd1229e8   1Gi        RWO            Delete           Bound    default/test-pvc   hostpath-provisioner   <unset>                          4s
 --------------------
 kubectl apply -f service.yaml
 service/nginx created
@@ -343,12 +346,12 @@ service/nginx created
 curl http://localhost:8001
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   153  100   153    0     0   146k      0 --:--:-- --:--:-- --:--:--  149k
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   153  100   153    0     0   102k      0 --:--:-- --:--:-- --:--:--  149k
 <html>
 <head><title>403 Forbidden</title></head>
 <body>
 <center><h1>403 Forbidden</h1></center>
-<hr><center>nginx/1.27.2</center>
+<hr><center>nginx/1.27.4</center>
 </body>
 </html>
 --------------------
@@ -357,7 +360,7 @@ kubectl exec -it nginx  -- bash -c "echo 'Data on PV' > /usr/share/nginx/html/in
 curl http://localhost:8001
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    11  100    11    0     0  12429      0 --:--:-- --:--:-- --:--:-- 11000
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    11  100    11    0     0   9490      0 --:--:-- --:--:-- --:--:-- 11000
 Data on PV
 --------------------
 kubectl delete pod nginx
@@ -365,7 +368,7 @@ pod "nginx" deleted
 --------------------
 kubectl get pv
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM              STORAGECLASS           VOLUMEATTRIBUTESCLASS   REASON   AGE
-pvc-821fa768-7e96-4ca9-95ff-fcc8586c9156   1Gi        RWO            Delete           Bound    default/test-pvc   hostpath-provisioner   <unset>                          23s
+pvc-5220e38e-f419-435e-8de3-93c5bd1229e8   1Gi        RWO            Delete           Bound    default/test-pvc   hostpath-provisioner   <unset>                          22s
 --------------------
 kubectl apply -f pod.yaml
 pod/nginx created
@@ -374,7 +377,7 @@ pod/nginx condition met
 curl http://localhost:8001
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    11  100    11    0     0  11305      0 --:--:-- --:--:-- --:--:-- 11000
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    11  100    11    0     0   7762      0 --:--:-- --:--:-- --:--:-- 11000
 Data on PV
 --------------------
 kubectl delete service nginx
@@ -388,7 +391,7 @@ persistentvolumeclaim "test-pvc" deleted
 --------------------
 kubectl get pv
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS     CLAIM              STORAGECLASS           VOLUMEATTRIBUTESCLASS   REASON   AGE
-pvc-821fa768-7e96-4ca9-95ff-fcc8586c9156   1Gi        RWO            Delete           Released   default/test-pvc   hostpath-provisioner   <unset>                          32s
+pvc-5220e38e-f419-435e-8de3-93c5bd1229e8   1Gi        RWO            Delete           Released   default/test-pvc   hostpath-provisioner   <unset>                          30s
 --------------------
 --------------------
 kubectl apply -k .
@@ -407,7 +410,7 @@ partitioned roll out complete: 1 new pods have been updated...
 kubectl describe statefulset rabbitmq
 Name:               rabbitmq
 Namespace:          default
-CreationTimestamp:  Sun, 24 Nov 2024 11:58:50 +1100
+CreationTimestamp:  Mon, 14 Apr 2025 21:10:38 +1000
 Selector:           app=rabbitmq
 Labels:             <none>
 Annotations:        <none>
@@ -420,7 +423,7 @@ Pod Template:
   Service Account:  rabbitmq
   Init Containers:
    rabbitmq-config:
-    Image:      busybox:1.37.0
+    Image:      mirror.gcr.io/busybox:1.37.0
     Port:       <none>
     Host Port:  <none>
     Command:
@@ -433,7 +436,7 @@ Pod Template:
       /tmp/rabbitmq from rabbitmq-config (rw)
   Containers:
    rabbitmq:
-    Image:       rabbitmq:3.8.34
+    Image:       mirror.gcr.io/rabbitmq:3.8.34
     Ports:       5672/TCP, 15672/TCP, 15692/TCP, 4369/TCP
     Host Ports:  0/TCP, 0/TCP, 0/TCP, 0/TCP
     Liveness:    exec [rabbitmq-diagnostics status] delay=60s timeout=15s period=60s #success=1 #failure=3
@@ -470,33 +473,33 @@ Volume Claims:
 Events:
   Type    Reason            Age   From                    Message
   ----    ------            ----  ----                    -------
-  Normal  SuccessfulCreate  63s   statefulset-controller  create Claim rabbitmq-data-rabbitmq-0 Pod rabbitmq-0 in StatefulSet rabbitmq success
-  Normal  SuccessfulCreate  63s   statefulset-controller  create Pod rabbitmq-0 in StatefulSet rabbitmq successful
+  Normal  SuccessfulCreate  82s   statefulset-controller  create Claim rabbitmq-data-rabbitmq-0 Pod rabbitmq-0 in StatefulSet rabbitmq success
+  Normal  SuccessfulCreate  82s   statefulset-controller  create Pod rabbitmq-0 in StatefulSet rabbitmq successful
 --------------------
 kubectl get pods
-NAME                             READY   STATUS    RESTARTS   AGE
-probe-test-app-fc7776cb8-hlgfj   1/1     Running   0          3m24s
-probe-test-app-fc7776cb8-hqrdj   1/1     Running   0          3m24s
-probe-test-app-fc7776cb8-z4qmx   1/1     Running   0          3m27s
-rabbitmq-0                       1/1     Running   0          64s
+NAME                              READY   STATUS    RESTARTS   AGE
+probe-test-app-685956d4cf-cmprb   1/1     Running   0          4m4s
+probe-test-app-685956d4cf-pvtn6   1/1     Running   0          4m2s
+probe-test-app-685956d4cf-vvv54   1/1     Running   0          4m
+rabbitmq-0                        1/1     Running   0          83s
 --------------------
 kubectl get pvc
 NAME                       STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS           VOLUMEATTRIBUTESCLASS   AGE
-rabbitmq-data-rabbitmq-0   Bound    pvc-60220317-e891-42b3-93c9-c9a335b9ba27   3Gi        RWO            hostpath-provisioner   <unset>                 65s
+rabbitmq-data-rabbitmq-0   Bound    pvc-8c88ca44-f7a2-4392-92d8-14770662a886   3Gi        RWO            hostpath-provisioner   <unset>                 84s
 --------------------
 kubectl get pv
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                              STORAGECLASS           VOLUMEATTRIBUTESCLASS   REASON   AGE
-pvc-60220317-e891-42b3-93c9-c9a335b9ba27   3Gi        RWO            Delete           Bound    default/rabbitmq-data-rabbitmq-0   hostpath-provisioner   <unset>                          62s
+pvc-8c88ca44-f7a2-4392-92d8-14770662a886   3Gi        RWO            Delete           Bound    default/rabbitmq-data-rabbitmq-0   hostpath-provisioner   <unset>                          80s
 --------------------
 kubectl delete pod rabbitmq-0
 pod "rabbitmq-0" deleted
 --------------------
 kubectl get pods
-NAME                             READY   STATUS     RESTARTS   AGE
-probe-test-app-fc7776cb8-hlgfj   1/1     Running    0          3m30s
-probe-test-app-fc7776cb8-hqrdj   1/1     Running    0          3m30s
-probe-test-app-fc7776cb8-z4qmx   1/1     Running    0          3m33s
-rabbitmq-0                       0/1     Init:0/1   0          1s
+NAME                              READY   STATUS            RESTARTS   AGE
+probe-test-app-685956d4cf-cmprb   1/1     Running           0          4m11s
+probe-test-app-685956d4cf-pvtn6   1/1     Running           0          4m9s
+probe-test-app-685956d4cf-vvv54   1/1     Running           0          4m7s
+rabbitmq-0                        0/1     PodInitializing   0          1s
 --------------------
 cd ../../monitoring
 --------------------
@@ -506,19 +509,18 @@ Updating docker-desktop pods to expose metrics endpoints
 This will involve several kube-system pod restarts
 
 Fetching debian image to run nsenter on the docker-desktop host...
-12.8: Pulling from library/debian
-b2b31b28ee3c: Pulling fs layer
-b2b31b28ee3c: Download complete
-Digest: sha256:10901ccd8d249047f9761845b4594f121edef079cfd8224edebd9ea726f0a7f6
-Status: Downloaded newer image for debian:12.8
-docker.io/library/debian:12.8
+12.10: Pulling from debian
+23b7d26ef1d2: Already exists
+Digest: sha256:00cd074b40c4d99ff0c24540bdde0533ca3791edcdac0de36d6b9fb3260d89e2
+Status: Downloaded newer image for mirror.gcr.io/debian:12.10
+mirror.gcr.io/debian:12.10
 Host Node IP: 192.168.65.3
 Updating kube-proxy configmap...
 configmap "kube-proxy" deleted
 configmap/kube-proxy created
 Restarting the kube-proxy pod
-pod "kube-proxy-62z7v" deleted
-pod/kube-proxy-svzcg condition met
+pod "kube-proxy-g8q9w" deleted
+pod/kube-proxy-p7hk4 condition met
 kube-proxy pod restarted.
 Updating bind-address on kube-controller-manager...
 Waiting for kube-controller-manager to restart, this can take some time...
@@ -537,19 +539,19 @@ pod/etcd-docker-desktop condition met
 
 Done! You can now deploy the monitoring components.
 
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
 "prometheus-community" already exists with the same configuration, skipping
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
 Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "argo-helm" chart repository
+...Successfully got an update from the "kedacore" chart repository
+...Successfully got an update from the "kiali" chart repository
+...Successfully got an update from the "gatekeeper" chart repository
+...Successfully got an update from the "istio" chart repository
 ...Successfully got an update from the "prometheus-community" chart repository
+...Successfully got an update from the "ingress-nginx" chart repository
 Update Complete. ⎈Happy Helming!⎈
 namespace/monitoring created
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
 NAME: prometheus
-LAST DEPLOYED: Sun Nov 24 12:02:27 2024
+LAST DEPLOYED: Mon Apr 14 21:14:44 2025
 NAMESPACE: monitoring
 STATUS: deployed
 REVISION: 1
@@ -558,10 +560,8 @@ kube-prometheus-stack has been installed. Check its status by running:
   kubectl --namespace monitoring get pods -l "release=prometheus"
 
 Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
 NAME: adapter
-LAST DEPLOYED: Sun Nov 24 12:02:49 2024
+LAST DEPLOYED: Mon Apr 14 21:15:12 2025
 NAMESPACE: monitoring
 STATUS: deployed
 REVISION: 1
@@ -576,25 +576,24 @@ Waiting for deployment "adapter-prometheus-adapter" rollout to finish: 0 of 1 up
 deployment "adapter-prometheus-adapter" successfully rolled out
 --------------------
 kubectl top nodes
-NAME             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
-docker-desktop   360m         1%     4292Mi          13%       
+error: metrics not available yet
 --------------------
 kubectl top pods
-NAME                             CPU(cores)   MEMORY(bytes)   
-probe-test-app-fc7776cb8-hlgfj   0m           37Mi            
-probe-test-app-fc7776cb8-hqrdj   0m           37Mi            
-probe-test-app-fc7776cb8-z4qmx   0m           37Mi            
-rabbitmq-0                       15m          139Mi           
+NAME                              CPU(cores)   MEMORY(bytes)   
+probe-test-app-685956d4cf-cmprb   0m           40Mi            
+probe-test-app-685956d4cf-pvtn6   0m           40Mi            
+probe-test-app-685956d4cf-vvv54   0m           40Mi            
+rabbitmq-0                        12m          202Mi           
 --------------------
 kubectl top pods -n monitoring
 NAME                                                     CPU(cores)   MEMORY(bytes)   
-adapter-prometheus-adapter-b84b78594-5s24d               16m          59Mi            
-alertmanager-prometheus-kube-prometheus-alertmanager-0   0m           29Mi            
-prometheus-grafana-6b758d7b46-fm28n                      12m          240Mi           
-prometheus-kube-prometheus-operator-c5f7c5b6-6f6x8       0m           29Mi            
-prometheus-kube-state-metrics-677845d566-29gpp           0m           17Mi            
-prometheus-prometheus-kube-prometheus-prometheus-0       8m           136Mi           
-prometheus-prometheus-node-exporter-x4dsb                0m           9Mi             
+adapter-prometheus-adapter-66b7469965-4zzkf              1m           28Mi            
+alertmanager-prometheus-kube-prometheus-alertmanager-0   0m           31Mi            
+prometheus-grafana-8564d589ff-znv4m                      1m           259Mi           
+prometheus-kube-prometheus-operator-cf55d947c-4wvx5      0m           29Mi            
+prometheus-kube-state-metrics-59b844b9c-f8kx4            0m           18Mi            
+prometheus-prometheus-kube-prometheus-prometheus-0       7m           115Mi           
+prometheus-prometheus-node-exporter-7rq7m                0m           8Mi             
 --------------------
 cd ../probe-test-app
 --------------------
@@ -603,1590 +602,4 @@ horizontalpodautoscaler.autoscaling/probe-test-app created
 --------------------
 kubectl apply -f generate-load-app-replicaset.yaml
 replicaset.apps/generate-load-app created
---------------------
-kubectl get pods
-NAME                             READY   STATUS    RESTARTS   AGE
-generate-load-app-2x6kf          1/1     Running   0          29s
-generate-load-app-fx74w          1/1     Running   0          29s
-generate-load-app-ns6x6          1/1     Running   0          29s
-generate-load-app-vcffs          1/1     Running   0          29s
-generate-load-app-vjwqh          1/1     Running   0          29s
-probe-test-app-fc7776cb8-hlgfj   1/1     Running   0          8m38s
-probe-test-app-fc7776cb8-hqrdj   1/1     Running   0          8m38s
-probe-test-app-fc7776cb8-z4qmx   1/1     Running   0          8m41s
-rabbitmq-0                       1/1     Running   0          5m9s
---------------------
-kubectl delete replicaset generate-load-app
-replicaset.apps "generate-load-app" deleted
---------------------
-kubectl describe hpa probe-test-app
-Name:                                                  probe-test-app
-Namespace:                                             default
-Labels:                                                <none>
-Annotations:                                           <none>
-CreationTimestamp:                                     Sun, 24 Nov 2024 12:04:37 +1100
-Reference:                                             Deployment/probe-test-app
-Metrics:                                               ( current / target )
-  resource cpu on pods  (as a percentage of request):  52% (26m) / 50%
-Min replicas:                                          1
-Max replicas:                                          5
-Deployment pods:                                       3 current / 3 desired
-Conditions:
-  Type            Status  Reason              Message
-  ----            ------  ------              -------
-  AbleToScale     True    ReadyForNewScale    recommended size matches current size
-  ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
-  ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
-Events:           <none>
---------------------
-cd ../limit-examples
---------------------
-kubectl apply -f cpu-stressor.yaml
-deployment.apps/cpu-stressor created
-Waiting for deployment "cpu-stressor" rollout to finish: 0 of 1 updated replicas are available...
-deployment "cpu-stressor" successfully rolled out
---------------------
-kubectl delete deployment cpu-stressor
-deployment.apps "cpu-stressor" deleted
---------------------
-kubectl apply -f memory-stressor.yaml
-pod/memory-stressor created
---------------------
-kubectl delete pod memory-stressor
-pod "memory-stressor" deleted
---------------------
-cd ../keda-example
---------------------
-./install-keda.sh
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-"kedacore" has been added to your repositories
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "kedacore" chart repository
-...Successfully got an update from the "prometheus-community" chart repository
-Update Complete. ⎈Happy Helming!⎈
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME: keda
-LAST DEPLOYED: Sun Nov 24 12:06:03 2024
-NAMESPACE: keda
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-:::^.     .::::^:     :::::::::::::::    .:::::::::.                   .^.                  
-7???~   .^7????~.     7??????????????.   :?????????77!^.              .7?7.                 
-7???~  ^7???7~.       ~!!!!!!!!!!!!!!.   :????!!!!7????7~.           .7???7.                
-7???~^7????~.                            :????:    :~7???7.         :7?????7.               
-7???7????!.           ::::::::::::.      :????:      .7???!        :7??77???7.              
-7????????7:           7???????????~      :????:       :????:      :???7?5????7.             
-7????!~????^          !77777777777^      :????:       :????:     ^???7?#P7????7.            
-7???~  ^????~                            :????:      :7???!     ^???7J#@J7?????7.           
-7???~   :7???!.                          :????:   .:~7???!.    ~???7Y&@#7777????7.          
-7???~    .7???7:      !!!!!!!!!!!!!!!    :????7!!77????7^     ~??775@@@GJJYJ?????7.         
-7???~     .!????^     7?????????????7.   :?????????7!~:      !????G@@@@@@@@5??????7:        
-::::.       :::::     :::::::::::::::    .::::::::..        .::::JGGGB@@@&7:::::::::        
-                                                                      ?@@#~                  
-                                                                      P@B^                   
-                                                                    :&G:                    
-                                                                    !5.                     
-                                                                    .Kubernetes Event-driven Autoscaling (KEDA) - Application autoscaling made simple.
-
-Get started by deploying Scaled Objects to your cluster:
-    - Information about Scaled Objects : https://keda.sh/docs/latest/concepts/
-    - Samples: https://github.com/kedacore/samples
-
-Get information about the deployed ScaledObjects:
-  kubectl get scaledobject [--namespace <namespace>]
-
-Get details about a deployed ScaledObject:
-  kubectl describe scaledobject <scaled-object-name> [--namespace <namespace>]
-
-Get information about the deployed ScaledObjects:
-  kubectl get triggerauthentication [--namespace <namespace>]
-
-Get details about a deployed ScaledObject:
-  kubectl describe triggerauthentication <trigger-authentication-name> [--namespace <namespace>]
-
-Get an overview of the Horizontal Pod Autoscalers (HPA) that KEDA is using behind the scenes:
-  kubectl get hpa [--all-namespaces] [--namespace <namespace>]
-
-Learn more about KEDA:
-- Documentation: https://keda.sh/
-- Support: https://keda.sh/support/
-- File an issue: https://github.com/kedacore/keda/issues/new/choose
---------------------
-kubectl apply -f consumer.yaml
-secret/rabbitmq-consumer-secret created
-deployment.apps/rabbitmq-consumer created
---------------------
-kubectl apply -f keda-scaled-object.yaml
-scaledobject.keda.sh/rabbitmq-consumer created
-triggerauthentication.keda.sh/rabbitmq-consumer-trigger created
---------------------
-kubectl apply -f publisher.yaml
-job.batch/rabbitmq-publish created
---------------------
-kubectl get pods
-NAME                                READY   STATUS              RESTARTS   AGE
-probe-test-app-fc7776cb8-hlgfj      1/1     Running             0          9m49s
-probe-test-app-fc7776cb8-hqrdj      1/1     Running             0          9m49s
-probe-test-app-fc7776cb8-z4qmx      1/1     Running             0          9m52s
-rabbitmq-0                          1/1     Running             0          6m20s
-rabbitmq-consumer-dd9d7cfd4-wktqw   0/1     ContainerCreating   0          4s
-rabbitmq-publish-hhq9l              0/1     ContainerCreating   0          2s
---------------------
-kubectl events
-LAST SEEN               TYPE      REASON                    OBJECT                                           MESSAGE
-11m                     Normal    NodeAllocatableEnforced   Node/docker-desktop                              Updated Node Allocatable limit across pods
-11m (x8 over 11m)       Normal    NodeHasSufficientMemory   Node/docker-desktop                              Node docker-desktop status is now: NodeHasSufficientMemory
-11m                     Normal    Starting                  Node/docker-desktop                              Starting kubelet.
-11m (x8 over 11m)       Normal    NodeHasNoDiskPressure     Node/docker-desktop                              Node docker-desktop status is now: NodeHasNoDiskPressure
-11m (x7 over 11m)       Normal    NodeHasSufficientPID      Node/docker-desktop                              Node docker-desktop status is now: NodeHasSufficientPID
-11m                     Normal    RegisteredNode            Node/docker-desktop                              Node docker-desktop event: Registered Node docker-desktop in Controller
-11m                     Normal    Starting                  Node/docker-desktop                              
-10m                     Normal    Scheduled                 Pod/probe-test-app                               Successfully assigned default/probe-test-app to docker-desktop
-10m                     Normal    Pulling                   Pod/probe-test-app                               Pulling image "jasonumiker/probe-test-app:v1"
-10m                     Normal    Pulled                    Pod/probe-test-app                               Successfully pulled image "jasonumiker/probe-test-app:v1" in 14.603s (14.603s including waiting). Image size: 383887660 bytes.
-10m                     Normal    Started                   Pod/probe-test-app                               Started container probe-test-app
-10m                     Normal    Created                   Pod/probe-test-app                               Created container probe-test-app
-10m                     Normal    Scheduled                 Pod/probe-test-app-2                             Successfully assigned default/probe-test-app-2 to docker-desktop
-10m                     Normal    Created                   Pod/probe-test-app-2                             Created container probe-test-app
-10m                     Normal    Pulled                    Pod/probe-test-app-2                             Container image "jasonumiker/probe-test-app:v1" already present on machine
-10m                     Warning   Unhealthy                 Pod/probe-test-app-2                             Readiness probe failed: Get "http://10.1.0.7:8080/readyz": dial tcp 10.1.0.7:8080: connect: connection refused
-10m                     Normal    Started                   Pod/probe-test-app-2                             Started container probe-test-app
-10m                     Normal    Killing                   Pod/probe-test-app-2                             Stopping container probe-test-app
-10m                     Normal    Killing                   Pod/probe-test-app                               Stopping container probe-test-app
-10m                     Normal    Started                   Pod/probe-test-app-cz7bw                         Started container probe-test-app
-10m                     Normal    Pulled                    Pod/probe-test-app-4d692                         Container image "jasonumiker/probe-test-app:v1" already present on machine
-10m                     Normal    Started                   Pod/probe-test-app-4d692                         Started container probe-test-app
-10m                     Normal    Pulled                    Pod/probe-test-app-cz7bw                         Container image "jasonumiker/probe-test-app:v1" already present on machine
-10m                     Normal    Created                   Pod/probe-test-app-cz7bw                         Created container probe-test-app
-10m                     Normal    Created                   Pod/probe-test-app-4d692                         Created container probe-test-app
-10m                     Normal    Pulled                    Pod/probe-test-app-pfz9x                         Container image "jasonumiker/probe-test-app:v1" already present on machine
-10m                     Normal    Started                   Pod/probe-test-app-pfz9x                         Started container probe-test-app
-10m                     Normal    Created                   Pod/probe-test-app-pfz9x                         Created container probe-test-app
-10m                     Normal    Scheduled                 Pod/probe-test-app-pfz9x                         Successfully assigned default/probe-test-app-pfz9x to docker-desktop
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app                        Created pod: probe-test-app-4d692
-10m                     Normal    Scheduled                 Pod/probe-test-app-4d692                         Successfully assigned default/probe-test-app-4d692 to docker-desktop
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app                        Created pod: probe-test-app-cz7bw
-10m                     Normal    Scheduled                 Pod/probe-test-app-cz7bw                         Successfully assigned default/probe-test-app-cz7bw to docker-desktop
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app                        Created pod: probe-test-app-pfz9x
-10m                     Normal    SuccessfulDelete          ReplicaSet/probe-test-app                        Deleted pod: probe-test-app-cz7bw
-10m                     Normal    Killing                   Pod/probe-test-app-pfz9x                         Stopping container probe-test-app
-10m                     Normal    Killing                   Pod/probe-test-app-4d692                         Stopping container probe-test-app
-10m                     Normal    Killing                   Pod/probe-test-app-cz7bw                         Stopping container probe-test-app
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8              Created pod: probe-test-app-fc7776cb8-ldmd2
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8              Created pod: probe-test-app-fc7776cb8-w6v8w
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8              Created pod: probe-test-app-fc7776cb8-cdbrd
-10m                     Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled up replica set probe-test-app-fc7776cb8 to 3
-10m                     Normal    Pulled                    Pod/probe-test-app-fc7776cb8-w6v8w               Container image "jasonumiker/probe-test-app:v1" already present on machine
-10m                     Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-w6v8w               Successfully assigned default/probe-test-app-fc7776cb8-w6v8w to docker-desktop
-10m                     Normal    Pulled                    Pod/probe-test-app-fc7776cb8-ldmd2               Container image "jasonumiker/probe-test-app:v1" already present on machine
-10m                     Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-ldmd2               Successfully assigned default/probe-test-app-fc7776cb8-ldmd2 to docker-desktop
-10m                     Normal    Pulled                    Pod/probe-test-app-fc7776cb8-cdbrd               Container image "jasonumiker/probe-test-app:v1" already present on machine
-10m                     Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-cdbrd               Successfully assigned default/probe-test-app-fc7776cb8-cdbrd to docker-desktop
-10m                     Normal    Started                   Pod/probe-test-app-fc7776cb8-ldmd2               Started container probe-test-app
-10m                     Normal    Created                   Pod/probe-test-app-fc7776cb8-cdbrd               Created container probe-test-app
-10m                     Normal    Started                   Pod/probe-test-app-fc7776cb8-w6v8w               Started container probe-test-app
-10m                     Normal    Created                   Pod/probe-test-app-fc7776cb8-w6v8w               Created container probe-test-app
-10m                     Normal    Created                   Pod/probe-test-app-fc7776cb8-ldmd2               Created container probe-test-app
-10m                     Normal    Started                   Pod/probe-test-app-fc7776cb8-cdbrd               Started container probe-test-app
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fb95466cc              Created pod: probe-test-app-fb95466cc-n62j2
-10m                     Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled up replica set probe-test-app-fb95466cc to 1
-10m                     Normal    Scheduled                 Pod/probe-test-app-fb95466cc-n62j2               Successfully assigned default/probe-test-app-fb95466cc-n62j2 to docker-desktop
-10m                     Normal    Pulling                   Pod/probe-test-app-fb95466cc-n62j2               Pulling image "jasonumiker/probe-test-app:v2"
-10m                     Normal    Created                   Pod/probe-test-app-fb95466cc-n62j2               Created container probe-test-app
-10m                     Normal    Pulled                    Pod/probe-test-app-fb95466cc-n62j2               Successfully pulled image "jasonumiker/probe-test-app:v2" in 3.667s (3.667s including waiting). Image size: 383887659 bytes.
-10m                     Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled down replica set probe-test-app-fc7776cb8 to 2 from 3
-10m                     Normal    Started                   Pod/probe-test-app-fb95466cc-n62j2               Started container probe-test-app
-10m                     Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled up replica set probe-test-app-fb95466cc to 2 from 1
-10m                     Normal    Scheduled                 Pod/probe-test-app-fb95466cc-7lxf2               Successfully assigned default/probe-test-app-fb95466cc-7lxf2 to docker-desktop
-10m                     Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fb95466cc              Created pod: probe-test-app-fb95466cc-7lxf2
-10m                     Normal    Killing                   Pod/probe-test-app-fc7776cb8-cdbrd               Stopping container probe-test-app
-10m                     Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fc7776cb8              Deleted pod: probe-test-app-fc7776cb8-cdbrd
-10m                     Normal    Pulled                    Pod/probe-test-app-fb95466cc-7lxf2               Container image "jasonumiker/probe-test-app:v2" already present on machine
-10m                     Normal    Created                   Pod/probe-test-app-fb95466cc-7lxf2               Created container probe-test-app
-10m                     Normal    Started                   Pod/probe-test-app-fb95466cc-7lxf2               Started container probe-test-app
-9m59s                   Warning   Unhealthy                 Pod/probe-test-app-fb95466cc-7lxf2               Readiness probe failed: Get "http://10.1.0.15:8080/readyz": dial tcp 10.1.0.15:8080: connect: connection refused
-9m58s                   Normal    Pulled                    Pod/probe-test-app-fb95466cc-8dtct               Container image "jasonumiker/probe-test-app:v2" already present on machine
-9m58s                   Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fc7776cb8              Deleted pod: probe-test-app-fc7776cb8-ldmd2
-9m58s                   Normal    Killing                   Pod/probe-test-app-fc7776cb8-ldmd2               Stopping container probe-test-app
-9m58s                   Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fb95466cc              Created pod: probe-test-app-fb95466cc-8dtct
-9m58s                   Normal    Scheduled                 Pod/probe-test-app-fb95466cc-8dtct               Successfully assigned default/probe-test-app-fb95466cc-8dtct to docker-desktop
-9m58s                   Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled down replica set probe-test-app-fc7776cb8 to 1 from 2
-9m58s                   Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled up replica set probe-test-app-fb95466cc to 3 from 2
-9m57s                   Normal    Started                   Pod/probe-test-app-fb95466cc-8dtct               Started container probe-test-app
-9m57s                   Normal    Created                   Pod/probe-test-app-fb95466cc-8dtct               Created container probe-test-app
-9m56s                   Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled down replica set probe-test-app-fc7776cb8 to 0 from 1
-9m56s                   Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fc7776cb8              Deleted pod: probe-test-app-fc7776cb8-w6v8w
-9m56s                   Normal    Killing                   Pod/probe-test-app-fc7776cb8-w6v8w               Stopping container probe-test-app
-9m53s                   Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled up replica set probe-test-app-fc7776cb8 to 1 from 0
-9m53s                   Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8              Created pod: probe-test-app-fc7776cb8-z4qmx
-9m53s                   Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-z4qmx               Successfully assigned default/probe-test-app-fc7776cb8-z4qmx to docker-desktop
-9m52s                   Warning   Unhealthy                 Pod/probe-test-app-fc7776cb8-z4qmx               Readiness probe failed: Get "http://10.1.0.17:8080/readyz": dial tcp 10.1.0.17:8080: connect: connection refused
-9m52s                   Normal    Started                   Pod/probe-test-app-fc7776cb8-z4qmx               Started container probe-test-app
-9m52s                   Normal    Created                   Pod/probe-test-app-fc7776cb8-z4qmx               Created container probe-test-app
-9m52s                   Normal    Pulled                    Pod/probe-test-app-fc7776cb8-z4qmx               Container image "jasonumiker/probe-test-app:v1" already present on machine
-9m50s                   Normal    Killing                   Pod/probe-test-app-fb95466cc-8dtct               Stopping container probe-test-app
-9m50s                   Normal    Killing                   Pod/probe-test-app-fb95466cc-7lxf2               Stopping container probe-test-app
-9m50s                   Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8              Created pod: probe-test-app-fc7776cb8-hqrdj
-9m50s                   Normal    SuccessfulCreate          ReplicaSet/probe-test-app-fc7776cb8              Created pod: probe-test-app-fc7776cb8-hlgfj
-9m50s (x2 over 9m57s)   Warning   Unhealthy                 Pod/probe-test-app-fb95466cc-8dtct               Readiness probe failed: Get "http://10.1.0.16:8080/readyz": dial tcp 10.1.0.16:8080: connect: connection refused
-9m50s                   Normal    ScalingReplicaSet         Deployment/probe-test-app                        Scaled down replica set probe-test-app-fb95466cc to 2 from 3
-9m50s                   Normal    Created                   Pod/probe-test-app-fc7776cb8-hqrdj               Created container probe-test-app
-9m50s                   Normal    Pulled                    Pod/probe-test-app-fc7776cb8-hqrdj               Container image "jasonumiker/probe-test-app:v1" already present on machine
-9m50s                   Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-hqrdj               Successfully assigned default/probe-test-app-fc7776cb8-hqrdj to docker-desktop
-9m50s                   Normal    Scheduled                 Pod/probe-test-app-fc7776cb8-hlgfj               Successfully assigned default/probe-test-app-fc7776cb8-hlgfj to docker-desktop
-9m50s                   Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fb95466cc              Deleted pod: probe-test-app-fb95466cc-8dtct
-9m50s                   Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fb95466cc              Deleted pod: probe-test-app-fb95466cc-7lxf2
-9m49s                   Warning   Unhealthy                 Pod/probe-test-app-fb95466cc-7lxf2               Readiness probe failed: Get "http://10.1.0.15:8080/readyz": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
-9m49s                   Warning   Unhealthy                 Pod/probe-test-app-fc7776cb8-hqrdj               Readiness probe failed: Get "http://10.1.0.18:8080/readyz": dial tcp 10.1.0.18:8080: connect: connection refused
-9m49s                   Normal    Started                   Pod/probe-test-app-fc7776cb8-hqrdj               Started container probe-test-app
-9m49s                   Normal    Started                   Pod/probe-test-app-fc7776cb8-hlgfj               Started container probe-test-app
-9m49s                   Normal    Created                   Pod/probe-test-app-fc7776cb8-hlgfj               Created container probe-test-app
-9m49s                   Normal    Pulled                    Pod/probe-test-app-fc7776cb8-hlgfj               Container image "jasonumiker/probe-test-app:v1" already present on machine
-9m48s                   Normal    Killing                   Pod/probe-test-app-fb95466cc-n62j2               Stopping container probe-test-app
-9m48s (x4 over 9m50s)   Normal    ScalingReplicaSet         Deployment/probe-test-app                        (combined from similar events): Scaled down replica set probe-test-app-fb95466cc to 0 from 1
-9m48s                   Normal    SuccessfulDelete          ReplicaSet/probe-test-app-fb95466cc              Deleted pod: probe-test-app-fb95466cc-n62j2
-9m41s                   Normal    Pulling                   Pod/pod-with-sidecar                             Pulling image "alpine:3.20.3"
-9m41s                   Normal    Scheduled                 Pod/pod-with-sidecar                             Successfully assigned default/pod-with-sidecar to docker-desktop
-9m37s                   Normal    Pulled                    Pod/pod-with-sidecar                             Successfully pulled image "alpine:3.20.3" in 3.882s (3.882s including waiting). Image size: 3634744 bytes.
-9m36s                   Normal    Pulling                   Pod/pod-with-sidecar                             Pulling image "nginx:1.27.2-bookworm"
-9m36s                   Normal    Started                   Pod/pod-with-sidecar                             Started container app-container
-9m36s                   Normal    Created                   Pod/pod-with-sidecar                             Created container app-container
-9m30s                   Normal    Started                   Pod/pod-with-sidecar                             Started container sidecar-container
-9m30s                   Normal    Pulled                    Pod/pod-with-sidecar                             Successfully pulled image "nginx:1.27.2-bookworm" in 6.007s (6.007s including waiting). Image size: 72955450 bytes.
-9m30s                   Normal    Created                   Pod/pod-with-sidecar                             Created container sidecar-container
-9m27s                   Normal    Pulling                   Pod/myapp-pod                                    Pulling image "busybox:1.28"
-9m27s                   Normal    Scheduled                 Pod/myapp-pod                                    Successfully assigned default/myapp-pod to docker-desktop
-9m23s                   Normal    Pulled                    Pod/myapp-pod                                    Container image "busybox:1.28" already present on machine
-9m23s                   Normal    Pulled                    Pod/myapp-pod                                    Successfully pulled image "busybox:1.28" in 3.495s (3.495s including waiting). Image size: 727869 bytes.
-9m23s                   Normal    Started                   Pod/myapp-pod                                    Started container init-myservice
-9m23s                   Normal    Created                   Pod/myapp-pod                                    Created container init-mydb
-9m23s                   Normal    Created                   Pod/myapp-pod                                    Created container init-myservice
-9m22s                   Normal    Started                   Pod/myapp-pod                                    Started container init-mydb
-9m22s                   Normal    Pulled                    Pod/myapp-pod                                    Container image "busybox:1.28" already present on machine
-9m21s                   Normal    Started                   Pod/myapp-pod                                    Started container myapp-container
-9m21s                   Normal    Created                   Pod/myapp-pod                                    Created container myapp-container
-9m15s                   Normal    Killing                   Pod/myapp-pod                                    Stopping container myapp-container
-8m45s                   Normal    Killing                   Pod/pod-with-sidecar                             Stopping container sidecar-container
-8m45s                   Normal    Killing                   Pod/pod-with-sidecar                             Stopping container app-container
-8m12s                   Normal    WaitForFirstConsumer      PersistentVolumeClaim/test-pvc                   waiting for first consumer to be created before binding
-8m10s                   Normal    ExternalProvisioning      PersistentVolumeClaim/test-pvc                   Waiting for a volume to be created either by the external provisioner 'microk8s.io/hostpath' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
-8m9s                    Normal    Provisioning              PersistentVolumeClaim/test-pvc                   External provisioner is provisioning volume for claim "default/test-pvc"
-8m4s                    Normal    ProvisioningSucceeded     PersistentVolumeClaim/test-pvc                   Successfully provisioned volume pvc-821fa768-7e96-4ca9-95ff-fcc8586c9156
-8m3s                    Normal    Scheduled                 Pod/nginx                                        Successfully assigned default/nginx to docker-desktop
-8m2s                    Normal    Pulling                   Pod/nginx                                        Pulling image "nginx:1.27.2"
-8m1s                    Normal    Pulled                    Pod/nginx                                        Successfully pulled image "nginx:1.27.2" in 1.75s (1.75s including waiting). Image size: 72955450 bytes.
-8m                      Normal    Created                   Pod/nginx                                        Created container nginx
-8m                      Normal    Started                   Pod/nginx                                        Started container nginx
-7m43s                   Normal    Killing                   Pod/nginx                                        Stopping container nginx
-7m40s                   Normal    Scheduled                 Pod/nginx                                        Successfully assigned default/nginx to docker-desktop
-7m39s                   Normal    Started                   Pod/nginx                                        Started container nginx
-7m39s                   Normal    Created                   Pod/nginx                                        Created container nginx
-7m39s                   Normal    Pulled                    Pod/nginx                                        Container image "nginx:1.27.2" already present on machine
-7m36s                   Normal    Killing                   Pod/nginx                                        Stopping container nginx
-7m30s                   Normal    Provisioning              PersistentVolumeClaim/rabbitmq-data-rabbitmq-0   External provisioner is provisioning volume for claim "default/rabbitmq-data-rabbitmq-0"
-7m30s                   Normal    SuccessfulCreate          StatefulSet/rabbitmq                             create Claim rabbitmq-data-rabbitmq-0 Pod rabbitmq-0 in StatefulSet rabbitmq success
-7m30s                   Normal    WaitForFirstConsumer      PersistentVolumeClaim/rabbitmq-data-rabbitmq-0   waiting for first consumer to be created before binding
-7m30s                   Normal    ExternalProvisioning      PersistentVolumeClaim/rabbitmq-data-rabbitmq-0   Waiting for a volume to be created either by the external provisioner 'microk8s.io/hostpath' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
-7m26s                   Normal    ProvisioningSucceeded     PersistentVolumeClaim/rabbitmq-data-rabbitmq-0   Successfully provisioned volume pvc-60220317-e891-42b3-93c9-c9a335b9ba27
-7m25s                   Normal    Pulling                   Pod/rabbitmq-0                                   Pulling image "busybox:1.37.0"
-7m25s                   Normal    Scheduled                 Pod/rabbitmq-0                                   Successfully assigned default/rabbitmq-0 to docker-desktop
-7m21s                   Normal    Created                   Pod/rabbitmq-0                                   Created container rabbitmq-config
-7m21s                   Normal    Pulling                   Pod/rabbitmq-0                                   Pulling image "rabbitmq:3.8.34"
-7m21s                   Normal    Started                   Pod/rabbitmq-0                                   Started container rabbitmq-config
-7m21s                   Normal    Pulled                    Pod/rabbitmq-0                                   Successfully pulled image "busybox:1.37.0" in 3.693s (3.693s including waiting). Image size: 2167126 bytes.
-7m14s                   Normal    Started                   Pod/rabbitmq-0                                   Started container rabbitmq
-7m14s                   Normal    Created                   Pod/rabbitmq-0                                   Created container rabbitmq
-7m14s                   Normal    Pulled                    Pod/rabbitmq-0                                   Successfully pulled image "rabbitmq:3.8.34" in 6.267s (6.267s including waiting). Image size: 99409513 bytes.
-<unknown>               Normal    Created                   RabbitMQ/pod/rabbitmq-0                          Node rabbit@rabbitmq-0 is registered
-6m23s                   Normal    Killing                   Pod/rabbitmq-0                                   Stopping container rabbitmq
-6m21s                   Normal    Scheduled                 Pod/rabbitmq-0                                   Successfully assigned default/rabbitmq-0 to docker-desktop
-6m21s (x2 over 7m30s)   Normal    SuccessfulCreate          StatefulSet/rabbitmq                             create Pod rabbitmq-0 in StatefulSet rabbitmq successful
-6m20s                   Normal    Created                   Pod/rabbitmq-0                                   Created container rabbitmq-config
-6m20s                   Normal    Pulled                    Pod/rabbitmq-0                                   Container image "busybox:1.37.0" already present on machine
-6m20s                   Normal    Created                   Pod/rabbitmq-0                                   Created container rabbitmq
-6m20s                   Normal    Pulled                    Pod/rabbitmq-0                                   Container image "rabbitmq:3.8.34" already present on machine
-6m20s                   Normal    Started                   Pod/rabbitmq-0                                   Started container rabbitmq-config
-6m20s                   Normal    Started                   Pod/rabbitmq-0                                   Started container rabbitmq
-<unknown>               Normal    Created                   RabbitMQ/pod/rabbitmq-0                          Node rabbit@rabbitmq-0 is registered
-6m9s                    Normal    Starting                  Node/docker-desktop                              
-5m54s                   Normal    RegisteredNode            Node/docker-desktop                              Node docker-desktop event: Registered Node docker-desktop in Controller
-101s                    Normal    SuccessfulCreate          ReplicaSet/generate-load-app                     Created pod: generate-load-app-vjwqh
-101s                    Normal    SuccessfulCreate          ReplicaSet/generate-load-app                     Created pod: generate-load-app-vcffs
-101s                    Normal    SuccessfulCreate          ReplicaSet/generate-load-app                     Created pod: generate-load-app-2x6kf
-101s                    Normal    SuccessfulCreate          ReplicaSet/generate-load-app                     Created pod: generate-load-app-ns6x6
-101s                    Normal    SuccessfulCreate          ReplicaSet/generate-load-app                     Created pod: generate-load-app-fx74w
-101s                    Normal    Pulled                    Pod/generate-load-app-fx74w                      Container image "busybox:1.37.0" already present on machine
-101s                    Normal    Scheduled                 Pod/generate-load-app-fx74w                      Successfully assigned default/generate-load-app-fx74w to docker-desktop
-101s                    Normal    Scheduled                 Pod/generate-load-app-2x6kf                      Successfully assigned default/generate-load-app-2x6kf to docker-desktop
-101s                    Normal    Scheduled                 Pod/generate-load-app-ns6x6                      Successfully assigned default/generate-load-app-ns6x6 to docker-desktop
-101s                    Normal    Scheduled                 Pod/generate-load-app-vjwqh                      Successfully assigned default/generate-load-app-vjwqh to docker-desktop
-101s                    Normal    Scheduled                 Pod/generate-load-app-vcffs                      Successfully assigned default/generate-load-app-vcffs to docker-desktop
-100s                    Normal    Started                   Pod/generate-load-app-vjwqh                      Started container generate-load-app
-100s                    Normal    Pulled                    Pod/generate-load-app-2x6kf                      Container image "busybox:1.37.0" already present on machine
-100s                    Normal    Started                   Pod/generate-load-app-vcffs                      Started container generate-load-app
-100s                    Normal    Started                   Pod/generate-load-app-ns6x6                      Started container generate-load-app
-100s                    Normal    Pulled                    Pod/generate-load-app-vcffs                      Container image "busybox:1.37.0" already present on machine
-100s                    Normal    Pulled                    Pod/generate-load-app-vjwqh                      Container image "busybox:1.37.0" already present on machine
-100s                    Normal    Pulled                    Pod/generate-load-app-ns6x6                      Container image "busybox:1.37.0" already present on machine
-100s                    Normal    Created                   Pod/generate-load-app-vjwqh                      Created container generate-load-app
-100s                    Normal    Created                   Pod/generate-load-app-ns6x6                      Created container generate-load-app
-100s                    Normal    Started                   Pod/generate-load-app-fx74w                      Started container generate-load-app
-100s                    Normal    Created                   Pod/generate-load-app-fx74w                      Created container generate-load-app
-100s                    Normal    Created                   Pod/generate-load-app-vcffs                      Created container generate-load-app
-100s                    Normal    Started                   Pod/generate-load-app-2x6kf                      Started container generate-load-app
-100s                    Normal    Created                   Pod/generate-load-app-2x6kf                      Created container generate-load-app
-71s                     Normal    Killing                   Pod/generate-load-app-ns6x6                      Stopping container generate-load-app
-71s                     Normal    Killing                   Pod/generate-load-app-vcffs                      Stopping container generate-load-app
-71s                     Normal    Killing                   Pod/generate-load-app-2x6kf                      Stopping container generate-load-app
-71s                     Normal    Killing                   Pod/generate-load-app-vjwqh                      Stopping container generate-load-app
-71s                     Normal    Killing                   Pod/generate-load-app-fx74w                      Stopping container generate-load-app
-40s                     Normal    ScalingReplicaSet         Deployment/cpu-stressor                          Scaled up replica set cpu-stressor-8556c54f68 to 1
-40s                     Normal    SuccessfulCreate          ReplicaSet/cpu-stressor-8556c54f68               Created pod: cpu-stressor-8556c54f68-q94xz
-39s                     Normal    Scheduled                 Pod/cpu-stressor-8556c54f68-q94xz                Successfully assigned default/cpu-stressor-8556c54f68-q94xz to docker-desktop
-39s                     Normal    Pulling                   Pod/cpu-stressor-8556c54f68-q94xz                Pulling image "narmidm/k8s-pod-cpu-stressor:v1.2.0"
-36s                     Normal    Pulled                    Pod/cpu-stressor-8556c54f68-q94xz                Successfully pulled image "narmidm/k8s-pod-cpu-stressor:v1.2.0" in 3.423s (3.423s including waiting). Image size: 4851746 bytes.
-36s                     Normal    Created                   Pod/cpu-stressor-8556c54f68-q94xz                Created container cpu-stressor
-35s                     Normal    Started                   Pod/cpu-stressor-8556c54f68-q94xz                Started container cpu-stressor
-32s                     Normal    Killing                   Pod/cpu-stressor-8556c54f68-q94xz                Stopping container cpu-stressor
-31s                     Normal    Scheduled                 Pod/memory-stressor                              Successfully assigned default/memory-stressor to docker-desktop
-31s                     Normal    Pulling                   Pod/memory-stressor                              Pulling image "polinux/stress:1.0.4"
-28s                     Normal    Pulled                    Pod/memory-stressor                              Successfully pulled image "polinux/stress:1.0.4" in 3.472s (3.472s including waiting). Image size: 4041495 bytes.
-26s (x2 over 27s)       Warning   BackOff                   Pod/memory-stressor                              Back-off restarting failed container memory-stressor in pod memory-stressor_default(51e1dbb1-8bc7-4de9-84ef-7728a41f7754)
-26s (x2 over 27s)       Normal    Created                   Pod/memory-stressor                              Created container memory-stressor
-26s (x2 over 27s)       Normal    Started                   Pod/memory-stressor                              Started container memory-stressor
-26s                     Normal    Pulled                    Pod/memory-stressor                              Container image "polinux/stress:1.0.4" already present on machine
-5s                      Normal    ScalingReplicaSet         Deployment/rabbitmq-consumer                     Scaled up replica set rabbitmq-consumer-dd9d7cfd4 to 1
-5s                      Normal    SuccessfulCreate          ReplicaSet/rabbitmq-consumer-dd9d7cfd4           Created pod: rabbitmq-consumer-dd9d7cfd4-wktqw
-4s                      Normal    Scheduled                 Pod/rabbitmq-consumer-dd9d7cfd4-wktqw            Successfully assigned default/rabbitmq-consumer-dd9d7cfd4-wktqw to docker-desktop
-4s                      Normal    Pulling                   Pod/rabbitmq-consumer-dd9d7cfd4-wktqw            Pulling image "ghcr.io/kedacore/rabbitmq-client:v1.0"
-2s                      Normal    SuccessfulCreate          Job/rabbitmq-publish                             Created pod: rabbitmq-publish-hhq9l
-2s                      Normal    Pulling                   Pod/rabbitmq-publish-hhq9l                       Pulling image "ghcr.io/kedacore/rabbitmq-client:v1.0"
-2s                      Normal    Scheduled                 Pod/rabbitmq-publish-hhq9l                       Successfully assigned default/rabbitmq-publish-hhq9l to docker-desktop
---------------------
-kubectl describe job rabbitmq-publish
-Name:             rabbitmq-publish
-Namespace:        default
-Selector:         batch.kubernetes.io/controller-uid=051debe3-1860-4343-a79f-eddfb3844a95
-Labels:           batch.kubernetes.io/controller-uid=051debe3-1860-4343-a79f-eddfb3844a95
-                  batch.kubernetes.io/job-name=rabbitmq-publish
-                  controller-uid=051debe3-1860-4343-a79f-eddfb3844a95
-                  job-name=rabbitmq-publish
-Annotations:      <none>
-Parallelism:      1
-Completions:      1
-Completion Mode:  NonIndexed
-Suspend:          false
-Backoff Limit:    4
-Start Time:       Sun, 24 Nov 2024 12:06:17 +1100
-Pods Statuses:    1 Active (0 Ready) / 0 Succeeded / 0 Failed
-Pod Template:
-  Labels:  batch.kubernetes.io/controller-uid=051debe3-1860-4343-a79f-eddfb3844a95
-           batch.kubernetes.io/job-name=rabbitmq-publish
-           controller-uid=051debe3-1860-4343-a79f-eddfb3844a95
-           job-name=rabbitmq-publish
-  Containers:
-   rabbitmq-client:
-    Image:      ghcr.io/kedacore/rabbitmq-client:v1.0
-    Port:       <none>
-    Host Port:  <none>
-    Command:
-      send
-      $(rabbitmq_host)
-      300
-    Environment:
-      rabbitmq_host:  <set to the key 'host' in secret 'rabbitmq-consumer-secret'>  Optional: false
-    Mounts:           <none>
-  Volumes:            <none>
-  Node-Selectors:     <none>
-  Tolerations:        <none>
-Events:
-  Type    Reason            Age   From            Message
-  ----    ------            ----  ----            -------
-  Normal  SuccessfulCreate  3s    job-controller  Created pod: rabbitmq-publish-hhq9l
---------------------
-cd ../cronjob
---------------------
-kubectl apply -f cronjob.yaml
-cronjob.batch/hello created
---------------------
-kubectl get pods
-NAME                                READY   STATUS      RESTARTS   AGE
-hello-28873507-kk98j                0/1     Completed   0          80s
-hello-28873508-swwlb                0/1     Completed   0          20s
-probe-test-app-fc7776cb8-ctp4m      1/1     Running     0          110s
-probe-test-app-fc7776cb8-hlgfj      1/1     Running     0          11m
-probe-test-app-fc7776cb8-hqrdj      1/1     Running     0          11m
-probe-test-app-fc7776cb8-z4qmx      1/1     Running     0          11m
-rabbitmq-0                          1/1     Running     0          8m21s
-rabbitmq-consumer-dd9d7cfd4-7lm7w   1/1     Running     0          55s
-rabbitmq-consumer-dd9d7cfd4-jnxpz   1/1     Running     0          55s
-rabbitmq-consumer-dd9d7cfd4-nrmxs   1/1     Running     0          55s
-rabbitmq-consumer-dd9d7cfd4-wktqw   1/1     Running     0          2m5s
-rabbitmq-publish-hhq9l              0/1     Completed   0          2m3s
---------------------
-kubectl get cronjob
-NAME    SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
-hello   * * * * *   <none>     False     0        21s             2m
---------------------
-kubectl delete cronjob hello
-cronjob.batch "hello" deleted
---------------------
-kubectl get pods -A
-NAMESPACE     NAME                                                     READY   STATUS              RESTARTS        AGE
-default       probe-test-app-fc7776cb8-ctp4m                           1/1     Running             0               113s
-default       probe-test-app-fc7776cb8-hlgfj                           1/1     Running             0               11m
-default       probe-test-app-fc7776cb8-hqrdj                           1/1     Running             0               11m
-default       probe-test-app-fc7776cb8-z4qmx                           1/1     Running             0               11m
-default       rabbitmq-0                                               1/1     Running             0               8m24s
-default       rabbitmq-consumer-dd9d7cfd4-7lm7w                        1/1     Running             0               58s
-default       rabbitmq-consumer-dd9d7cfd4-gnbfg                        0/1     ContainerCreating   0               1s
-default       rabbitmq-consumer-dd9d7cfd4-jnxpz                        1/1     Running             0               58s
-default       rabbitmq-consumer-dd9d7cfd4-ljvpt                        0/1     ContainerCreating   0               1s
-default       rabbitmq-consumer-dd9d7cfd4-mbdxk                        0/1     ContainerCreating   0               1s
-default       rabbitmq-consumer-dd9d7cfd4-nbcrv                        0/1     ContainerCreating   0               1s
-default       rabbitmq-consumer-dd9d7cfd4-nrmxs                        1/1     Running             0               58s
-default       rabbitmq-consumer-dd9d7cfd4-wktqw                        1/1     Running             0               2m8s
-default       rabbitmq-publish-hhq9l                                   0/1     Completed           0               2m6s
-keda          keda-admission-webhooks-6b7b75c487-jjth8                 1/1     Running             0               2m19s
-keda          keda-operator-86846bb678-wzp2f                           1/1     Running             1 (2m10s ago)   2m19s
-keda          keda-operator-metrics-apiserver-5b677c7769-7cjvr         1/1     Running             0               2m19s
-kube-system   coredns-55cb58b774-b8tgb                                 1/1     Running             0               13m
-kube-system   coredns-55cb58b774-fbltj                                 1/1     Running             0               13m
-kube-system   etcd-docker-desktop                                      1/1     Running             0               6m9s
-kube-system   hostpath-provisioner-6bb9769b5f-ktr4z                    1/1     Running             1 (7m8s ago)    10m
-kube-system   kube-apiserver-docker-desktop                            1/1     Running             0               13m
-kube-system   kube-controller-manager-docker-desktop                   1/1     Running             0               7m59s
-kube-system   kube-proxy-svzcg                                         1/1     Running             0               8m14s
-kube-system   kube-scheduler-docker-desktop                            1/1     Running             1 (7m4s ago)    7m39s
-kube-system   storage-provisioner                                      1/1     Running             1 (7m10s ago)   13m
-kube-system   vpnkit-controller                                        1/1     Running             0               13m
-monitoring    adapter-prometheus-adapter-b84b78594-5s24d               1/1     Running             0               5m34s
-monitoring    alertmanager-prometheus-kube-prometheus-alertmanager-0   2/2     Running             0               5m25s
-monitoring    prometheus-grafana-6b758d7b46-fm28n                      3/3     Running             0               5m41s
-monitoring    prometheus-kube-prometheus-operator-c5f7c5b6-6f6x8       1/1     Running             0               5m41s
-monitoring    prometheus-kube-state-metrics-677845d566-29gpp           1/1     Running             0               5m41s
-monitoring    prometheus-prometheus-kube-prometheus-prometheus-0       2/2     Running             0               5m25s
-monitoring    prometheus-prometheus-node-exporter-x4dsb                1/1     Running             0               5m41s
---------------------
-kubectl api-resources
-NAME                                SHORTNAMES               APIVERSION                        NAMESPACED   KIND
-bindings                                                     v1                                true         Binding
-componentstatuses                   cs                       v1                                false        ComponentStatus
-configmaps                          cm                       v1                                true         ConfigMap
-endpoints                           ep                       v1                                true         Endpoints
-events                              ev                       v1                                true         Event
-limitranges                         limits                   v1                                true         LimitRange
-namespaces                          ns                       v1                                false        Namespace
-nodes                               no                       v1                                false        Node
-persistentvolumeclaims              pvc                      v1                                true         PersistentVolumeClaim
-persistentvolumes                   pv                       v1                                false        PersistentVolume
-pods                                po                       v1                                true         Pod
-podtemplates                                                 v1                                true         PodTemplate
-replicationcontrollers              rc                       v1                                true         ReplicationController
-resourcequotas                      quota                    v1                                true         ResourceQuota
-secrets                                                      v1                                true         Secret
-serviceaccounts                     sa                       v1                                true         ServiceAccount
-services                            svc                      v1                                true         Service
-mutatingwebhookconfigurations                                admissionregistration.k8s.io/v1   false        MutatingWebhookConfiguration
-validatingadmissionpolicies                                  admissionregistration.k8s.io/v1   false        ValidatingAdmissionPolicy
-validatingadmissionpolicybindings                            admissionregistration.k8s.io/v1   false        ValidatingAdmissionPolicyBinding
-validatingwebhookconfigurations                              admissionregistration.k8s.io/v1   false        ValidatingWebhookConfiguration
-customresourcedefinitions           crd,crds                 apiextensions.k8s.io/v1           false        CustomResourceDefinition
-apiservices                                                  apiregistration.k8s.io/v1         false        APIService
-controllerrevisions                                          apps/v1                           true         ControllerRevision
-daemonsets                          ds                       apps/v1                           true         DaemonSet
-deployments                         deploy                   apps/v1                           true         Deployment
-replicasets                         rs                       apps/v1                           true         ReplicaSet
-statefulsets                        sts                      apps/v1                           true         StatefulSet
-selfsubjectreviews                                           authentication.k8s.io/v1          false        SelfSubjectReview
-tokenreviews                                                 authentication.k8s.io/v1          false        TokenReview
-localsubjectaccessreviews                                    authorization.k8s.io/v1           true         LocalSubjectAccessReview
-selfsubjectaccessreviews                                     authorization.k8s.io/v1           false        SelfSubjectAccessReview
-selfsubjectrulesreviews                                      authorization.k8s.io/v1           false        SelfSubjectRulesReview
-subjectaccessreviews                                         authorization.k8s.io/v1           false        SubjectAccessReview
-horizontalpodautoscalers            hpa                      autoscaling/v2                    true         HorizontalPodAutoscaler
-cronjobs                            cj                       batch/v1                          true         CronJob
-jobs                                                         batch/v1                          true         Job
-certificatesigningrequests          csr                      certificates.k8s.io/v1            false        CertificateSigningRequest
-leases                                                       coordination.k8s.io/v1            true         Lease
-endpointslices                                               discovery.k8s.io/v1               true         EndpointSlice
-cloudeventsources                                            eventing.keda.sh/v1alpha1         true         CloudEventSource
-clustercloudeventsources                                     eventing.keda.sh/v1alpha1         false        ClusterCloudEventSource
-events                              ev                       events.k8s.io/v1                  true         Event
-flowschemas                                                  flowcontrol.apiserver.k8s.io/v1   false        FlowSchema
-prioritylevelconfigurations                                  flowcontrol.apiserver.k8s.io/v1   false        PriorityLevelConfiguration
-clustertriggerauthentications       cta,clustertriggerauth   keda.sh/v1alpha1                  false        ClusterTriggerAuthentication
-scaledjobs                          sj                       keda.sh/v1alpha1                  true         ScaledJob
-scaledobjects                       so                       keda.sh/v1alpha1                  true         ScaledObject
-triggerauthentications              ta,triggerauth           keda.sh/v1alpha1                  true         TriggerAuthentication
-nodes                                                        metrics.k8s.io/v1beta1            false        NodeMetrics
-pods                                                         metrics.k8s.io/v1beta1            true         PodMetrics
-alertmanagerconfigs                 amcfg                    monitoring.coreos.com/v1alpha1    true         AlertmanagerConfig
-alertmanagers                       am                       monitoring.coreos.com/v1          true         Alertmanager
-podmonitors                         pmon                     monitoring.coreos.com/v1          true         PodMonitor
-probes                              prb                      monitoring.coreos.com/v1          true         Probe
-prometheusagents                    promagent                monitoring.coreos.com/v1alpha1    true         PrometheusAgent
-prometheuses                        prom                     monitoring.coreos.com/v1          true         Prometheus
-prometheusrules                     promrule                 monitoring.coreos.com/v1          true         PrometheusRule
-scrapeconfigs                       scfg                     monitoring.coreos.com/v1alpha1    true         ScrapeConfig
-servicemonitors                     smon                     monitoring.coreos.com/v1          true         ServiceMonitor
-thanosrulers                        ruler                    monitoring.coreos.com/v1          true         ThanosRuler
-ingressclasses                                               networking.k8s.io/v1              false        IngressClass
-ingresses                           ing                      networking.k8s.io/v1              true         Ingress
-networkpolicies                     netpol                   networking.k8s.io/v1              true         NetworkPolicy
-runtimeclasses                                               node.k8s.io/v1                    false        RuntimeClass
-poddisruptionbudgets                pdb                      policy/v1                         true         PodDisruptionBudget
-clusterrolebindings                                          rbac.authorization.k8s.io/v1      false        ClusterRoleBinding
-clusterroles                                                 rbac.authorization.k8s.io/v1      false        ClusterRole
-rolebindings                                                 rbac.authorization.k8s.io/v1      true         RoleBinding
-roles                                                        rbac.authorization.k8s.io/v1      true         Role
-priorityclasses                     pc                       scheduling.k8s.io/v1              false        PriorityClass
-csidrivers                                                   storage.k8s.io/v1                 false        CSIDriver
-csinodes                                                     storage.k8s.io/v1                 false        CSINode
-csistoragecapacities                                         storage.k8s.io/v1                 true         CSIStorageCapacity
-storageclasses                      sc                       storage.k8s.io/v1                 false        StorageClass
-volumeattachments                                            storage.k8s.io/v1                 false        VolumeAttachment
---------------------
-kubectl get clusterrole admin -o yaml
-aggregationRule:
-  clusterRoleSelectors:
-  - matchLabels:
-      rbac.authorization.k8s.io/aggregate-to-admin: "true"
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  annotations:
-    rbac.authorization.kubernetes.io/autoupdate: "true"
-  creationTimestamp: "2024-11-24T00:55:09Z"
-  labels:
-    kubernetes.io/bootstrapping: rbac-defaults
-  name: admin
-  resourceVersion: "326"
-  uid: f6d9a302-c8ab-4808-8ffe-4309d8cfbb32
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - pods/attach
-  - pods/exec
-  - pods/portforward
-  - pods/proxy
-  - secrets
-  - services/proxy
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts
-  verbs:
-  - impersonate
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  - pods/attach
-  - pods/exec
-  - pods/portforward
-  - pods/proxy
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - pods/eviction
-  verbs:
-  - create
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - events
-  - persistentvolumeclaims
-  - replicationcontrollers
-  - replicationcontrollers/scale
-  - secrets
-  - serviceaccounts
-  - services
-  - services/proxy
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - serviceaccounts/token
-  verbs:
-  - create
-- apiGroups:
-  - apps
-  resources:
-  - daemonsets
-  - deployments
-  - deployments/rollback
-  - deployments/scale
-  - replicasets
-  - replicasets/scale
-  - statefulsets
-  - statefulsets/scale
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - autoscaling
-  resources:
-  - horizontalpodautoscalers
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - batch
-  resources:
-  - cronjobs
-  - jobs
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - extensions
-  resources:
-  - daemonsets
-  - deployments
-  - deployments/rollback
-  - deployments/scale
-  - ingresses
-  - networkpolicies
-  - replicasets
-  - replicasets/scale
-  - replicationcontrollers/scale
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - policy
-  resources:
-  - poddisruptionbudgets
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingresses
-  - networkpolicies
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - endpoints
-  - persistentvolumeclaims
-  - persistentvolumeclaims/status
-  - pods
-  - replicationcontrollers
-  - replicationcontrollers/scale
-  - serviceaccounts
-  - services
-  - services/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - bindings
-  - events
-  - limitranges
-  - namespaces/status
-  - pods/log
-  - pods/status
-  - replicationcontrollers/status
-  - resourcequotas
-  - resourcequotas/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - namespaces
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - discovery.k8s.io
-  resources:
-  - endpointslices
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - controllerrevisions
-  - daemonsets
-  - daemonsets/status
-  - deployments
-  - deployments/scale
-  - deployments/status
-  - replicasets
-  - replicasets/scale
-  - replicasets/status
-  - statefulsets
-  - statefulsets/scale
-  - statefulsets/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - autoscaling
-  resources:
-  - horizontalpodautoscalers
-  - horizontalpodautoscalers/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - batch
-  resources:
-  - cronjobs
-  - cronjobs/status
-  - jobs
-  - jobs/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - daemonsets
-  - daemonsets/status
-  - deployments
-  - deployments/scale
-  - deployments/status
-  - ingresses
-  - ingresses/status
-  - networkpolicies
-  - replicasets
-  - replicasets/scale
-  - replicasets/status
-  - replicationcontrollers/scale
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - policy
-  resources:
-  - poddisruptionbudgets
-  - poddisruptionbudgets/status
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - ingresses
-  - ingresses/status
-  - networkpolicies
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - localsubjectaccessreviews
-  verbs:
-  - create
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - rolebindings
-  - roles
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - get
-  - list
-  - patch
-  - update
-  - watch
---------------------
-kubectl get clusterrole admin -o yaml | wc -l
-315
---------------------
-cd ../k8s-authz
---------------------
-./setup-tokens-on-cluster.sh
---------------------
-./add-users-kubeconfig.sh
-Context "docker-desktop-jane" created.
-Context "docker-desktop-john" created.
---------------------
-cat team1.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: "team1"
-  labels:
-    name: "team1"
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: admin
-  namespace: team1
-rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: admin
-  namespace: team1
-subjects:
-- kind: User
-  name: jane
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: admin
-  apiGroup: rbac.authorization.k8s.io--------------------
-kubectl apply -f team1.yaml && kubectl apply -f team2.yaml
-namespace/team1 created
-role.rbac.authorization.k8s.io/admin created
-rolebinding.rbac.authorization.k8s.io/admin created
-namespace/team2 created
-role.rbac.authorization.k8s.io/admin created
-rolebinding.rbac.authorization.k8s.io/admin created
---------------------
-kubectl config get-contexts
-CURRENT   NAME                  CLUSTER          AUTHINFO         NAMESPACE
-*         docker-desktop        docker-desktop   docker-desktop   
-          docker-desktop-jane   docker-desktop   jane             team1
-          docker-desktop-john   docker-desktop   john             team2
---------------------
-kubectl config use-context docker-desktop-jane
-Switched to context "docker-desktop-jane".
---------------------
-kubectl get pods -A
-Error from server (Forbidden): pods is forbidden: User "jane" cannot list resource "pods" in API group "" at the cluster scope
---------------------
-kubectl get pods
-No resources found in team1 namespace.
---------------------
-kubectl config use-context docker-desktop-john
-Switched to context "docker-desktop-john".
---------------------
-kubectl get pods
-No resources found in team2 namespace.
---------------------
-kubectl get pods --namespace=team1
-Error from server (Forbidden): pods is forbidden: User "john" cannot list resource "pods" in API group "" in the namespace "team1"
---------------------
-kubectl config use-context docker-desktop
-Switched to context "docker-desktop".
---------------------
-Cleaning up Jane and John...
-deleted user jane from /home/jumiker/.kube/config
-deleted user john from /home/jumiker/.kube/config
-deleted context docker-desktop-jane from /home/jumiker/.kube/config
-deleted context docker-desktop-john from /home/jumiker/.kube/config
---------------------
-cd ../ingress
---------------------
-./install-nginx.sh
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-"ingress-nginx" has been added to your repositories
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "ingress-nginx" chart repository
-...Successfully got an update from the "kedacore" chart repository
-...Successfully got an update from the "prometheus-community" chart repository
-Update Complete. ⎈Happy Helming!⎈
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME: ingress
-LAST DEPLOYED: Sun Nov 24 12:09:19 2024
-NAMESPACE: default
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-The ingress-nginx controller has been installed.
-It may take a few minutes for the load balancer IP to be available.
-You can watch the status by running 'kubectl get service --namespace default ingress-ingress-nginx-controller --output wide --watch'
-
-An example Ingress that makes use of the controller:
-  apiVersion: networking.k8s.io/v1
-  kind: Ingress
-  metadata:
-    name: example
-    namespace: foo
-  spec:
-    ingressClassName: nginx
-    rules:
-      - host: www.example.com
-        http:
-          paths:
-            - pathType: Prefix
-              backend:
-                service:
-                  name: exampleService
-                  port:
-                    number: 80
-              path: /
-    # This section is only required if TLS is to be enabled for the Ingress
-    tls:
-      - hosts:
-        - www.example.com
-        secretName: example-tls
-
-If TLS is enabled for the Ingress, a Secret containing the certificate and key must also be provided:
-
-  apiVersion: v1
-  kind: Secret
-  metadata:
-    name: example-tls
-    namespace: foo
-  data:
-    tls.crt: <base64 encoded cert>
-    tls.key: <base64 encoded key>
-  type: kubernetes.io/tls
---------------------
-kubectl apply -f probe-test-app-ingress.yaml
-ingress.networking.k8s.io/probe-test-app created
---------------------
-curl http://localhost
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   577  100   577    0     0   176k      0 --:--:-- --:--:-- --:--:--  187k
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>probetest</title>
-</head>
-<body>
-    <p>This Flask app is served from probe-test-app-fc7776cb8-hqrdj</p>
-    <p>The readiness endpoint (/readyz) is Healthy</p>
-    <p>The liveness endpoint is (/livez) Healthy</p>
-    <form method="POST">
-        <button type="submit" name="readyz">Toggle Readiness</button>
-        <button type="submit" name="livez">Toggle Liveness</button>
-    </form>
-    <p>Version 1</p>
-</body>
-</html>--------------------
-kubectl apply -f nyancat.yaml
-deployment.apps/nyancat created
-service/nyancat created
---------------------
-kubectl rollout status deployment nyancat -n default
-Waiting for deployment "nyancat" rollout to finish: 0 of 1 updated replicas are available...
-deployment "nyancat" successfully rolled out
---------------------
-kubectl apply -f nyancat-ingress.yaml
-ingress.networking.k8s.io/probe-test-app configured
---------------------
-curl http://localhost/nyancat/
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   207  100   207    0     0  98901      0 --:--:-- --:--:-- --:--:--  101k
-<!doctype html>
-<html lang=en>
-<title>404 Not Found</title>
-<h1>Not Found</h1>
-<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>
---------------------
-kubectl delete ingress probe-test-app
-ingress.networking.k8s.io "probe-test-app" deleted
---------------------
-helm uninstall ingress
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-release "ingress" uninstalled
---------------------
-Cleaning up probe-test-app and nyancat...
-horizontalpodautoscaler.autoscaling "probe-test-app" deleted
-deployment.apps "probe-test-app" deleted
-deployment.apps "nyancat" deleted
-service "probe-test-app" deleted
-service "nyancat" deleted
---------------------
-cd ../istio
---------------------
-./install-istio.sh
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-"istio" has been added to your repositories
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "ingress-nginx" chart repository
-...Successfully got an update from the "prometheus-community" chart repository
-...Successfully got an update from the "istio" chart repository
-...Successfully got an update from the "kedacore" chart repository
-Update Complete. ⎈Happy Helming!⎈
-namespace/istio-system created
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME: istio-base
-LAST DEPLOYED: Sun Nov 24 12:10:41 2024
-NAMESPACE: istio-system
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Istio base successfully installed!
-
-To learn more about the release, try:
-  $ helm status istio-base -n istio-system
-  $ helm get all istio-base -n istio-system
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME: istiod
-LAST DEPLOYED: Sun Nov 24 12:10:42 2024
-NAMESPACE: istio-system
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-"istiod" successfully installed!
-
-To learn more about the release, try:
-  $ helm status istiod -n istio-system
-  $ helm get all istiod -n istio-system
-
-Next steps:
-  * Deploy a Gateway: https://istio.io/latest/docs/setup/additional-setup/gateway/
-  * Try out our tasks to get started on common configurations:
-    * https://istio.io/latest/docs/tasks/traffic-management
-    * https://istio.io/latest/docs/tasks/security/
-    * https://istio.io/latest/docs/tasks/policy-enforcement/
-  * Review the list of actively supported releases, CVE publications and our hardening guide:
-    * https://istio.io/latest/docs/releases/supported-releases/
-    * https://istio.io/latest/news/security/
-    * https://istio.io/latest/docs/ops/best-practices/security/
-
-For further documentation see https://istio.io website
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-"kiali" has been added to your repositories
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME: kiali-server
-LAST DEPLOYED: Sun Nov 24 12:10:51 2024
-NAMESPACE: istio-system
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-Welcome to Kiali! For more details on Kiali, see: https://kiali.io
-
-The Kiali Server [v2.1.0] has been installed in namespace [istio-system]. It will be ready soon.
-
-When installing with "deployment.cluster_wide_access=false" using this Kiali Server Helm Chart,
-it is your responsibility to manually create the proper Roles and RoleBindings for the Kiali Server
-to have the correct permissions to access the service mesh namespaces.
-
-(Helm: Chart=[kiali-server], Release=[kiali-server], Version=[2.1.0])
-servicemonitor.monitoring.coreos.com/prometheus-oper-istio-controlplane created
-servicemonitor.monitoring.coreos.com/prometheus-oper-istio-dataplane created
-customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io created
-customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io created
-customresourcedefinition.apiextensions.k8s.io/grpcroutes.gateway.networking.k8s.io created
-customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io created
-customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io created
---------------------
-kubectl label namespace default istio-injection=enabled
-namespace/default labeled
---------------------
-kubectl apply -f bookinfo/platform/kube/bookinfo.yaml
-service/details created
-serviceaccount/bookinfo-details created
-deployment.apps/details-v1 created
-service/ratings created
-serviceaccount/bookinfo-ratings created
-deployment.apps/ratings-v1 created
-service/reviews created
-serviceaccount/bookinfo-reviews created
-deployment.apps/reviews-v1 created
-deployment.apps/reviews-v2 created
-deployment.apps/reviews-v3 created
-service/productpage created
-serviceaccount/bookinfo-productpage created
-deployment.apps/productpage-v1 created
---------------------
-kubectl apply -f bookinfo/gateway-api/bookinfo-gateway.yaml
-gateway.gateway.networking.k8s.io/bookinfo-gateway created
-httproute.gateway.networking.k8s.io/bookinfo created
---------------------
-kubectl apply -f bookinfo/platform/kube/bookinfo-versions.yaml
-service/reviews-v1 created
-service/reviews-v2 created
-service/reviews-v3 created
-service/productpage-v1 created
-service/ratings-v1 created
-service/details-v1 created
---------------------
-kubectl apply -f bookinfo/gateway-api/route-all-v1.yaml
-httproute.gateway.networking.k8s.io/reviews created
-httproute.gateway.networking.k8s.io/productpage created
-httproute.gateway.networking.k8s.io/ratings created
-httproute.gateway.networking.k8s.io/details created
---------------------
-kubectl apply -f bookinfo/gateway-api/route-reviews-90-10.yaml
-httproute.gateway.networking.k8s.io/reviews configured
---------------------
-kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml
-httproute.gateway.networking.k8s.io/reviews configured
---------------------
-bookinfo/platform/kube/cleanup.sh
-using NAMESPACE=default
-gateway.gateway.networking.k8s.io "bookinfo-gateway" deleted
-httproute.gateway.networking.k8s.io "bookinfo" deleted
-httproute.gateway.networking.k8s.io "details" deleted
-httproute.gateway.networking.k8s.io "productpage" deleted
-httproute.gateway.networking.k8s.io "ratings" deleted
-httproute.gateway.networking.k8s.io "reviews" deleted
-Application cleanup may take up to one minute
-service "details" deleted
-serviceaccount "bookinfo-details" deleted
-deployment.apps "details-v1" deleted
-service "ratings" deleted
-serviceaccount "bookinfo-ratings" deleted
-deployment.apps "ratings-v1" deleted
-service "reviews" deleted
-serviceaccount "bookinfo-reviews" deleted
-deployment.apps "reviews-v1" deleted
-deployment.apps "reviews-v2" deleted
-deployment.apps "reviews-v3" deleted
-service "productpage" deleted
-serviceaccount "bookinfo-productpage" deleted
-deployment.apps "productpage-v1" deleted
-Application cleanup successful
---------------------
-cd ../kustomize
---------------------
-kustomize build prod
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    run: my-nginx
-  name: prod-my-nginx
-spec:
-  ports:
-  - port: 80
-    protocol: TCP
-  selector:
-    run: my-nginx
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: prod-my-nginx
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      run: my-nginx
-  template:
-    metadata:
-      labels:
-        run: my-nginx
-    spec:
-      containers:
-      - image: nginx
-        name: my-nginx
---------------------
-kubectl apply -k prod
-service/prod-my-nginx created
-deployment.apps/prod-my-nginx created
---------------------
-kubectl get pods
-NAME                             READY   STATUS      RESTARTS   AGE
-prod-my-nginx-554c7b49dd-4xgjz   0/2     Init:0/1    0          1s
-prod-my-nginx-554c7b49dd-9jwkt   0/2     Init:0/1    0          1s
-rabbitmq-0                       1/1     Running     0          12m
-rabbitmq-publish-hhq9l           0/1     Completed   0          5m46s
---------------------
-kubectl apply -k dev
-service/dev-my-nginx created
-deployment.apps/dev-my-nginx created
---------------------
-kubectl get pods
-NAME                             READY   STATUS            RESTARTS   AGE
-dev-my-nginx-554c7b49dd-clx2n    0/2     Init:0/1          0          1s
-prod-my-nginx-554c7b49dd-4xgjz   0/2     PodInitializing   0          4s
-prod-my-nginx-554c7b49dd-9jwkt   0/2     PodInitializing   0          4s
-rabbitmq-0                       1/1     Running           0          12m
-rabbitmq-publish-hhq9l           0/1     Completed         0          5m49s
---------------------
-Cleaning up Kustomization example...
-service "prod-my-nginx" deleted
-deployment.apps "prod-my-nginx" deleted
-service "dev-my-nginx" deleted
-deployment.apps "dev-my-nginx" deleted
---------------------
-helm ls -A
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME        	NAMESPACE   	REVISION	UPDATED                                 	STATUS  	CHART                       	APP VERSION
-adapter     	monitoring  	1       	2024-11-24 12:02:49.45027175 +1100 AEDT 	deployed	prometheus-adapter-4.11.0   	v0.12.0    
-istio-base  	istio-system	1       	2024-11-24 12:10:41.14927978 +1100 AEDT 	deployed	base-1.24.0                 	1.24.0     
-istiod      	istio-system	1       	2024-11-24 12:10:42.334213772 +1100 AEDT	deployed	istiod-1.24.0               	1.24.0     
-keda        	keda        	1       	2024-11-24 12:06:03.838018344 +1100 AEDT	deployed	keda-2.16.0                 	2.16.0     
-kiali-server	istio-system	1       	2024-11-24 12:10:51.422454733 +1100 AEDT	deployed	kiali-server-2.1.0          	v2.1.0     
-prometheus  	monitoring  	1       	2024-11-24 12:02:27.388629035 +1100 AEDT	deployed	kube-prometheus-stack-65.8.1	v0.77.2    
---------------------
-Installing required CRD updates for prometheus chart upgrade from 65 to 66...
-error: Apply failed with 2 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
-error: Apply failed with 3 conflicts: conflicts with "helm" using apiextensions.k8s.io/v1:
-- .metadata.annotations.controller-gen.kubebuilder.io/version
-- .metadata.annotations.operator.prometheus.io/version
-- .spec.versions
-Please review the fields above--they currently have other managers. Here
-are the ways you can resolve this warning:
-* If you intend to manage all of these fields, please re-run the apply
-  command with the `--force-conflicts` flag.
-* If you do not intend to manage all of the fields, please edit your
-  manifest to remove references to the fields that should keep their
-  current managers.
-* You may co-own fields by updating your manifest to match the existing
-  value; in this case, you'll become the manager if the other manager(s)
-  stop managing the field (remove it from their configuration).
-See https://kubernetes.io/docs/reference/using-api/server-side-apply/#conflicts
---------------------
-helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-Release "prometheus" has been upgraded. Happy Helming!
-NAME: prometheus
-LAST DEPLOYED: Sun Nov 24 12:12:27 2024
-NAMESPACE: monitoring
-STATUS: deployed
-REVISION: 2
-NOTES:
-kube-prometheus-stack has been installed. Check its status by running:
-  kubectl --namespace monitoring get pods -l "release=prometheus"
-
-Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
---------------------
-helm get values prometheus -n monitoring
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-USER-SUPPLIED VALUES:
-grafana:
-  service:
-    port: 3000
-    type: LoadBalancer
-kubelet:
-  serviceMonitor:
-    cAdvisorMetricRelabelings: null
-prometheus:
-  service:
-    type: LoadBalancer
-prometheus-node-exporter:
-  hostRootFsMount:
-    enabled: false
-  prometheus:
-    monitor:
-      attachMetadata:
-        node: true
-      relabelings:
-      - action: replace
-        regex: (.+)
-        replacement: ${1}
-        sourceLabels:
-        - __meta_kubernetes_endpoint_node_name
-        targetLabel: node
---------------------
-helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-"gatekeeper" has been added to your repositories
---------------------
-helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.17.1
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME: gatekeeper
-LAST DEPLOYED: Sun Nov 24 12:12:54 2024
-NAMESPACE: gatekeeper-system
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
---------------------
-cd ../opa-gatekeeper
---------------------
-kubectl apply -f k8srequiredlabels-constraint-template.yaml
-constrainttemplate.templates.gatekeeper.sh/k8srequiredlabels created
---------------------
-kubectl apply -f pods-in-default-must-have-owner.yaml
-k8srequiredlabels.constraints.gatekeeper.sh/pods-in-default-must-have-owner created
---------------------
-kubectl apply -f ../probe-test-app/probe-test-app-pod.yaml
-Error from server (Forbidden): error when creating "../probe-test-app/probe-test-app-pod.yaml": admission webhook "validation.gatekeeper.sh" denied the request: [pods-in-default-must-have-owner] missing required label, requires all of: owner
-[pods-in-default-must-have-owner] regex mismatch
---------------------
-kubectl apply -f probe-test-app-pod.yaml
-pod/probe-test-app created
---------------------
-kubectl delete constraint pods-in-default-must-have-owner
-k8srequiredlabels.constraints.gatekeeper.sh "pods-in-default-must-have-owner" deleted
---------------------
-kubectl delete pod probe-test-app
-pod "probe-test-app" deleted
---------------------
-helm repo add argo-helm https://argoproj.github.io/argo-helm
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-"argo-helm" has been added to your repositories
---------------------
-helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.6.1
-WARNING: Kubernetes configuration file is group-readable. This is insecure. Location: /home/jumiker/.kube/config
-WARNING: Kubernetes configuration file is world-readable. This is insecure. Location: /home/jumiker/.kube/config
-NAME: argo-cd
-LAST DEPLOYED: Sun Nov 24 12:14:01 2024
-NAMESPACE: argocd
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-In order to access the server UI you have the following options:
-
-1. kubectl port-forward service/argo-cd-argocd-server -n argocd 8080:443
-
-    and then open the browser on http://localhost:8080 and accept the certificate
-
-2. enable ingress in the values file `server.ingress.enabled` and either
-      - Add the annotation for ssl passthrough: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough
-      - Set the `configs.params."server.insecure"` in the values file and terminate SSL at your ingress: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-2-multiple-ingress-objects-and-hosts
-
-
-After reaching the UI the first time you can login with username: admin and the random password generated during the installation. You can find the password by running:
-
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-
-(You should delete the initial secret afterwards as suggested by the Getting Started Guide: https://argo-cd.readthedocs.io/en/stable/getting_started/#4-login-using-the-cli)
---------------------
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath={.data.password} | base64 -d
-dry4EcKndKibTuyM--------------------
-cd ../argocd
---------------------
-kubectl apply -f probe-test-app.yaml -n argocd
-application.argoproj.io/probe-test-app created
---------------------
-kubectl apply -f argo-rollouts-app.yaml -n argocd
-application.argoproj.io/argo-rollouts created
---------------------
-kubectl delete deployment probe-test-app
-Error from server (NotFound): deployments.apps "probe-test-app" not found
---------------------
-kubectl get pods
-NAME                             READY   STATUS      RESTARTS   AGE
-probe-test-app-fc7776cb8-4d6v8   2/2     Running     0          10s
-probe-test-app-fc7776cb8-ckc7s   2/2     Running     0          10s
-probe-test-app-fc7776cb8-vbf6s   2/2     Running     0          10s
-rabbitmq-0                       1/1     Running     0          14m
-rabbitmq-publish-hhq9l           0/1     Completed   0          8m32s
---------------------
-kubectl delete application probe-test-app -n argocd
-application.argoproj.io "probe-test-app" deleted
+./tools/test-all-steps.sh: line 695: unexpected EOF while looking for matching `"'

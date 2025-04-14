@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: memory-stressor
-    image: polinux/stress:1.0.4
+    image: mirror.gcr.io/polinux/stress:1.0.4
     resources:
       requests:
         memory: "100Mi"

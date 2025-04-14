@@ -13,7 +13,7 @@ spec:
         run: nyancat
     spec:
       containers:
-      - image: jasonumiker/nyancat:latest
+      - image: mirror.gcr.io/jasonumiker/nyancat:latest
         imagePullPolicy: IfNotPresent
         name: nyancat
         ports:

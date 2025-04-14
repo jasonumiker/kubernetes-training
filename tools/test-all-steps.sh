@@ -278,7 +278,7 @@ echo "./install-prometheus.sh"
 sleep 10
 kubectl rollout status deployment adapter-prometheus-adapter -n monitoring
 kubectl rollout status statefulset prometheus-prometheus-kube-prometheus-prometheus -n monitoring
-sleep 10
+sleep 45
 echo "--------------------"
 sleep 1
 echo "kubectl top nodes"
@@ -506,7 +506,7 @@ sleep 1
 echo "kubectl apply -f nyancat-ingress.yaml"
 kubectl apply -f nyancat-ingress.yaml
 echo "--------------------"
-sleep 1
+sleep 10
 echo "curl http://localhost/nyancat/"
 curl http://localhost/nyancat/
 echo "--------------------"
@@ -601,21 +601,8 @@ echo "helm ls -A"
 helm ls -A
 echo "--------------------"
 sleep 1
-echo "Installing required CRD updates for prometheus chart upgrade from 65 to 66..."
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
-echo "--------------------"
-sleep 10
-echo "helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring"
-helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring
+echo "helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 70.4.2 -n monitoring"
+helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 70.4.2 -n monitoring
 echo "--------------------"
 sleep 10
 echo "helm get values prometheus -n monitoring"
@@ -681,7 +668,7 @@ sleep 1
 echo "kubectl apply -f argo-rollouts-app.yaml -n argocd"
 kubectl apply -f argo-rollouts-app.yaml -n argocd
 echo "--------------------"
-sleep 1
+sleep 10
 echo "kubectl delete deployment probe-test-app"
 kubectl delete deployment probe-test-app
 echo "--------------------"

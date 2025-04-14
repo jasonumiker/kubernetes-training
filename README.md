@@ -1002,34 +1002,21 @@ prometheus  	monitoring  	1       	2024-11-22 15:11:47.902443 +1100 AEDT	deploye
 ```
 If we look closer at the prometheus we deployed via Helm:
 
-* That was installed with the command `helm install prometheus prometheus-community/kube-prometheus-stack --values prometheus-stack-values.yaml --version 65.8.1 -n monitoring`
+* That was installed with the command `helm install prometheus prometheus-community/kube-prometheus-stack --values prometheus-stack-values.yaml --version 70.4.1 -n monitoring`
   * That comes from this GitHub repository - https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
     * You can see how values are templated in to the manifests with Helm within that repository in examples like [this](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/templates/prometheus/prometheus.yaml)
-  * We asked for the specific version of the chart 65.8.1 - the best practice is to pin a specific version so you can count on the values.yaml parameters being the same - and can explicitly update to what new version you want in the future too
+  * We asked for the specific version of the chart 70.4.1 - the best practice is to pin a specific version so you can count on the values.yaml parameters being the same - and can explicitly update to what new version you want in the future too
   * If you look at [monitoring/prometheus-stack-default-values.yaml](monitoring/prometheus-stack-default-values.yaml) these are all the possible parameters and their default values for the Helm chart
   * We chose to override some of those for our needs in [monitoring/prometheus-stack-values.yaml](monitoring/prometheus-stack-values.yaml) - which we specified in the `helm install` command
 
-If we wanted to update, there is actually a new version of this chart since when we initially pinned the version. You usually want to check the repo for any instructions on going up major versions - and in this case we would be (from 65 to 66) - https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/UPGRADE.md#from-65x-to-66x. If we needed to change our values it would usually be called out in the documentation as well - but in this case they don't mention it (so we should be safe). So, first we follow their instructions to run the following commands to update the CRDs before trying to update the Chart:
-
-```
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusagents.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml
-kubectl replace -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.78.1/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml
-```
-
-Then we can update to the latest (at the time of writing) version of the chart - 66.2.1. 
-`helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 66.2.1 -n monitoring`
+To update to the latest (at the time of writing) version of the chart - 70.4.2 - we can run this command:
+`helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 70.4.2 -n monitoring`
 
 That should be successful.
 
 This time we didn't need to specify the values because it'll keep the same ones from before. To see that you can run `helm get values prometheus -n monitoring` to see it still knows the ones we specified when we first installed it from [monitoring/prometheus-stack-values](monitoring/prometheus-stack-values.yaml).
+
+Note that you should check for changes to the required values and any other upgrade instructions/warnings before proceeding. In the case of this chart, the instructions to go from any one version to the next is available [here](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/UPGRADE.md).
 
 ### What is a Custom Resource Definition (CRD)?
 It may not have been clear why we needed to update those Custom Resource Definitions (CRDs) before we could upgrade the chart? What is a CRD anyway?

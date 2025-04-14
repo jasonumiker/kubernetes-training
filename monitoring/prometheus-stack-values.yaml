@@ -22,3 +22,6 @@ grafana:
 kubelet:
   serviceMonitor:
     cAdvisorMetricRelabelings: null
+crds:
+  upgradeJob:
+    enabled: true

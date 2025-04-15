@@ -16,6 +16,8 @@ prometheus:
   service:
     type: LoadBalancer
 grafana:
+  image:
+    registry: mirror.gcr.io
   service:
     type: LoadBalancer
     port: 3000
@@ -25,3 +27,6 @@ kubelet:
 crds:
   upgradeJob:
     enabled: true
+    image:
+      busybox:
+        registry: mirror.gcr.io

@@ -32,7 +32,7 @@ spec:
             - name: PV_DIR
               value: /var/lib/k8s-pvs
             - name: BUSYBOX_IMAGE
-              value: busybox:1.28.4
+              value: mirror.gcr.io/busybox:1.37.0
           volumeMounts:
             - name: pv-volume
               mountPath: /var/lib/k8s-pvs

@@ -679,3 +679,48 @@ echo "--------------------"
 sleep 1
 echo "kubectl delete application probe-test-app -n argocd"
 kubectl delete application probe-test-app -n argocd
+echo "--------------------"
+sleep 1
+echo "cd ../argo-rollouts"
+cd ../argo-rollouts
+echo "--------------------"
+sleep 1
+echo "kubectl apply -f bluegreen-service.yaml"
+kubectl apply -f bluegreen-service.yaml
+echo "--------------------"
+sleep 1
+echo "kubectl apply -f bluegreen-gateway.yaml"
+kubectl apply -f bluegreen-gateway.yaml
+echo "--------------------"
+sleep 1
+echo "kubectl apply -f bluegreen-preview-service.yaml"
+kubectl apply -f bluegreen-preview-service.yaml
+echo "--------------------"
+sleep 1
+echo "kubectl apply -f bluegreen-preview-gateway.yaml"
+kubectl apply -f bluegreen-preview-gateway.yaml
+echo "--------------------"
+sleep 1
+echo "kubectl apply -f bluegreen-rollout-manual.yaml"
+kubectl apply -f bluegreen-rollout-manual.yaml
+echo "--------------------"
+sleep 1
+echo "kubectl apply -f bluegreen-rollout-manual-green.yaml"
+kubectl apply -f bluegreen-rollout-manual-green.yaml
+echo "--------------------"
+sleep 10
+echo "kubectl argo rollouts get rollout bluegreen-demo"
+kubectl argo rollouts get rollout bluegreen-demo
+echo "--------------------"
+sleep 10
+echo "kubectl argo rollouts promote bluegreen-demo"
+kubectl argo rollouts promote bluegreen-demo
+echo "--------------------"
+sleep 10
+echo "kubectl argo rollouts get rollout bluegreen-demo"
+kubectl argo rollouts get rollout bluegreen-demo
+echo "--------------------"
+sleep 10
+echo "kubectl argo rollouts undo bluegreen-demo"
+kubectl argo rollouts undo bluegreen-demo
+echo "--------------------"

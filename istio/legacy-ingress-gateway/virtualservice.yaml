@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: probe-test-app
+  namespace: default
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - default/istio-ingress
+  http:
+  - match:
+    - uri:
+        exact: /
+    route:
+    - destination:
+        host: probe-test-app
+        port:
+          number: 8000

@@ -568,6 +568,22 @@ echo "bookinfo/platform/kube/cleanup.sh"
 bookinfo/platform/kube/cleanup.sh
 echo "--------------------"
 sleep 1
+echo "helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.25.1"
+helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.25.1
+echo "--------------------"
+sleep 1
+echo "kubectl apply -k legacy-ingress-gateway"
+kubectl apply -k legacy-ingress-gateway
+echo "--------------------"
+sleep 1
+echo "helm uninstall istio-ingress -n istio-ingress"
+helm uninstall istio-ingress -n istio-ingress
+echo "--------------------"
+sleep 1
+echo "kubectl delete -k legacy-ingress-gateway"
+kubectl delete -k legacy-ingress-gateway
+echo "--------------------"
+sleep 1
 echo "cd ../kustomize"
 cd ../kustomize
 echo "--------------------"

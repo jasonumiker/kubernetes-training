@@ -278,7 +278,7 @@ echo "./install-prometheus.sh"
 sleep 10
 kubectl rollout status deployment adapter-prometheus-adapter -n monitoring
 kubectl rollout status statefulset prometheus-prometheus-kube-prometheus-prometheus -n monitoring
-sleep 45
+sleep 60
 echo "--------------------"
 sleep 1
 echo "kubectl top nodes"
@@ -568,8 +568,8 @@ echo "bookinfo/platform/kube/cleanup.sh"
 bookinfo/platform/kube/cleanup.sh
 echo "--------------------"
 sleep 1
-echo "helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.25.1"
-helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.25.1
+echo "helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.29.1"
+helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.29.1
 echo "--------------------"
 sleep 1
 echo "kubectl apply -k legacy-ingress-gateway"
@@ -617,8 +617,8 @@ echo "helm ls -A"
 helm ls -A
 echo "--------------------"
 sleep 1
-echo "helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 70.4.2 -n monitoring"
-helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 70.4.2 -n monitoring
+echo "helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 83.4.0 -n monitoring"
+helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 83.4.0 -n monitoring
 echo "--------------------"
 sleep 10
 echo "helm get values prometheus -n monitoring"
@@ -629,8 +629,8 @@ echo "helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/ch
 helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
 echo "--------------------"
 sleep 1
-echo "helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.19.0"
-helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.19.0
+echo "helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.22.0"
+helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.22.0
 echo "--------------------"
 sleep 10
 echo "cd ../opa-gatekeeper"
@@ -665,8 +665,8 @@ echo "helm repo add argo-helm https://argoproj.github.io/argo-helm"
 helm repo add argo-helm https://argoproj.github.io/argo-helm
 echo "--------------------"
 sleep 1
-echo "helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.8.24"
-helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.8.24
+echo "helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 9.5.0"
+helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 9.5.0
 echo "--------------------"
 sleep 10
 echo "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d"

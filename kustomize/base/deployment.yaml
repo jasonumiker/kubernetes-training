@@ -14,4 +14,4 @@ spec:
     spec:
       containers:
       - name: my-nginx
-        image: mirror.gcr.io/nginx:1.27.4-bookworm
+        image: mirror.gcr.io/nginx:1.29.8-trixie

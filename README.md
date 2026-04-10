@@ -51,14 +51,14 @@ This set of general Kubernetes training materials was designed to run on the Kub
 1. Download and Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 1. On Windows, install [Ubuntu on Windows Subsystem for Linux (WSL) v2](https://documentation.ubuntu.com/wsl/en/latest/guides/install-ubuntu-wsl2/)
     1. You also will need to ensure your Ubuntu user in in the docker group by running `sudo usermod -aG docker $USER` and `newgrp docker`
-1. Open Settings (the gear icon in the upper right) and then enable Kubernetes ![](images/enable_kubernetes.png)
+1. Open Settings (the gear icon in the upper right) and then enable Kubernetes choosing the Kubeadm cluster type which is required for some of our examples like the API Authorization one ![](images/enable_kubernetes.png) 
     1. Note that if you ever 'mess up' this cluster you can just click that red Reset Kubernetes Cluster and it'll quickly go back to default settings - it's your 'get out of jail free card'!
 1. On Windows, while still in Settings, go to Resources then WSL Integration and make sure it is turned on for Ubuntu
 1. Install Homebrew (on either Mac or Ubuntu WSL2 - if you do not have it installed already) - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
     1. Note that there is a `Next steps:` section at the end of that install script - make sure you do those to or it won't be in your path etc.
 1. Install Helm via Homebrew with a `brew install helm`
 1. Install Kustomize via Homebrew with a `brew install kustomize`
-1. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install derailed/k9s/k9s`
+1. Install [k9s](https://k9scli.io/) via Homebrew with a `brew install k9s`
 1. Install the Argo CD CLI with a `brew install argocd`
 1. Install the Argo Rollouts CLI with a `brew install argoproj/tap/kubectl-argo-rollouts`
 1. Install git (if it's not already)
@@ -190,13 +190,9 @@ You can see the details by running `kubectl get services -o wide`. You'll see th
   - You can just ignore that and use the <http://localhost:8000> and ignore that though - thanks Docker Desktop!
 - That it is pointing at any Pods (it's Selector) with the label `app.kubernetes.io/name=probe-test-app`
 
-If you run `kubectl get endpoints` you'll see the Pod IP there as the only endpoint of the service (you can see the Pod IP to verify it is what you see with `kubectl get pods -o wide`).
+To see that selector and load balancing in action we can add a 2nd Pod with that label by running `kubectl apply -f probe-test-app-pod-2.yaml`
 
-To see that in action we can add a 2nd Pod with that label by running `kubectl apply -f probe-test-app-pod-2.yaml`
-
-If you re-run `kubectl get endpoints` you'll now see the 2nd Pod has been added as an endpoint for the service.
-
-And if you go to <http://localhost:8000> in your browser and refresh you'll see that the name changes in what Pod that you're served from (that you are balanced between them). Note that the hostname the Pod sees is its Pod name - and I am just having it return that hostname out this web app.
+Then if you go to <http://localhost:8000> in your browser and refresh you'll see that the name changes in what Pod that you're served from (that you are balanced between them). Note that the hostname the Pod sees is its Pod name - and I am just having it return that hostname out this web app.
 
 One last thing to note about Services is that Kubernetes creates a DNS record for them in a naming convention that allows for easy and predictable discovery of them by other Pods running within the same cluster. The naming convention is `service-name.namespace-name.svc.cluster.local`. You'll see this convention used later on in the init containers example below. Note that this only applies within a Pod - you can't use this convention outside the cluster or between clusters.
 
@@ -227,7 +223,7 @@ You may have noticed in the Pod settings that we've defined both of the types of
 
 You don't have to put all of those settings but I wanted to put them all explicitly on what they default to so that you can see what options are available and what their defaults are. You can learn more about them in the K8s documentation [here](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes)
 
-In short, the livenessProbe controls whether a Pod should be restarted due to it being unhealthy (as an attempt to heal it) vs. the readinessProbe which is used to decide whether a Service should send it traffic or not. In AWS these two things are often combined - but separating them into different endpoints and behaviors can be very useful.
+In short, the livenessProbe controls whether a Pod should be restarted due to it being unhealthy (as an attempt to heal it) vs. the readinessProbe which is used to decide whether a Service should send it traffic or not. In public clouds like AWS these two things are often combined - but separating them into different endpoints and behaviors can be very useful.
 
 The app that you go to on <http://localhost:8000> not only tells you if each of these is healthy but it also lets you toggle them between behind healthy and unhealthy.
 
@@ -403,8 +399,8 @@ Then see this in action by:
 - `kubectl get pvc` - see now that it is Bound and there a VOLUME listed
 - `kubectl get pv` - here you'll see the PersistentVolume that was created by fulfilling the claim
 - `kubectl apply -f service.yaml` - create a service to expose this nginx
-- <http://localhost:8001> - we mounted an empty volume at the nginx path
-- `kubectl exec -it nginx  -- bash -c "echo 'Data on PV' > /usr/share/nginx/html/index.html"` to write some stuff to index.html for nginx to display
+- <http://localhost:8001> - we mounted an empty volume at the nginx path so you see an access denied because there is no index.html etc.
+- `kubectl exec -it nginx  -- bash -c "echo 'Data on PV' > /usr/share/nginx/html/index.html"` to write some stuff to an index.html for nginx to display
 - <http://localhost:8001>
 - `kubectl delete pod nginx`
 - `kubectl get pv` - even if we delete the Pod the volume is still here
@@ -434,7 +430,7 @@ There is a good example of a StatefulSet in the RabbitMQ that we'll also need fo
 - `kubectl describe statefulset rabbitmq` to see more about our new StatefulSet
 - `kubectl get pods` - you'll see a rabbitmq-0 - unlike ReplicaSets which appends some random characters to the end of the Pod name
 - `kubectl get pvc` and `kubectl get pv` - you'll see that it got its own PersistentVolume via its own PersistentVolumeClaim
-- `kubectl delete pod rabbit-mq-0` and `kubectl get pods` - you'll see that the Pod comes back with the same name and the same PersistentVolume with its state in it
+- `kubectl delete pod rabbitmq-0` and `kubectl get pods` - you'll see that the Pod comes back with the same name and the same PersistentVolume with its state in it
 
 We'll look more closely at this RabbitMQ in the KEDA section later on...
 
@@ -583,6 +579,7 @@ Let's apply that HPA by running:
 
 - `cd ../probe-test-app`
 - `kubectl apply -f probe-test-app-hpa.yaml`
+- `kubectl get hpa`
 
 Now we'll generate a bunch of load against our probe-test-app by running `kubectl apply -f generate-load-app-replicaset.yaml`
 
@@ -882,9 +879,9 @@ We can also now optionally remove probe-test-app and nyancat too:
 
 ### What is 'wrong' with Ingress for it to need to be eventually replaced (by Gateway)?
 
-Ingress will *eventually* go away and be replaced by Gateway. However, many of the providers such as [AWS](https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1338) and [Microsoft](https://github.com/Azure/AKS/issues/3198) have not yet released new versions of their load balancer controllers that support that the new Gateway API. The only of the major cloud providers to release one at the time of writing this is [Google](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api). And, they still also offer an Ingress option alongside it too. So, Ingress remains the current solution in the industry - especially in places with AWS EKS or Azure AKS in the mix.
+Ingress will *eventually* go away and be replaced by Gateway - but I included it because it has been around for years and is still in use in many environments.
 
-The main reason is that the Ingress API standard/schema didn't include enough of the common options that people need to control around a Layer 7 load balancer. The solution they all went with is to use annotations for most of this (to break out of 'the standard' and flip the missing options they need for just their ingress controller). But then every Ingress controller opted for different annotations - so you can't take an Ingress document written for one controller/cloud and use it on another without changing it quite a bit.
+The main reason it's being replaced is that the Ingress API standard/schema didn't include enough of the common options that people need to control around a Layer 7 load balancer. The solution they all went with is to use annotations for most of this (to break out of 'the standard' and flip the missing options they need for just their ingress controller). But then every Ingress controller opted for different annotations - so you can't take an Ingress document written for one controller/cloud and use it on another without changing it quite a bit.
 
 For example, look at all the [annotations for AWS ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/). And how much they differ from the [nginx ones](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) that we're working with here in this example.
 
@@ -952,13 +949,14 @@ You won't see anything here in the Traffic Map until you generate traffic throug
 One of the things that Istio can really help us with is traffic management. To see this in action:
 
 - Run `kubectl apply -f bookinfo/platform/kube/bookinfo-versions.yaml` to define the available versions via backend service definitions
+  - Refresh Kiali and you'll now see the three different versions of the review service split out
 - Run `kubectl apply -f bookinfo/gateway-api/route-all-v1.yaml` to have it route to only the v1 version (so you'll stop seeing both the black and red stars)
   - See this by refreshing <http://localhost/productpage> and also by seeing the subsequent Traffic Map in Kiali
 - Run `kubectl apply -f bookinfo/gateway-api/route-reviews-90-10.yaml` to change it so that it sends 90% of the traffic to v1 and 10% of it to v2 (useful for progressive rollouts / canary deployments)
   - See this by refreshing <http://localhost/productpage> and also by seeing the subsequent Traffic Map in Kiali
 - Run `kubectl apply -f bookinfo/gateway-api/route-jason-v2.yaml` to change it to send the user Jason to v2 and everybody else to v1 - replacing some of what we may have previously needed feature flags in code for at the network/mesh layer
   - It does this based on a header that is put on the downstream request between the the productpage and the reviews service
-  - On <http://localhost/productpage> log in as user jason (it doesn't validate the password - type anything for that) and refresh the browser to see the black stars of v2!
+  - On <http://localhost/productpage> log in as user "jason" (all lower case and it doesn't validate the password - type anything for that) and refresh the browser to see the black stars of v2!
   - Open another browser or the existing one in incognito and see that non-Jason goes back to no stars
 
 **NOTE:** You were just working with the Gateway API there (the replacement for Ingress we were talking about) - Istio is just implementing that standard - and it would work with other controllers that provide load balancers to that standard as well (such as when AWS releases theirs for the ALB).
@@ -969,13 +967,13 @@ We'll keep the Istio running as we'll leverage it in our Argo Rollouts example c
 
 Since we had just been discussing the Kubernetes Gateway API vs. Ingress - and Istio is moving to not just implementing this new Kubernetes API but will be [making it the default soon](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/) - I started with an example based on that.
 
-Somewhat confusingly though, Istio also has a Gateway API too. You can tell the difference as the API will be `apiVersion: networking.istio.io/v1` instead of `gateway.networking.k8s.io/v1` we were using above. And that, in turn, goes hand-in-hand with a custom resource called a VirtualService (as opposed to the HTTPRoute of the K8s Gateway API). In the Istio documentation these days you'll see tabs for the two different options in each example.
+Somewhat confusingly though, Istio also has its own Gateway API too that predated the Kubernetes one. You can tell the difference as the API will be `apiVersion: networking.istio.io/v1` instead of `gateway.networking.k8s.io/v1` we were using above. And that, in turn, goes hand-in-hand with a custom resource called a VirtualService (as opposed to the HTTPRoute of the K8s Gateway API). In the Istio documentation these days you'll see tabs for the two different options in each example.
 
 Other than having a quite different schema, the main difference between these two APIs is that when you create a Kubernetes Gateway CustomResource it will spin up Pods running the the gateway in response (similar to how the nginx Ingress controller spun up Pods running nginx in response to you creating an Ingress). Whereas the Istio Ingress requires you to have already spun that up and give it a selector for it to manage those Pods.
 
 To see this in action:
 
-- Run `helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.25.1` to install some Pods running the Istio Gateway
+- Run `helm install istio-ingress istio/gateway --create-namespace -n istio-ingress --wait --version=1.29.1` to install some Pods running the Istio Gateway
 - Run `kubectl apply -k legacy-ingress-gateway` to deploy probe-test-app as well as a Gateway and VirtualService to configure it to route through to it.
 
 Go to <http://localhost> in your browser to see the Gateway and VirtualService Route through to probe-test-app
@@ -998,7 +996,7 @@ Employing the Istio Service Mesh on your Kubernetes cluster(s) can offer signifi
 
 The classic Sidecar version, which remains the most common, *doubles* the number of containers that you are running (by putting an Envoy sidecar into each Pod). And issues in a service mesh are often harder to debug because they involve multiple layers (application, sidecar proxies, mesh control plane, etc.). Plus there are often operational challenges in upgrading and maintaining this fairly complex yet system in production once you've standardized on it.
 
-Native Kubernetes features (e.g., Ingress controllers - especially for managed AWS ALBs with their controller, NetworkPolicy, etc.) may often suffice and with much less cost, complexity and overhead.
+Native Kubernetes features (e.g., Ingress or Gateway API controllers - especially for managed AWS ALBs with their controller, NetworkPolicy, etc.) may often suffice and with much less cost, complexity and overhead.
 
 ## Kustomize and Helm
 
@@ -1072,15 +1070,15 @@ prometheus   monitoring   1        2024-11-22 15:11:47.902443 +1100 AEDT deploye
 
 If we look closer at the prometheus we deployed via Helm:
 
-- That was installed with the command `helm install prometheus prometheus-community/kube-prometheus-stack --values prometheus-stack-values.yaml --version 70.4.1 -n monitoring`
+- That was installed with the command `helm install prometheus prometheus-community/kube-prometheus-stack --values prometheus-stack-values.yaml --version 83.3.0 -n monitoring`
   - That comes from this GitHub repository - <https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack>
     - You can see how values are templated in to the manifests with Helm within that repository in examples like [this](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/templates/prometheus/prometheus.yaml)
-  - We asked for the specific version of the chart 70.4.1 - the best practice is to pin a specific version so you can count on the values.yaml parameters being the same - and can explicitly update to what new version you want in the future too
+  - We asked for the specific version of the chart 83.3.0 - the best practice is to pin a specific version so you can count on the values.yaml parameters being the same - and can explicitly update to what new version you want in the future too
   - If you look at [monitoring/prometheus-stack-default-values.yaml](monitoring/prometheus-stack-default-values.yaml) these are all the possible parameters and their default values for the Helm chart
   - We chose to override some of those for our needs in [monitoring/prometheus-stack-values.yaml](monitoring/prometheus-stack-values.yaml) - which we specified in the `helm install` command
 
-To update to the latest (at the time of writing) version of the chart - 70.4.2 - we can run this command:
-`helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 70.4.2 -n monitoring`
+To update to the latest (at the time of writing) version of the chart - 83.4.0 - we can run this command:
+`helm upgrade prometheus prometheus-community/kube-prometheus-stack --version 83.4.0 -n monitoring`
 
 That should be successful.
 
@@ -1101,8 +1099,6 @@ This Helm chart actually installs an operator that installs/runs the Prometheus 
 A CRD is a way to extend Kubernetes to be able to give it more YAML documents to represent other things than what is built-in to Kubernetes. This chart/operator installs several but lets look at one key one (Prometheuses) - `kubectl get prometheuses -n monitoring -o yaml`.
 
 This operator is waiting for you to create/update/delete YAML documents of `kind: Prometheus` document (as defined in the CRD) - and, in response, it will install/update/delete prometheus server(s) on the cluster.
-
-The reason why we had to update those CRDs is the schema of what parameters the operator supports/expects form these custom resources will have changed from version 65 to 66.
 
 We'll look more at what an operator is in the next section.
 
@@ -1131,7 +1127,7 @@ There is a public library these OPA Gatekeeper ConstraintTemplates/Constraints a
 To see this in action:
 
 - `helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts`
-- `helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --set image.repository= --version 3.19.0`
+- `helm install gatekeeper/gatekeeper --name-template=gatekeeper --namespace gatekeeper-system --create-namespace --version 3.22.0`
 - `cd ../opa-gatekeeper`
 - `kubectl apply -f k8srequiredlabels-constraint-template.yaml` - this applies the ConstraintTemplate to let us require that any Pods must have certain labels
 - `kubectl apply -f pods-in-default-must-have-owner.yaml` - this constraint specifies the required labels and where they are required (in this case the owner label needs to be there on any Pods in the default Namespace)
@@ -1162,7 +1158,7 @@ The way that this works is that Argo has extended your kubernetes with the custo
 To install and log into Argo CD:
 
 - `helm repo add argo-helm https://argoproj.github.io/argo-helm`
-- `helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 7.8.24`
+- `helm install argo-cd argo-helm/argo-cd --namespace argocd --create-namespace --version 9.5.0`
 - `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d` - retrieve the password for the Argo UI
 - `kubectl port-forward service/argo-cd-argocd-server -n argocd 8081:443`
 - Go to <https://localhost:8081>, accept the self-signed cert, and log in with the username admin and the password you retrieved from the secret
@@ -1278,6 +1274,7 @@ What about a fully automated flow? In this example we are:
 
 To see it in action:
 
+- Run `kubectl apply -f success-rate-analysis.yaml` to define the prometheus query to do to work out if we are successful (less than 5% error rate)
 - Run `kubectl apply -f bluegreen-rollout-automatic.yaml` to roll back to blue and with this new automation
 - Open <http://localhost:81> - as you'll need to generate some traffic there for it to work out the less than 5% error rate
   - Note that there is a slider there where you can increase it if you want to see this fail instead
@@ -1320,7 +1317,7 @@ kubectl run nsenter-pod --restart=Never -it --rm --image overriden --overrides '
     "containers": [
       {
         "name": "nsenter",
-        "image": "mirror.gcr.io/debian:12.10",
+        "image": "mirror.gcr.io/debian:trixie",
         "command": [
           "nsenter", "--all", "--target=1", "--", "su", "-"
         ],
@@ -1389,8 +1386,7 @@ Error from server (Forbidden): pods "nsenter-pod" is forbidden: violates PodSecu
 
 ## Other topics that we didn't cover because Docker Desktop's K8s is not suitable for exploring them
 
-- Since Docker Desktop is a single-Node Kubernetes, anything that involves multiple Nodes (draining them, updating them, scaling them in/out, etc.)
+- When I started with this Docker Desktop's built-in K8s was only the Kubeadm-based single-Node Kubernetes - so I didn't cover anything that involves multiple Nodes (draining them, updating them, scaling them in/out, etc.)
+  - It now includes a multi-Node kind-based option, though, so I will add a second set of examples focused on multi-Node concerns based on that in the future
 - Since Docker Desktop doesn't have a network plugin (CNI) that supports NetworkPolicies (the K8s native firewall), anything that involves the implementation of those
 - Since we are not in the cloud, the use of operators that control/integrate with the underlying cloud environment (AWS Load Balancer controller, AWS IAM Roles for Service Accounts (IRSA), AWS SecurityGroups for Pods, external-dns of Route53, Crossplane, etc.)
-
-I'll develop another training with a cloud environment that can support these items to cover them. Stay tuned!

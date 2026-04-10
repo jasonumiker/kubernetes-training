@@ -9,7 +9,7 @@ kubectl run nsenter-pod --restart=Never -it --rm --image overriden --overrides '
     "containers": [
       {
         "name": "nsenter",
-        "image": "mirror.gcr.io/debian:12.10",
+        "image": "mirror.gcr.io/debian:trixie",
         "command": [
           "nsenter", "--all", "--target=1", "--", "su", "-"
         ],

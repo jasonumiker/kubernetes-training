@@ -24,35 +24,24 @@ spec:
       labels:
         app: rabbitmq
     spec:
-      initContainers:
-      # We use an init container to copy from the read-only ConfigMap to a read-write path
-      - name: "rabbitmq-config"
-        image: mirror.gcr.io/busybox:1.37.0
-        volumeMounts:
-        - name: rabbitmq-config
-          mountPath: /tmp/rabbitmq
-        - name: rabbitmq-config-rw
-          mountPath: /etc/rabbitmq
-        command:
-        - sh
-        - -c
-        # the newline is needed since the Docker image entrypoint scripts appends to the config file
-        - cp /tmp/rabbitmq/rabbitmq.conf /etc/rabbitmq/rabbitmq.conf && echo '' >> /etc/rabbitmq/rabbitmq.conf;
-          cp /tmp/rabbitmq/enabled_plugins /etc/rabbitmq/enabled_plugins
       volumes:
       - name: rabbitmq-config
-        configMap:
-          name: rabbitmq-config
-          optional: false
-          items:
-          - key: enabled_plugins
-            path: "enabled_plugins"
-          - key: rabbitmq.conf
-            path: "rabbitmq.conf"
-      # read-write volume into which to copy the rabbitmq.conf and enabled_plugins files
-      # this is needed since the docker image writes to the rabbitmq.conf file
-      - name: rabbitmq-config-rw
-        emptyDir: {}
+        projected:
+          sources:
+          - configMap:
+              name: rabbitmq-config
+              optional: false
+              items:
+              - key: enabled_plugins
+                path: "enabled_plugins"
+              - key: rabbitmq.conf
+                path: "rabbitmq.conf"
+          - secret:
+              name: rabbitmq-definitions
+              optional: false
+              items:
+              - key: definitions.json
+                path: "definitions.json"
       - name: rabbitmq-data
         persistentVolumeClaim:
           claimName: rabbitmq-data
@@ -69,29 +58,15 @@ spec:
         runAsGroup: 999
       containers:
       - name: rabbitmq
-        # This is the last version that supported these env vars for config
-        # TODO: Redo this to support current Rabbit MQ image
-        image: mirror.gcr.io/rabbitmq:3.8.34
+        image: rabbitmq:4.2.5-management
         volumeMounts:
-        # mounting rabbitmq.conf and enabled_plugins
-        # this should have writeable access, this might be a problem
-        - name: rabbitmq-config-rw
+        # mounting rabbitmq.conf, enabled_plugins, and definitions.json
+        - name: rabbitmq-config
           mountPath: "/etc/rabbitmq"
-          # mountPath: "/etc/rabbitmq/conf.d/"
         # rabbitmq data directory
         - name: rabbitmq-data
           mountPath: "/var/lib/rabbitmq/mnesia"
         env:
-        - name: RABBITMQ_DEFAULT_PASS
-          valueFrom:
-            secretKeyRef:
-              name: rabbitmq-admin
-              key: pass
-        - name: RABBITMQ_DEFAULT_USER
-          valueFrom:
-            secretKeyRef:
-              name: rabbitmq-admin
-              key: user
         - name: RABBITMQ_ERLANG_COOKIE
           valueFrom:
             secretKeyRef:

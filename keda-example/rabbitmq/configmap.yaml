@@ -10,5 +10,5 @@ data:
     cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
     cluster_formation.k8s.address_type = hostname
     cluster_formation.k8s.service_name = rabbitmq-headless
-
+    management.load_definitions = /etc/rabbitmq/definitions.json
     queue_master_locator=min-masters

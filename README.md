@@ -137,7 +137,7 @@ Kubernetes will let us tunnel right to the Pod IP by forwarding a port on our ho
 
 Then open <http://localhost:8080> in your browser and you'll see the app served by this Pod.
 
-NOTE: You are tunneling *through* the Kubernetes control plane to the Pod. So even if you can't reach the Pod directly (such as in a production environment where a firewall actively prevents it) if you can reach the K8s control plane, and it allows you to port-forward, then you can reach it that way using its access/connectivity to it.
+**NOTE:** You are tunneling *through* the Kubernetes control plane to the Pod. So even if you can't reach the Pod directly (such as in a production environment where a firewall actively prevents it) if you can reach the K8s control plane, and it allows you to port-forward, then you can reach it that way using its access/connectivity to it.
 
 Once you're done you can ctrl-c out of that port-forward in your terminal.
 
@@ -459,33 +459,54 @@ The RabbitMQ that we just deployed above uses both of these so lets have a look 
     ```
 
 - [keda-example/rabbitmq/secrets.yaml](keda-example/rabbitmq/secrets.yaml)
-  - These are mounted into environment variables at runtime:
+  - One of these is mounted into an environment variables at runtime the other mounted as a file on the filesystem:
 
     ```
-    env:
-    - name: RABBITMQ_DEFAULT_PASS
-      valueFrom:
-        secretKeyRef:
-          name: rabbitmq-admin
-          key: pass
-    - name: RABBITMQ_DEFAULT_USER
-      valueFrom:
-        secretKeyRef:
-          name: rabbitmq-admin
-          key: user
-    - name: RABBITMQ_ERLANG_COOKIE
-      valueFrom:
-        secretKeyRef:
-          name: erlang-cookie
-          key: cookie
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: erlang-cookie
+    type: generic
+    stringData:
+      cookie: super-secret-erlang-cookie
+    ---
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: rabbitmq-definitions
+    type: Opaque
+    stringData:
+      definitions.json: |
+        {
+          "users": [
+            {
+              "name": "admin",
+              "password": "admin",
+              "tags": "administrator"
+            }
+          ],
+          "vhosts": [
+            {
+              "name": "/"
+            }
+          ],
+          "permissions": [
+            {
+              "user": "admin",
+              "vhost": "/",
+              "configure": ".*",
+              "write": ".*",
+              "read": ".*"
+            }
+          ]
+        }
     ```
 
 Kubernetes secrets are base64 encoded. They are in clear text in this YAML file because we specified `stringData` - asking Kubernetes to base64 encode it on the way in for us. That means we'll need to base64 decode it if we want to look at it from the API later. Though, when mounting it in your container at runtime, K8s'll decode it for you too. To see this run:
 
-- `kubectl get secret rabbitmq-admin -o yaml` - see the encoded values in pass and user
-- Copy/paste the user or pass value into a command like this to decode it `echo "YWRtaW4=" | base64 --decode` - it'll reveal it as admin
+`kubectl get secret rabbitmq-definitions -o jsonpath='{.data.definitions\.json}' | base64 -d`
 
-**NOTE**: Normally you shouldn't check a secret into the git repo like this - it is something that should be added to the cluster out-of-band and only live in Kubernetes where it is the source-of-truth for it. And access to it is tightly controlled via the Kubernetes API's authentication - which we'll cover in a later section.
+**NOTE**: Normally you shouldn't check a secret into the git repo like this - it is something that should be added to the cluster out-of-band and only live in the Kubernetes control plane where it will be the source-of-truth for it. Then access to it is should be tightly controlled via the Kubernetes API's authentication - which we'll cover in a later section.
 
 Also, in addition to built-in Kubernetes Secrets there is the popular [External Secrets Operator](https://github.com/external-secrets/external-secrets) that will let you store your secrets in tools like AWS Secrets Manager, Google Secrets Manager, Azure Key Vault, Hashicorp Vault, etc. and reference/mount them at runtime from within Kubernetes. There can be advantages to externalizing the secrets this way - mainly that they can be referenced from other clusters or services that are not running on Kubernetes within that public cloud etc.
 
@@ -527,7 +548,7 @@ You can see the all the data sources that Prometheus is scraping for metrics (it
 - Prometheus Node Exporter which gives it host-level metrics on the Node
 - And cAdvisor which gives it container-level metrics (which it is actually scraping through the Node's Kubelet)
 
-NOTE: Unfortunately, for some reason the Kubernetes in Docker Desktop is missing some usual/expected labels on its cAdvisor container-level metrics - container and image being two main ones. [I believe this is because it is using an uncommon container runtime for K8s (cri-docker)](https://github.com/kubernetes/kubernetes/issues/122182) to allow it to bridge back to Docker's container runtime in Docker Desktop. That means that many of the dashboards that ship built-in with this Grafana, that expect those labels, will appear empty unless we change their queries to omit them. It *does* still have the following labels - and so will still work for our needs here - instance, namespace, node, pod and service.
+**NOTE:** Unfortunately, for some reason the Kubernetes in Docker Desktop is missing some usual/expected labels on its cAdvisor container-level metrics - container and image being two main ones. [I believe this is because it is using an uncommon container runtime for K8s (cri-docker)](https://github.com/kubernetes/kubernetes/issues/122182) to allow it to bridge back to Docker's container runtime in Docker Desktop. That means that many of the dashboards that ship built-in with this Grafana, that expect those labels, will appear empty unless we change their queries to omit them. It *does* still have the following labels - and so will still work for our needs here - instance, namespace, node, pod and service.
 
 We've also installed the adapter to let Prometheus serve the Kubernetes Metrics API - that serves `kubectl top` as well as the Horizontal Pod Autoscaler. To see that in action run the following:
 
@@ -913,7 +934,7 @@ The main reason it's being replaced is that the Ingress API standard/schema didn
 
 For example, look at all the [annotations for AWS ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/). And how much they differ from the also common [nginx ones](https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx/).
 
-NOTE: The popular nginx Ingress controller has now been end-of-lifed so traefik added support for many of its annoations to ease migrations for people. They documented this migration [here](https://doc.traefik.io/traefik/migrate/nginx-to-traefik/)
+**NOTE:** The popular nginx Ingress controller has now been end-of-lifed so traefik added support for many of its annoations to ease migrations for people. They documented this migration [here](https://doc.traefik.io/traefik/migrate/nginx-to-traefik/)
 
 The new Gateway API is informed by all these differences to ensure they are (much more) covered by the standard this time.
 

@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: probe-test-app
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - http:
       paths:
@@ -13,4 +13,4 @@ spec:
           service:
             name: probe-test-app
             port:
-              number: 8080
+              number: 8000

@@ -1,26 +1,56 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: nyancat-redirect-slash
+  namespace: default
+spec:
+  redirectRegex:
+    regex: "^(https?://[^/]+)/nyancat$"
+    replacement: "${1}/nyancat/"
+    permanent: false
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: nyancat-strip-prefix
+  namespace: default
+spec:
+  stripPrefix:
+    prefixes:
+      - /nyancat
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: probe-test-app
+  name: nyancat
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/configuration-snippet: rewrite ^(/nyancat)$ $1/ redirect;
+    traefik.ingress.kubernetes.io/router.middlewares: default-nyancat-redirect-slash@kubernetescrd,default-nyancat-strip-prefix@kubernetescrd
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
     - http:
         paths:
-          - path: /()(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: probe-test-app
-                port:
-                  number: 8080
-          - path: /nyancat()(.*)
-            pathType: ImplementationSpecific
+          - path: /nyancat
+            pathType: Prefix
             backend:
               service:
                 name: nyancat
                 port:
                   number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: probe-test-app
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: probe-test-app
+                port:
+                  number: 8000

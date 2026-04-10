@@ -782,12 +782,12 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 
 The initial Kubernetes approach to Layer 7 LoadBalancing is [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Unlike Services, which are built-in to Kubernetes, Ingress is more a standard for plugins/controllers to provide the capability in a (somewhat) consistent way.
 
-The two approaches to these controllers are to either to run them on top of the cluster, by managing tools such as nginx or Envoy running in Pods on the cluster, or by orchestrating a Layer-7 Load Balancer outside of the cluster such as the AWS ALB. In this example, we'll use the common and free nginx Ingress controller - which is a combination of an nginx to forward the traffic and a controller to watch for Ingress documents and convert those to the require nginx config(s) both running on our cluster.
+The two approaches to these controllers are to either to run them on top of the cluster, by managing tools such as traefik or Envoy running in Pods on the cluster, or by orchestrating a Layer-7 Load Balancer outside of the cluster such as the AWS ALB. In this example, we'll use the common and free traefik Ingress controller - which is a combination of an traefik to forward the traffic and a controller to watch for Ingress documents and convert those to the require traefik config(s) both running on our cluster.
 
 1. `cd ../ingress`
-1. Run `./install-nginx.sh` to install the Nginx Ingress Controller via its Helm Chart
+1. Run `./install-traefik.sh` to install the traefik Ingress Controller via its Helm Chart
 
-This deployed the controller fronted by a Service type LoadBalancer on ports 80 and 443. Given the way that Docker Desktop works that means it is listening on <http://localhost> and <https://localhost> (on a self-signed certificate). If you go to these you'll see you get back a 404 page from nginx - that is because we haven't provided it Ingress YAML documents to tell it where the traffic to it should go yet.
+This deployed the controller fronted by a Service type LoadBalancer on ports 80 and 443. Given the way that Docker Desktop works that means it is listening on <http://localhost> and <https://localhost> (on a self-signed certificate). If you go to these you'll see you get back a 404 page from traefik - that is because we haven't provided it Ingress YAML documents to tell it where the traffic to it should go yet.
 
 Ingress points at an underlying Kubernetes Service to discover its targets. We have one still running in probe-test-app that we'll use.
 
@@ -798,10 +798,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: probe-test-app
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - http:
       paths:
@@ -811,7 +809,7 @@ spec:
           service:
             name: probe-test-app
             port:
-              number: 8080
+              number: 8000
 ```
 
 This will just say if you to go to the Ingress's endpoint <http://localhost> it'll forward you through to the probe-test-app service.
@@ -823,38 +821,68 @@ This will just say if you to go to the Ingress's endpoint <http://localhost> it'
 
 To set that in action run `kubectl apply -f probe-test-app-ingress.yaml` and then go to <http://localhost>.
 
-For something more elaborate, let's add a second service at a different URI path:
+For something more elaborate, let's add a second service at a different URI path to our Ingress:
 
 ```
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: nyancat-redirect-slash
+  namespace: default
+spec:
+  redirectRegex:
+    regex: "^(https?://[^/]+)/nyancat$"
+    replacement: "${1}/nyancat/"
+    permanent: false
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: nyancat-strip-prefix
+  namespace: default
+spec:
+  stripPrefix:
+    prefixes:
+      - /nyancat
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: probe-test-app
+  name: nyancat
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/configuration-snippet: rewrite ^(/nyancat)$ $1/ redirect;
+    traefik.ingress.kubernetes.io/router.middlewares: default-nyancat-redirect-slash@kubernetescrd,default-nyancat-strip-prefix@kubernetescrd
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
     - http:
         paths:
-          - path: /()(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: probe-test-app
-                port:
-                  number: 8080
-          - path: /nyancat()(.*)
-            pathType: ImplementationSpecific
+          - path: /nyancat
+            pathType: Prefix
             backend:
               service:
                 name: nyancat
                 port:
                   number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: probe-test-app
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: probe-test-app
+                port:
+                  number: 8000
 ```
 
-**NOTE:** This is one area where nginx handles its path rewrites a bit differently to something like an AWS ALB - and so the Ingress document for the two controllers will vary a bit. We'll discuss why this is one of the sorts of things leading to Kubernetes from Ingress to Gateway below.
+**NOTE:** Path rewrites are one of many areas where traefik handles things differently to something like the AWS Load Balancer Controller - in this case using another CRD called Middleware rather than annotations. We'll discuss why these differences in providers is an example of what is leading to Kubernetes moving from Ingress to Gateway below.
 
 To see this:
 
@@ -881,11 +909,11 @@ We can also now optionally remove probe-test-app and nyancat too:
 
 Ingress will *eventually* go away and be replaced by Gateway - but I included it because it has been around for years and is still in use in many environments.
 
-The main reason it's being replaced is that the Ingress API standard/schema didn't include enough of the common options that people need to control around a Layer 7 load balancer. The solution they all went with is to use annotations for most of this (to break out of 'the standard' and flip the missing options they need for just their ingress controller). But then every Ingress controller opted for different annotations - so you can't take an Ingress document written for one controller/cloud and use it on another without changing it quite a bit.
+The main reason it's being replaced is that the Ingress API standard/schema didn't include enough of the common options that people need to control around a Layer 7 load balancer. The solution they all went with is to use annotations for most of this (to break out of 'the standard' and flip the missing options they need for just their ingress controller). But then every Ingress controller opted for different annotations - so you can't take an Ingress document written for one controller/cloud and use it on another without changing it quite a bit. And some opted for exposing some settings in other external CRDs like the Middleware you saw above from traefik.
 
-For example, look at all the [annotations for AWS ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/). And how much they differ from the [nginx ones](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) that we're working with here in this example.
+For example, look at all the [annotations for AWS ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/). And how much they differ from the also common [nginx ones](https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx/).
 
-Also, you'll see in the second example we had to flip the paths to 'ImplementationSpecific' which lets the paths deviate from the standard (to do things like regex in them like nginx wanted).
+NOTE: The popular nginx Ingress controller has now been end-of-lifed so traefik added support for many of its annoations to ease migrations for people. They documented this migration [here](https://doc.traefik.io/traefik/migrate/nginx-to-traefik/)
 
 The new Gateway API is informed by all these differences to ensure they are (much more) covered by the standard this time.
 

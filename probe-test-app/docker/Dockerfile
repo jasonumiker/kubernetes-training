@@ -1,4 +1,4 @@
-FROM python:3.13.3-bookworm
+FROM python:3.13.13-trixie
 
 RUN useradd --user-group --system --no-log-init --create-home python
 USER python

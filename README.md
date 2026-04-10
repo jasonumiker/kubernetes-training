@@ -782,12 +782,12 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 
 The initial Kubernetes approach to Layer 7 LoadBalancing is [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). Unlike Services, which are built-in to Kubernetes, Ingress is more a standard for plugins/controllers to provide the capability in a (somewhat) consistent way.
 
-The two approaches to these controllers are to either to run them on top of the cluster, by managing tools such as traefik or Envoy running in Pods on the cluster, or by orchestrating a Layer-7 Load Balancer outside of the cluster such as the AWS ALB. In this example, we'll use the common and free traefik Ingress controller - which is a combination of an traefik to forward the traffic and a controller to watch for Ingress documents and convert those to the require traefik config(s) both running on our cluster.
+The two approaches to these controllers are to either to run them on top of the cluster, by managing tools such as Traefik or Envoy running in Pods on the cluster, or by orchestrating a Layer-7 Load Balancer outside of the cluster such as the AWS ALB. In this example, we'll use the common and free Traefik Ingress controller - which is a combination of a traefik proxy to forward the traffic and a controller to watch for Ingress documents and convert those to the required traefik config(s) to do so both running on our cluster.
 
 1. `cd ../ingress`
 1. Run `./install-traefik.sh` to install the traefik Ingress Controller via its Helm Chart
 
-This deployed the controller fronted by a Service type LoadBalancer on ports 80 and 443. Given the way that Docker Desktop works that means it is listening on <http://localhost> and <https://localhost> (on a self-signed certificate). If you go to these you'll see you get back a 404 page from traefik - that is because we haven't provided it Ingress YAML documents to tell it where the traffic to it should go yet.
+This deployed the controller fronted by a Service type LoadBalancer on ports 80 and 443. Given the way that Docker Desktop works that means it is listening on <http://localhost> and <https://localhost> (on a self-signed certificate). If you go to these you'll see you get back a 404 page from Traefik - that is because we haven't provided it Ingress YAML documents to tell it where the traffic to it should go yet.
 
 Ingress points at an underlying Kubernetes Service to discover its targets. We have one still running in probe-test-app that we'll use.
 
@@ -882,7 +882,7 @@ spec:
                   number: 8000
 ```
 
-**NOTE:** Path rewrites are one of many areas where traefik handles things differently to something like the AWS Load Balancer Controller - in this case using another CRD called Middleware rather than annotations. We'll discuss why these differences in providers is an example of what is leading to Kubernetes moving from Ingress to Gateway below.
+**NOTE:** Path rewrites are one of many areas where Traefik handles things differently to something like the AWS Load Balancer Controller - in this case using another CRD called Middleware rather than annotations. We'll discuss why these differences in providers is an example of what is leading to Kubernetes moving from Ingress to Gateway below.
 
 To see this:
 
@@ -909,7 +909,7 @@ We can also now optionally remove probe-test-app and nyancat too:
 
 Ingress will *eventually* go away and be replaced by Gateway - but I included it because it has been around for years and is still in use in many environments.
 
-The main reason it's being replaced is that the Ingress API standard/schema didn't include enough of the common options that people need to control around a Layer 7 load balancer. The solution they all went with is to use annotations for most of this (to break out of 'the standard' and flip the missing options they need for just their ingress controller). But then every Ingress controller opted for different annotations - so you can't take an Ingress document written for one controller/cloud and use it on another without changing it quite a bit. And some opted for exposing some settings in other external CRDs like the Middleware you saw above from traefik.
+The main reason it's being replaced is that the Ingress API standard/schema didn't include enough of the common options that people need to control around a Layer 7 load balancer. The solution they all went with is to use annotations for most of this (to break out of 'the standard' and flip the missing options they need for just their ingress controller). But then every Ingress controller opted for different annotations - so you can't take an Ingress document written for one controller/cloud and use it on another without changing it quite a bit. And some opted for exposing some settings in other external CRDs like the Middleware you saw above from Traefik.
 
 For example, look at all the [annotations for AWS ALB](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/). And how much they differ from the also common [nginx ones](https://doc.traefik.io/traefik/reference/install-configuration/providers/kubernetes/kubernetes-ingress-nginx/).
 

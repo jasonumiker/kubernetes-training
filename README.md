@@ -914,7 +914,7 @@ To see this:
 Once you're done you need to clean this up or Istio won't work (as it'll want port 80 and 443 on localhost):
 
 - `kubectl delete ingress probe-test-app`
-- `helm uninstall ingress`
+- `helm uninstall traefik -n traefik`
 
 We can also now optionally remove probe-test-app and nyancat too:
 

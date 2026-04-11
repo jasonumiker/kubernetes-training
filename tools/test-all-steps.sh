@@ -35,10 +35,6 @@ echo "kubectl get services -o wide"
 kubectl get services -o wide
 echo "--------------------"
 sleep 1
-echo "kubectl get endpoints"
-kubectl get endpoints
-echo "--------------------"
-sleep 1
 echo "kubectl apply -f probe-test-app-pod-2.yaml"
 kubectl apply -f probe-test-app-pod-2.yaml
 kubectl wait --for=condition=ready pod probe-test-app-2
@@ -481,9 +477,9 @@ echo "cd ../ingress"
 cd ../ingress
 echo "--------------------"
 sleep 1
-echo "./install-nginx.sh"
-./install-nginx.sh
-kubectl rollout status deployment ingress-ingress-nginx-controller -n default
+echo "./install-traefik.sh"
+./install-traefik.sh
+kubectl rollout status deployment traefik -n traefik
 echo "--------------------"
 sleep 1
 echo "kubectl apply -f probe-test-app-ingress.yaml"
@@ -515,8 +511,8 @@ echo "kubectl delete ingress probe-test-app"
 kubectl delete ingress probe-test-app
 echo "--------------------"
 sleep 1
-echo "helm uninstall ingress"
-helm uninstall ingress
+echo "helm uninstall traefik -n traefik"
+helm uninstall traefik -n traefik
 echo "--------------------"
 sleep 1
 echo "Cleaning up probe-test-app and nyancat..."
